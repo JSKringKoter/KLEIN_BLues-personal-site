@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f1eadf" />
+    <meta name="description" content="KLEIN BLues 的小说、角色、摄影与技术随笔档案。" />
+    <title>KLEIN BLues — Fiction, Portrait, Photography & Notes</title>
+    <link rel="stylesheet" href="./styles.css?v=26" />
+  </head>
+  <body>
+    <div class="boot" id="boot" aria-hidden="true">
+      <div class="boot-mark"><span>K</span><i></i><span>B</span></div>
+      <p>Composing the archive</p>
+    </div>
+
+    <div class="noise" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span></span></div>
+
+    <header class="masthead" id="masthead">
+      <a class="wordmark" href="#top" aria-label="返回首页" data-cursor="HOME">
+        <strong>KLEIN</strong><span>BLues</span>
+      </a>
+      <nav class="primary-nav" aria-label="主导航">
+        <a href="#fiction"><span>01</span>文字</a>
+        <a href="#portraits"><span>02</span>画中人</a>
+        <a href="#notes"><span>03</span>随笔</a>
+        <a href="#photography"><span>04</span>浮光记</a>
+        <a href="#about"><span>05</span>关于</a>
+      </nav>
+      <div class="edition"><span>Independent archive</span><b>MMXXVI</b></div>
+    </header>
+
+    <main id="app">
+      <section class="hero" id="top" aria-labelledby="heroTitle">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="weather-atmosphere" id="weatherAtmosphere" aria-hidden="true">
+          <div class="weather-sun"></div>
+          <div class="weather-cloud cloud-a"></div>
+          <div class="weather-cloud cloud-b"></div>
+          <div class="weather-cloud cloud-c"></div>
+          <div class="weather-fog"><i></i><i></i><i></i></div>
+          <div class="weather-particles" id="weatherParticles"></div>
+          <div class="weather-flash"></div>
+        </div>
+        <div class="hero-orbit" id="heroCollage" aria-label="精选图像"></div>
+        <div class="hero-title" id="heroTitle">
+          <span class="hero-klein">KLEIN</span>
+          <span class="hero-blues">BL<span>u</span>es</span>
+        </div>
+        <div class="hero-note">
+          <span class="cross" aria-hidden="true"></span>
+          <p>文字负责时间，<br />图像负责光线。</p>
+          <small>Fiction / Character / Photography / Code</small>
+        </div>
+        <p class="hero-intro">一个关于故事与人物的私人档案。<br />在阅读与凝视之间，寻找未完成的叙事。</p>
+        <div class="weather-control" id="weatherControl">
+          <div class="weather-reading" id="weatherReading" aria-live="polite">
+            <strong id="weatherTemperature">LIVE</strong>
+            <span><b id="weatherCondition">正在读取当地天空</b><small id="weatherPlace">允许定位后自动匹配</small></span>
+          </div>
+          <button class="weather-cycle" id="weatherCycle" type="button" aria-label="手动切换天气" data-cursor="SWITCH">
+            <span id="weatherCycleLabel">切换天气</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8a7 7 0 1 0 1 5M19 3v5h-5" /></svg>
+          </button>
+        </div>
+        <a class="scroll-cue" href="#fiction" data-cursor="DOWN"><span>向下</span><i></i></a>
+      </section>
+
+      <div class="ticker" aria-hidden="true">
+        <div>
+          <span>FICTION AS TIME</span><i>✦</i><span>PORTRAIT AS LIGHT</span><i>✦</i>
+          <span>FICTION AS TIME</span><i>✦</i><span>PORTRAIT AS LIGHT</span><i>✦</i>
+        </div>
+      </div>
+
+      <section class="fiction section" id="fiction" aria-labelledby="fictionTitle">
+        <header class="section-head reveal">
+          <p><span>01</span> Index of fiction</p>
+          <h2 id="fictionTitle">一纸<br /><em>空文</em><small id="fictionTitleSuffix"></small></h2>
+          <div class="section-deck" id="fictionDeck">已经完成的文字，<br />以及仍在回响的故事。</div>
+        </header>
+
+        <div class="fiction-toolbar reveal">
+          <div class="fiction-switch" id="fictionSwitch" role="tablist" aria-label="切换文章档案">
+            <button class="is-active" type="button" role="tab" data-fiction-collection="complete" data-cursor="SWITCH" aria-selected="true">一纸空文</button>
+            <button type="button" role="tab" data-fiction-collection="unfinished" data-cursor="SWITCH" aria-selected="false">一纸空文·未尽</button>
+          </div>
+          <span class="fiction-archive-count" id="fictionArchiveCount"></span>
+        </div>
+
+        <div class="fiction-layout">
+          <div class="novel-index" id="novelIndex"></div>
+          <aside class="novel-preview reveal" id="novelPreview" aria-live="polite">
+            <div class="preview-surface">
+              <span class="preview-number" id="previewNumber">01</span>
+              <p id="previewExcerpt"></p>
+              <div class="preview-meta"><span id="previewCount"></span><i></i><span>Original fiction</span></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="portraits section" id="portraits" aria-labelledby="portraitTitle">
+        <header class="portrait-heading reveal">
+          <p><span>02</span> Portrait atlas</p>
+          <h2 id="portraitTitle">画中人</h2>
+          <div class="portrait-statement" id="portraitAside" aria-hidden="true"></div>
+        </header>
+
+        <div class="character-tabs reveal" id="characterTabs" role="tablist" aria-label="选择人物"></div>
+
+        <div class="portrait-stage" id="portraitStage">
+          <div class="portrait-cover-wrap reveal">
+            <button class="portrait-cover" id="portraitCover" type="button" data-cursor="OPEN">
+              <span class="portrait-media" id="portraitMedia">
+                <img id="portraitCoverImage" alt="" />
+                <span class="cover-index" id="coverIndex">01 / 01</span>
+              </span>
+            </button>
+            <div class="cover-caption">
+              <h3 id="characterName"></h3>
+              <p id="characterCount"></p>
+            </div>
+          </div>
+
+          <div class="portrait-rail-wrap reveal">
+            <div class="rail-instruction"><span>Drag / Wheel</span><i></i><span>Click to inspect</span></div>
+            <div class="portrait-rail" id="portraitRail" tabindex="0" aria-label="人物图像列表"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tech-notes section" id="notes" aria-labelledby="notesTitle">
+        <header class="tech-heading reveal">
+          <p><span>03</span> Engineering notebook</p>
+          <h2 id="notesTitle">随笔<em>而录</em></h2>
+          <div class="tech-statement">记录问题如何发生，<br />以及系统为什么这样工作。</div>
+        </header>
+        <div class="tech-shell reveal">
+          <div class="tech-toolbar">
+            <div class="tech-filters" id="techFilters" aria-label="筛选技术笔记"></div>
+            <span id="techTotal"></span>
+          </div>
+          <div class="tech-layout">
+            <div class="tech-index" id="techIndex" aria-label="技术笔记目录"></div>
+            <article class="tech-preview" id="techPreview" aria-live="polite">
+              <header><span id="techPreviewCategory"></span><b id="techPreviewStatus"></b><time id="techPreviewDate"></time></header>
+              <h3 id="techPreviewTitle"></h3>
+              <p id="techPreviewSummary"></p>
+              <div class="tech-tags" id="techPreviewTags"></div>
+              <pre><code id="techPreviewCode"></code></pre>
+              <footer><span id="techPreviewRead"></span><i></i><a id="techPreviewSource" href="#" target="_blank" rel="noreferrer" data-cursor="ENTER">在 Notion 阅读 ↗</a></footer>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="photography section" id="photography" aria-labelledby="photographyTitle">
+        <header class="photography-heading reveal">
+          <p><span>04</span> Notes of borrowed light</p>
+          <h2 id="photographyTitle">浮光<em>记</em></h2>
+          <div class="photography-statement">光线经过世界，<br />快门只留下它短暂的停顿。</div>
+        </header>
+        <div class="photo-grid" id="photoGrid"></div>
+        <div class="photo-disclaimer reveal"><span>TEST ARCHIVE</span>当前影像与 EXIF 为版式测试数据，之后可直接替换为真实摄影作品。</div>
+      </section>
+
+      <section class="about section" id="about" aria-labelledby="aboutTitle">
+        <div class="about-number reveal">05</div>
+        <div class="about-copy reveal">
+          <p class="eyebrow">About the archive</p>
+          <h2 id="aboutTitle">写故事，<br />也收藏光。</h2>
+          <p>这里收录小说、人物、图像、摄影与技术随笔。它不是结论，更像一间持续变化的工作室：文字留下时间，图像保留光，代码记录问题如何被解决。</p>
+        </div>
+        <div class="about-seal reveal" aria-hidden="true">
+          <svg viewBox="0 0 180 180">
+            <defs><path id="sealPath" d="M90,90 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" /></defs>
+            <text><textPath href="#sealPath">FICTION · PORTRAITS · PHOTOGRAPHY · CODE · </textPath></text>
+            <text class="seal-kb" x="90" y="101" text-anchor="middle">KB</text>
+          </svg>
+        </div>
+        <footer class="site-footer">
+          <span>© 2026 KLEIN BLues</span>
+          <a href="#top" data-cursor="UP">Back to top ↑</a>
+          <span>All works reserved</span>
+        </footer>
+      </section>
+    </main>
+
+    <section class="reader" id="reader" aria-hidden="true" aria-label="小说阅读器">
+      <div class="reader-curtain" aria-hidden="true"></div>
+      <div class="reader-ornaments" id="readerOrnaments" aria-hidden="true"></div>
+      <header class="reader-head">
+        <button id="readerClose" type="button" aria-label="关闭阅读器" data-cursor="BACK">
+          <svg viewBox="0 0 32 32"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+          <span>返回目录</span>
+        </button>
+        <div class="reader-progress"><i id="readerProgress"></i></div>
+        <span id="readerPosition">00%</span>
+      </header>
+      <article class="reader-sheet">
+        <header class="reader-title-block">
+          <p id="readerMeta"></p>
+          <h2 id="readerTitle"></h2>
+          <p id="readerSubtitle"></p>
+        </header>
+        <div class="reader-body" id="readerBody"></div>
+      </article>
+    </section>
+
+    <section class="viewer" id="viewer" aria-hidden="true" aria-label="图像查看器">
+      <div class="viewer-color" id="viewerColor" aria-hidden="true"></div>
+      <div class="viewer-blur" aria-hidden="true"><img id="viewerBlur" alt="" /></div>
+      <header class="viewer-head">
+        <div><strong>KLEIN BLues</strong><span id="viewerArchive">Portrait archive</span></div>
+        <button id="viewerClose" type="button" aria-label="关闭图像" data-cursor="CLOSE">
+          <span>Close</span><svg viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+      </header>
+      <figure class="viewer-figure"><img id="viewerImage" alt="" /></figure>
+      <div class="viewer-caption">
+        <span id="viewerCounter"></span>
+        <h3 id="viewerTitle"></h3>
+        <p id="viewerGroup"></p>
+      </div>
+      <dl class="viewer-exif" id="viewerExif" hidden>
+        <div><dt>Coordinates</dt><dd id="viewerCoordinates"></dd></div>
+        <div><dt>Camera</dt><dd id="viewerCamera"></dd></div>
+        <div><dt>Lens</dt><dd id="viewerLens"></dd></div>
+        <div><dt>Exposure</dt><dd id="viewerExposure"></dd></div>
+        <div><dt>Captured</dt><dd id="viewerCaptured"></dd></div>
+      </dl>
+      <div class="viewer-controls">
+        <button id="viewerPrev" type="button" aria-label="上一张" data-cursor="PREV">←</button>
+        <i></i>
+        <button id="viewerNext" type="button" aria-label="下一张" data-cursor="NEXT">→</button>
+      </div>
+    </section>
+
+    <script src="./vendor/gsap.min.js"></script>
+    <script src="./data.js"></script>
+    <script src="./notion-notes.js?v=1"></script>
+    <script src="./app.js?v=22"></script>
+  </body>
+</html>
