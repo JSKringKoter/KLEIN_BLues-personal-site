@@ -914,14 +914,21 @@ img {
 }
 
 .section-head h2 small {
-  margin-left: 0.12em;
-  color: var(--signal);
-  font-family: var(--sans);
-  font-size: 0.16em;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  vertical-align: 0.45em;
+  margin-left: 0.08em;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 0.22em;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  vertical-align: 0.22em;
   white-space: nowrap;
+}
+
+.section-head h2 small:not(:empty)::before {
+  content: "·";
+  margin-right: 0.08em;
+  color: var(--blue);
+  font-style: italic;
 }
 
 .section-deck {
@@ -942,57 +949,22 @@ img {
 .fiction-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.52fr) minmax(18rem, 0.48fr);
+  grid-template-areas: "index preview";
   gap: clamp(2rem, 6vw, 8rem);
   padding-top: 2rem;
+}
+
+.fiction-layout.is-unfinished {
+  grid-template-columns: minmax(18rem, 0.48fr) minmax(0, 1.52fr);
+  grid-template-areas: "preview index";
 }
 
 .fiction-toolbar {
   display: flex;
   align-items: end;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 2rem;
   padding-top: clamp(3rem, 5vw, 5rem);
-}
-
-.fiction-switch {
-  display: flex;
-  align-items: center;
-  gap: clamp(1.5rem, 4vw, 4.5rem);
-}
-
-.fiction-switch button {
-  position: relative;
-  padding: 0 0 0.75rem;
-  color: rgba(17, 16, 14, 0.42);
-  background: none;
-  font-family: var(--serif);
-  font-size: clamp(1.25rem, 2.2vw, 2.2rem);
-  cursor: pointer;
-  transition: color 350ms ease;
-}
-
-.fiction-switch button::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 0.16rem;
-  background: var(--blue);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 450ms var(--ease);
-}
-
-.fiction-switch button:hover,
-.fiction-switch button:focus-visible,
-.fiction-switch button.is-active {
-  color: var(--ink);
-}
-
-.fiction-switch button.is-active::after {
-  transform: scaleX(1);
-  transform-origin: left;
 }
 
 .fiction-archive-count {
@@ -1003,6 +975,7 @@ img {
 }
 
 .novel-index {
+  grid-area: index;
   max-height: min(68vh, 52rem);
   overflow-y: auto;
   border-top: 1px solid var(--ink);
@@ -1029,17 +1002,23 @@ img {
   content: "";
   position: absolute;
   z-index: 0;
-  inset: 0;
-  background: var(--row-color);
-  transform: translateX(-102%);
+  inset: -1.5rem;
+  background-color: var(--row-color);
+  background-image: linear-gradient(90deg, rgba(12, 18, 32, 0.34), rgba(12, 18, 32, 0.12)), var(--novel-cover, none);
+  background-position: center;
+  background-size: cover;
+  filter: blur(22px) saturate(1.2);
+  transform: translateX(-112%) scale(1.12);
   transition: transform 600ms var(--ease);
 }
 
 .novel-row:hover::before,
 .novel-row:focus-visible::before,
 .novel-row.is-active::before {
-  transform: translateX(0);
+  transform: translateX(0) scale(1.12);
 }
+
+.novel-row.is-loading { pointer-events: none; opacity: 0.64; }
 
 .novel-row > * {
   position: relative;
@@ -1121,16 +1100,24 @@ img {
 }
 
 .novel-preview {
-  position: relative;
+  grid-area: preview;
+  position: sticky;
+  top: 8rem;
+  align-self: start;
+}
+
+.fiction-layout.is-unfinished .preview-surface {
+  box-shadow: -1.1rem 1.1rem 0 var(--paper-deep);
 }
 
 .preview-surface {
-  position: sticky;
-  top: 8rem;
+  position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 31rem;
+  height: 31rem;
   padding: clamp(1.4rem, 2.5vw, 2.5rem);
+  overflow: hidden;
+  isolation: isolate;
   color: var(--paper);
   background:
     radial-gradient(circle at 80% 10%, rgba(70, 112, 222, 0.3), transparent 13rem),
@@ -1139,11 +1126,31 @@ img {
   transition: background-color 500ms ease;
 }
 
+.preview-surface::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-image: linear-gradient(rgba(12, 18, 36, 0.28), rgba(12, 18, 36, 0.42)), var(--preview-image, none);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(28px) saturate(1.22);
+  transform: scale(1.18);
+  transition: background-image 450ms ease;
+}
+
+.preview-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
 .preview-surface::after {
   content: "";
   position: absolute;
   inset: 0.65rem;
   border: 1px solid rgba(255, 255, 255, 0.28);
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -1179,6 +1186,91 @@ img {
 .preview-meta i {
   height: 1px;
   background: rgba(255, 255, 255, 0.4);
+}
+
+.fiction-collection-nav {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  margin-top: 1.4rem;
+  padding: 1.05rem 1.15rem;
+  color: var(--ink);
+  background: rgba(247, 243, 235, 0.78);
+  border: 1px solid rgba(17, 16, 14, 0.2);
+  box-shadow: 0.35rem 0.35rem 0 rgba(25, 76, 205, 0.14);
+  font-family: var(--serif);
+  font-size: clamp(0.95rem, 1.25vw, 1.15rem);
+  text-align: left;
+  cursor: pointer;
+  transition: color 350ms ease, background-color 350ms ease, border-color 350ms ease, transform 450ms var(--ease), box-shadow 450ms var(--ease);
+}
+
+.fiction-collection-nav i {
+  height: 1px;
+  background: currentColor;
+  opacity: 0.38;
+  transform: scaleX(0.72);
+  transition: opacity 350ms ease, transform 500ms var(--ease);
+}
+
+.fiction-collection-nav b {
+  font-family: var(--sans);
+  font-size: 1.35rem;
+  font-weight: 300;
+  transition: transform 500ms var(--ease);
+}
+
+.fiction-collection-nav:hover i,
+.fiction-collection-nav:focus-visible i {
+  opacity: 0.8;
+  transform: scaleX(1);
+}
+
+.fiction-collection-nav:hover,
+.fiction-collection-nav:focus-visible {
+  color: var(--paper);
+  background: var(--blue);
+  border-color: var(--blue);
+  box-shadow: 0.5rem 0.5rem 0 rgba(25, 76, 205, 0.18);
+  transform: translateY(-0.15rem);
+}
+
+.fiction-collection-nav:hover b,
+.fiction-collection-nav:focus-visible b {
+  transform: translateX(0.35rem);
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav {
+  grid-template-columns: auto auto 1fr;
+  box-shadow: -0.35rem 0.35rem 0 rgba(25, 76, 205, 0.14);
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav:hover,
+.fiction-layout.is-unfinished .fiction-collection-nav:focus-visible {
+  box-shadow: -0.5rem 0.5rem 0 rgba(25, 76, 205, 0.18);
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav b {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav span {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav i {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.fiction-layout.is-unfinished .fiction-collection-nav:hover b,
+.fiction-layout.is-unfinished .fiction-collection-nav:focus-visible b {
+  transform: translateX(-0.35rem);
 }
 
 .portraits {
@@ -2747,8 +2839,14 @@ img {
   .portrait-statement { grid-column: 2; margin: 1rem 0 0; }
   .photography-statement { grid-column: 2; margin: 1rem 0 0; }
   .tech-statement { grid-column: 2; margin: 1rem 0 0; }
-  .fiction-layout { grid-template-columns: 1fr; }
-  .novel-preview { display: none; }
+  .fiction-layout,
+  .fiction-layout.is-unfinished {
+    grid-template-columns: 1fr;
+    grid-template-areas: "preview" "index";
+  }
+  .novel-preview { display: block; position: relative; top: auto; }
+  .preview-surface { height: 24rem; }
+  .fiction-layout.is-unfinished .preview-surface { box-shadow: 1.1rem 1.1rem 0 var(--paper-deep); }
   .portrait-stage { grid-template-columns: 0.8fr 1.2fr; gap: 2rem; }
   .tech-layout { grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.2fr); }
   .about { grid-template-columns: 0.35fr 1.4fr 0.45fr; }
@@ -2806,10 +2904,8 @@ img {
   .portrait-statement,
   .photography-statement,
   .tech-statement { font-size: 1.05rem; }
-  .fiction-toolbar { display: block; padding-top: 3rem; }
-  .fiction-switch { gap: 1.5rem; overflow-x: auto; }
-  .fiction-switch button { flex: 0 0 auto; font-size: 1.25rem; }
-  .fiction-archive-count { display: block; margin-top: 1.5rem; padding: 0; }
+  .fiction-toolbar { padding-top: 3rem; }
+  .fiction-archive-count { display: block; padding: 0; }
   .fiction-layout { padding-top: 1.5rem; }
   .novel-index { max-height: none; }
   .novel-row {

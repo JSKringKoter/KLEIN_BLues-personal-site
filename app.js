@@ -17,12 +17,40 @@ const additionalPortraits = [
   { id: "p051", title: "紫罗兰与白日梦", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-04.png", width: 1280, height: 1856, ratio: "1280 / 1856" }
 ];
 const allPaintings = [...data.paintings, ...additionalPortraits];
-const unfinishedNovels = Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [];
+const localUnfinishedNovels = [
+  { id: "u01", title: "且听风雪", subtitle: "未尽之稿", charCount: 1386, textSrc: "assets/text/unfinished/qieting-fengxue.txt", cover: "assets/images/novel-covers/qieting-fengxue.svg", excerpt: "铺开纸笔，墨水饱蘸，本想就此落笔，你却犹豫了。窗外初雪纷飞，旧信与思念都被封存在同一个寒冬。" },
+  { id: "u02", title: "南城往事", subtitle: "未尽之稿", charCount: 441, textSrc: "assets/text/unfinished/nancheng-wangshi.txt", cover: "assets/images/novel-covers/nancheng-wangshi.svg", excerpt: "太阳晒着港口，运河是绿的。繁华的南城巷在雨幕里一闪而过，只剩破败小楼与一盏没有熄灭的烛。" },
+  { id: "u03", title: "尘埃深处", subtitle: "天空之梦 · 未尽", charCount: 28149, textSrc: "assets/text/unfinished/chenai-shenchu.txt", cover: "assets/images/novel-covers/chenai-shenchu.svg", excerpt: "在没有四季、没有生命的荒漠星球 EHIS-4，人们早已忘记地球与秋天。一点意外出现的生机，却让细雨重新有了可能。" },
+  { id: "u04", title: "猫屿咖啡屋", subtitle: "未尽之稿", charCount: 19532, textSrc: "assets/text/unfinished/maoyu-kafeiwu.txt", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。" }
+];
+const unfinishedNovels = [...localUnfinishedNovels, ...(Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [])];
 const completedNovelOrder = ["深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
+const completedNovelCovers = {
+  "深蓝": "assets/images/novel-covers/deep-blue.jpg",
+  "白鸟之泪": "assets/images/novel-covers/white-bird.jpg",
+  "彼岸之冬": "assets/images/novel-covers/winter-shore.jpg",
+  "空箱": "assets/images/novel-covers/empty-box.jpg",
+  "山海行人": "assets/images/novel-covers/mountain-sea.jpg",
+  "黄昏的魔术师": "assets/images/novel-covers/twilight-magician.svg",
+  "永远的铁道": "assets/images/novel-covers/eternal-railway.jpg"
+};
+const completedNovelExcerpts = {
+  "深蓝": "在北境漫长的极夜里，一位失去记忆的钢琴家与新来的邻居反复相识。未完成的乐曲、被遗忘的约定，以及海岸尽头的深蓝，逐渐拼回一段不愿消失的过去。",
+  "白鸟之泪": "持续不断的高原雨季困住了一名白鸟观察者，也让他走近草原上的少年与脆弱的候鸟栖地。当保护与掠夺正面相遇，洁白的羽翼成为信念、牺牲与遗忘的见证。",
+  "彼岸之冬": "一颗水仙块茎牵引柯尔利特回到被风雪封存的小镇。教堂、温泉与名为铃的少女在错位的记忆中重现，迫使他面对一场多年以前未曾伸手阻止的灾难。",
+  "空箱": "阁楼里的一只嫁妆箱保存着一名女子从少女时代到命运倾覆的全部痕迹。织物、钥匙与逐渐被取空的嫁妆，共同讲述一段被生活耗尽、又被后人轻易抹去的人生。",
+  "山海行人": "被家庭遗落的少年在山间遇见一位无人供奉的小神。花茶、竹笛与长明的香火陪伴他们走过短暂岁月，而现代生活的到来，也让神明面对被世人彻底忘却的命运。",
+  "黄昏的魔术师": "失意的旅人在斯通古城外遇见继承父亲旧梦的少女。一次筹备于麦田与落日之间的魔术表演，让两个人重新理解离别、承诺，以及平凡生活中仍然存在的奇迹。",
+  "永远的铁道": "一条从未迎来列车的铁路穿过常年落雪的小镇。枫与神秘少女白沿着铁轨寻找它的终点，也在现实与时间的缝隙里，追逐一班只为真正想要离开的人停靠的列车。"
+};
 const completedNovels = [
   ...completedNovelOrder.map((title) => data.novels.find((novel) => novel.title === title)).filter(Boolean),
   ...data.novels.filter((novel) => !completedNovelOrder.includes(novel.title))
-];
+].map((novel) => ({
+  ...novel,
+  cover: completedNovelCovers[novel.title] || "",
+  excerpt: completedNovelExcerpts[novel.title] || novel.excerpt || ""
+}));
 
 const app = document.querySelector("#app");
 const masthead = document.querySelector("#masthead");
@@ -32,11 +60,9 @@ const viewer = document.querySelector("#viewer");
 const storyColors = ["#1746d1", "#d84c2f", "#2e6659", "#8a5c28", "#633e6b", "#283f66", "#171715"];
 const viewerColors = ["#173fae", "#8b3427", "#31594e", "#72512c", "#4c3b59"];
 const photoWorks = [
-  { id: "p01", title: "雾线以北", src: "./assets/images/photography/photo-01.jpg", width: 1800, height: 1200, group: "Furka Pass · Switzerland", color: "#39505b", exif: { coordinates: "46.5729° N, 8.4153° E", camera: "Sony α7 IV", lens: "FE 24–70mm F2.8 GM II", exposure: "35 mm · f/5.6 · 1/320 s · ISO 100", captured: "2025.10.18 · 07:14" } },
-  { id: "p02", title: "湖把天空留下", src: "./assets/images/photography/photo-02.jpg", width: 1800, height: 1200, group: "Lake Brienz · Switzerland", color: "#315e68", exif: { coordinates: "46.7274° N, 7.9633° E", camera: "Fujifilm X-T5", lens: "XF 16–55mm F2.8 R LM WR", exposure: "23 mm · f/8 · 1/250 s · ISO 125", captured: "2025.06.03 · 16:42" } },
-  { id: "p03", title: "林间有风经过", src: "./assets/images/photography/photo-03.jpg", width: 1800, height: 1200, group: "Olympic Peninsula · USA", color: "#315346", exif: { coordinates: "47.8609° N, 123.9348° W", camera: "Nikon Z8", lens: "NIKKOR Z 24–120mm f/4 S", exposure: "42 mm · f/4.5 · 1/160 s · ISO 400", captured: "2024.09.27 · 11:08" } },
-  { id: "p04", title: "黄昏偏航", src: "./assets/images/photography/photo-04.jpg", width: 1800, height: 1200, group: "Dolomites · Italy", color: "#74513b", exif: { coordinates: "46.5383° N, 11.7734° E", camera: "Canon EOS R5", lens: "RF 70–200mm F2.8 L IS USM", exposure: "112 mm · f/7.1 · 1/500 s · ISO 100", captured: "2025.08.11 · 20:31" } },
-  { id: "p05", title: "公路尽头", src: "./assets/images/photography/photo-05.jpg", width: 1800, height: 2700, group: "Valley of Fire · USA", color: "#7c3f31", exif: { coordinates: "36.4299° N, 114.5142° W", camera: "Leica Q3", lens: "Summilux 28mm f/1.7 ASPH.", exposure: "28 mm · f/5.6 · 1/800 s · ISO 100", captured: "2025.04.22 · 14:17" } }
+  { id: "ph01", title: "云际", src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "拍摄时间未记录" } },
+  { id: "ph02", title: "前路", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "拍摄时间未记录" } },
+  { id: "ph03", title: "华灯初上", src: "./assets/images/photography/huadeng-chushang.jpg", thumb: "./assets/images/photography/huadeng-chushang-thumb.jpg", width: 3072, height: 4080, group: "南京 · 中国", color: "#735544", exif: { coordinates: "中国 · 南京", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/238 s · ISO 50 · EV 0", captured: "拍摄时间未记录" } }
 ];
 const fallbackTechnicalNotes = [
   { id: "t01", category: "前端", title: "把网页动画留在合成层", date: "2026.06.18", read: "8 MIN", summary: "从一次滚动卡顿出发，整理 transform、opacity、布局抖动与图层提升之间真正值得记住的边界。", tags: ["Performance", "GSAP", "CSS"], code: "const frame = () => {\n  element.style.transform = `translate3d(0, ${offset}px, 0)`;\n  requestAnimationFrame(frame);\n};" },
@@ -67,6 +93,7 @@ const manualWeatherOrder = ["default", "clear", "cloud", "rain", "fog", "snow", 
 
 let activeCharacter = "";
 let activeNovelCollection = "complete";
+let isSwitchingNovelCollection = false;
 let portraitImages = [];
 let portraitIndex = 0;
 let readerTrigger = null;
@@ -422,17 +449,20 @@ function renderNovels() {
   const novels = activeNovelCollection === "unfinished" ? unfinishedNovels : completedNovels;
   const unfinished = activeNovelCollection === "unfinished";
   const index = document.querySelector("#novelIndex");
-  document.querySelector("#fictionTitleSuffix").textContent = unfinished ? "·未尽" : "";
+  const layout = document.querySelector(".fiction-layout");
+  const collectionNav = document.querySelector("#fictionCollectionNav");
+  const nextCollection = unfinished ? "complete" : "unfinished";
+
+  layout.classList.toggle("is-unfinished", unfinished);
+  collectionNav.dataset.fictionCollection = nextCollection;
+  collectionNav.setAttribute("aria-label", unfinished ? "返回一纸空文" : "进入一纸空文·未尽");
+  document.querySelector("#fictionCollectionNavLabel").textContent = unfinished ? "一纸空文" : "一纸空文·未尽";
+  document.querySelector("#fictionCollectionNavArrow").textContent = unfinished ? "←" : "→";
+  document.querySelector("#fictionTitleSuffix").textContent = unfinished ? "未尽" : "";
   document.querySelector("#fictionDeck").innerHTML = unfinished
     ? "未完成的文字，<br />以及未完成的念想"
     : "已经完成的文字，<br />以及仍在回响的故事。";
   document.querySelector("#fictionArchiveCount").textContent = `${String(novels.length).padStart(2, "0")} ${unfinished ? "DRAFTS" : "WORKS"} / ARCHIVED`;
-  document.querySelectorAll("[data-fiction-collection]").forEach((button) => {
-    const active = button.dataset.fictionCollection === activeNovelCollection;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-
   if (!novels.length) {
     index.innerHTML = `
       <div class="novel-empty">
@@ -446,7 +476,7 @@ function renderNovels() {
   }
 
   index.innerHTML = novels.map((novel, position) => `
-    <button class="novel-row" type="button" data-novel="${novel.id}" data-cursor="ENTER" style="--row-color:${storyColors[position % storyColors.length]}" aria-label="阅读《${escapeHtml(novel.title)}》">
+    <button class="novel-row" type="button" data-novel="${novel.id}" data-cursor="ENTER" style="--row-color:${storyColors[position % storyColors.length]};--novel-cover:${novel.cover ? `url(&quot;${novel.cover}&quot;)` : "none"}" aria-label="阅读《${escapeHtml(novel.title)}》">
       <span class="novel-no">${String(position + 1).padStart(2, "0")}</span>
       <h3>${escapeHtml(novel.title)}</h3>
       <small>${Number(novel.charCount || 0).toLocaleString("zh-CN")} 字</small>
@@ -473,22 +503,46 @@ function updateEmptyNovelPreview() {
 }
 
 async function switchNovelCollection(collection) {
-  if (!["complete", "unfinished"].includes(collection) || collection === activeNovelCollection) return;
+  if (!["complete", "unfinished"].includes(collection) || collection === activeNovelCollection || isSwitchingNovelCollection) return;
+  isSwitchingNovelCollection = true;
+  const direction = collection === "unfinished" ? 1 : -1;
   const targets = ["#novelIndex", "#novelPreview", "#fictionDeck", "#fictionTitleSuffix", "#fictionArchiveCount"];
-  if (useMotion()) {
-    await new Promise((resolve) => gsap.to(targets, { autoAlpha: 0, y: 14, duration: 0.24, stagger: 0.025, ease: "power2.in", onComplete: resolve }));
-  }
-  activeNovelCollection = collection;
-  renderNovels();
-  if (useMotion()) {
-    gsap.fromTo(targets, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.52, stagger: 0.035, ease: "power3.out", clearProps: "opacity,visibility,transform" });
+
+  try {
+    if (useMotion()) {
+      await new Promise((resolve) => gsap.to(targets, {
+        autoAlpha: 0,
+        x: direction * -54,
+        duration: 0.32,
+        stagger: 0.025,
+        ease: "power3.in",
+        onComplete: resolve
+      }));
+    }
+    activeNovelCollection = collection;
+    renderNovels();
+    if (useMotion()) {
+      await new Promise((resolve) => gsap.fromTo(targets,
+        { autoAlpha: 0, x: direction * 54 },
+        {
+          autoAlpha: 1,
+          x: 0,
+          duration: 0.58,
+          stagger: 0.035,
+          ease: "power4.out",
+          clearProps: "opacity,visibility,transform",
+          onComplete: resolve
+        }
+      ));
+    }
+  } finally {
+    isSwitchingNovelCollection = false;
   }
 }
 
 function setupFictionSwitch() {
-  document.querySelectorAll("[data-fiction-collection]").forEach((button) => {
-    button.addEventListener("click", () => switchNovelCollection(button.dataset.fictionCollection));
-  });
+  const collectionNav = document.querySelector("#fictionCollectionNav");
+  collectionNav.addEventListener("click", () => switchNovelCollection(collectionNav.dataset.fictionCollection));
 }
 
 function updateNovelPreview(novel, position) {
@@ -496,6 +550,7 @@ function updateNovelPreview(novel, position) {
   const surface = document.querySelector(".preview-surface");
   const excerpt = String(novel.excerpt || novel.paragraphs?.[0] || "").replace(/\s+/g, " ").trim();
   surface.style.setProperty("--preview-color", storyColors[position % storyColors.length]);
+  surface.style.setProperty("--preview-image", novel.cover ? `url("${novel.cover}")` : "none");
   document.querySelector("#previewNumber").textContent = String(position + 1).padStart(2, "0");
   document.querySelector("#previewExcerpt").textContent = excerpt.length > 150 ? `${excerpt.slice(0, 150)}…` : excerpt;
   document.querySelector("#previewCount").textContent = `${Number(novel.charCount || 0).toLocaleString("zh-CN")} characters`;
@@ -686,7 +741,7 @@ function renderPhotography() {
   const grid = document.querySelector("#photoGrid");
   grid.innerHTML = photoWorks.map((item, index) => `
     <button class="photo-card reveal" type="button" data-photo-index="${index}" data-cursor="OPEN" aria-label="查看摄影作品《${escapeHtml(item.title)}》">
-      <span class="photo-frame"><img src="${item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
+      <span class="photo-frame"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
       <span class="photo-card-meta"><b>${String(index + 1).padStart(2, "0")}</b><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.group)}</small></span>
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
     </button>
@@ -817,13 +872,39 @@ function syncReaderBackdropHeight() {
   curtain.style.height = `${Math.max(reader.clientHeight, head.offsetHeight + sheet.offsetHeight)}px`;
 }
 
-function openReader(novel, trigger, position, total = completedNovels.length) {
+async function loadNovelParagraphs(novel) {
+  if (Array.isArray(novel.paragraphs) && novel.paragraphs.length) return novel.paragraphs;
+  if (!novel.textSrc) return [];
+  const response = await fetch(novel.textSrc);
+  if (!response.ok) throw new Error(`Unable to load ${novel.textSrc}`);
+  const text = (await response.text()).replace(/^\uFEFF/, "").trim();
+  const paragraphs = text
+    .split(/\r?\n\s*\r?\n+/)
+    .map((block) => block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).join("\n"))
+    .filter(Boolean);
+  if (paragraphs[0] && (paragraphs[0] === novel.title || paragraphs[0].endsWith(`-${novel.title}`))) paragraphs.shift();
+  novel.paragraphs = paragraphs;
+  return paragraphs;
+}
+
+async function openReader(novel, trigger, position, total = completedNovels.length) {
   if (reader.classList.contains("is-open")) return;
+  trigger.classList.add("is-loading");
+  trigger.setAttribute("aria-busy", "true");
+  let paragraphs = [];
+  try {
+    paragraphs = await loadNovelParagraphs(novel);
+  } catch {
+    paragraphs = [novel.excerpt || "正文暂时无法加载。"];
+  } finally {
+    trigger.classList.remove("is-loading");
+    trigger.removeAttribute("aria-busy");
+  }
   readerTrigger = trigger;
   document.querySelector("#readerMeta").textContent = `${String(position + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")} · ${Number(novel.charCount).toLocaleString("zh-CN")} 字`;
   document.querySelector("#readerTitle").textContent = novel.title;
   document.querySelector("#readerSubtitle").textContent = novel.subtitle || "Original fiction by KLEIN BLues";
-  document.querySelector("#readerBody").innerHTML = novel.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
+  document.querySelector("#readerBody").innerHTML = paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`).join("");
   const readerOrnaments = renderReaderOrnaments(novel);
   reader.scrollTop = 0;
   updateReaderProgress();

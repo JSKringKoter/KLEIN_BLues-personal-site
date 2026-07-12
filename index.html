@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f1eadf" />
     <meta name="description" content="KLEIN BLues 的小说、角色、摄影与技术随笔档案。" />
     <title>KLEIN BLues — Fiction, Portrait, Photography & Notes</title>
-    <link rel="stylesheet" href="./styles.css?v=26" />
+    <link rel="stylesheet" href="./styles.css?v=30" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -82,10 +82,6 @@
         </header>
 
         <div class="fiction-toolbar reveal">
-          <div class="fiction-switch" id="fictionSwitch" role="tablist" aria-label="切换文章档案">
-            <button class="is-active" type="button" role="tab" data-fiction-collection="complete" data-cursor="SWITCH" aria-selected="true">一纸空文</button>
-            <button type="button" role="tab" data-fiction-collection="unfinished" data-cursor="SWITCH" aria-selected="false">一纸空文·未尽</button>
-          </div>
           <span class="fiction-archive-count" id="fictionArchiveCount"></span>
         </div>
 
@@ -97,6 +93,11 @@
               <p id="previewExcerpt"></p>
               <div class="preview-meta"><span id="previewCount"></span><i></i><span>Original fiction</span></div>
             </div>
+            <button class="fiction-collection-nav" id="fictionCollectionNav" type="button" data-fiction-collection="unfinished" data-cursor="SWITCH" aria-label="进入一纸空文·未尽">
+              <span id="fictionCollectionNavLabel">一纸空文·未尽</span>
+              <i aria-hidden="true"></i>
+              <b id="fictionCollectionNavArrow" aria-hidden="true">→</b>
+            </button>
           </aside>
         </div>
       </section>
@@ -163,7 +164,7 @@
           <div class="photography-statement">光线经过世界，<br />快门只留下它短暂的停顿。</div>
         </header>
         <div class="photo-grid" id="photoGrid"></div>
-        <div class="photo-disclaimer reveal"><span>TEST ARCHIVE</span>当前影像与 EXIF 为版式测试数据，之后可直接替换为真实摄影作品。</div>
+        <div class="photo-disclaimer reveal"><span>VIVO X300 PRO</span>三张作品均由 Vivo X300 Pro 拍摄，参数与地点来自原始摄影记录。</div>
       </section>
 
       <section class="about section" id="about" aria-labelledby="aboutTitle">
@@ -241,6 +242,6 @@
     <script src="./vendor/gsap.min.js"></script>
     <script src="./data.js"></script>
     <script src="./notion-notes.js?v=1"></script>
-    <script src="./app.js?v=22"></script>
+    <script src="./app.js?v=25"></script>
   </body>
 </html>
