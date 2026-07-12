@@ -58,7 +58,7 @@ const reader = document.querySelector("#reader");
 const viewer = document.querySelector("#viewer");
 
 const storyColors = ["#1746d1", "#d84c2f", "#2e6659", "#8a5c28", "#633e6b", "#283f66", "#171715"];
-const viewerColors = ["#173fae", "#8b3427", "#31594e", "#72512c", "#4c3b59"];
+const viewerColorCache = new Map();
 const photoWorks = [
   { id: "ph01", title: "云际", src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "拍摄时间未记录" } },
   { id: "ph02", title: "前路", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "拍摄时间未记录" } },
@@ -142,6 +142,72 @@ async function preload(src) {
   const image = new Image();
   image.src = src;
   await ensureImage(image);
+  return image;
+}
+
+function rgbToHsl(red, green, blue) {
+  const r = red / 255;
+  const g = green / 255;
+  const b = blue / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+  let hue = 0;
+
+  if (delta) {
+    if (max === r) hue = ((g - b) / delta) % 6;
+    else if (max === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+    hue = Math.round(hue * 60);
+    if (hue < 0) hue += 360;
+  }
+
+  const lightness = (max + min) / 2;
+  const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
+  return { hue, saturation: saturation * 100, lightness: lightness * 100 };
+}
+
+function extractViewerColor(image, cacheKey) {
+  if (viewerColorCache.has(cacheKey)) return viewerColorCache.get(cacheKey);
+  const fallback = "hsl(222 52% 18%)";
+
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    let red = 0;
+    let green = 0;
+    let blue = 0;
+    let weightTotal = 0;
+
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index + 3] < 180) continue;
+      const pixelRed = pixels[index];
+      const pixelGreen = pixels[index + 1];
+      const pixelBlue = pixels[index + 2];
+      const brightness = (pixelRed + pixelGreen + pixelBlue) / 3;
+      if (brightness < 10 || brightness > 247) continue;
+      const spread = Math.max(pixelRed, pixelGreen, pixelBlue) - Math.min(pixelRed, pixelGreen, pixelBlue);
+      const weight = 0.35 + spread / 255;
+      red += pixelRed * weight;
+      green += pixelGreen * weight;
+      blue += pixelBlue * weight;
+      weightTotal += weight;
+    }
+
+    if (!weightTotal) return fallback;
+    const color = rgbToHsl(red / weightTotal, green / weightTotal, blue / weightTotal);
+    const saturation = Math.max(28, Math.min(62, color.saturation * 1.15));
+    const lightness = Math.max(15, Math.min(25, color.lightness * 0.48));
+    const result = `hsl(${color.hue} ${saturation.toFixed(1)}% ${lightness.toFixed(1)}%)`;
+    viewerColorCache.set(cacheKey, result);
+    return result;
+  } catch {
+    return fallback;
+  }
 }
 
 function setInterfaceLocked(locked, activeOverlay) {
@@ -741,7 +807,7 @@ function renderPhotography() {
   const grid = document.querySelector("#photoGrid");
   grid.innerHTML = photoWorks.map((item, index) => `
     <button class="photo-card reveal" type="button" data-photo-index="${index}" data-cursor="OPEN" aria-label="查看摄影作品《${escapeHtml(item.title)}》">
-      <span class="photo-frame"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
+      <span class="photo-frame" style="--photo-ratio:${item.width} / ${item.height}"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
       <span class="photo-card-meta"><b>${String(index + 1).padStart(2, "0")}</b><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.group)}</small></span>
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
     </button>
@@ -991,7 +1057,7 @@ function getViewerSize(item) {
 async function setViewerContent(index) {
   const item = viewerImages[index];
   if (!item) return;
-  await preload(item.src);
+  const sampledImage = await preload(item.src);
   viewerIndex = index;
   const image = document.querySelector("#viewerImage");
   const figure = document.querySelector(".viewer-figure");
@@ -1018,7 +1084,7 @@ async function setViewerContent(index) {
   document.querySelector("#viewerCounter").textContent = `${String(index + 1).padStart(2, "0")} / ${String(viewerImages.length).padStart(2, "0")}`;
   document.querySelector("#viewerPrev").disabled = index === 0;
   document.querySelector("#viewerNext").disabled = index === viewerImages.length - 1;
-  document.querySelector("#viewerColor").style.setProperty("--viewer-color", viewerColors[index % viewerColors.length]);
+  document.querySelector("#viewerColor").style.setProperty("--viewer-color", extractViewerColor(sampledImage, item.src));
   await ensureImage(image);
 }
 
@@ -1231,9 +1297,28 @@ function animateEntrance() {
 
   gsap.set([".hero-klein", ".hero-blues", ".hero-note", ".hero-intro", ".scroll-cue", ".masthead"], { autoAlpha: 0 });
   gsap.set(".hero-card", { autoAlpha: 0, scale: 0.82 });
-  gsap.set(".boot-mark i", { scaleX: 0 });
+  const bootPrimary = document.querySelector("#bootPrimary");
+  const bootSecondary = document.querySelector("#bootSecondary");
+  bootPrimary.textContent = "";
+  bootSecondary.textContent = "";
+  gsap.set(".boot-gap", { width: 0 });
+  gsap.set(".boot-caret", { autoAlpha: 1 });
+  gsap.set(".boot p", { autoAlpha: 0, y: 5 });
   gsap.timeline()
-    .to(".boot-mark i", { scaleX: 1, duration: 0.7, ease: "power3.inOut" }, 0)
+    .call(() => { bootPrimary.textContent = "K"; }, null, 0)
+    .call(() => { bootPrimary.textContent = "KL"; }, null, 0.04)
+    .call(() => { bootPrimary.textContent = "KLE"; }, null, 0.08)
+    .call(() => { bootPrimary.textContent = "KLEI"; }, null, 0.12)
+    .call(() => { bootPrimary.textContent = "KLEIN"; }, null, 0.16)
+    .to(".boot-caret", { autoAlpha: 0.28, duration: 0.06, repeat: 1, yoyo: true, ease: "sine.inOut" }, 0.23)
+    .set(".boot-gap", { width: "0.2em" }, 0.32)
+    .call(() => { bootSecondary.textContent = "B"; }, null, 0.32)
+    .call(() => { bootSecondary.textContent = "BL"; }, null, 0.36)
+    .call(() => { bootSecondary.textContent = "BLu"; }, null, 0.4)
+    .call(() => { bootSecondary.textContent = "BLue"; }, null, 0.44)
+    .call(() => { bootSecondary.textContent = "BLues"; }, null, 0.48)
+    .to(".boot p", { autoAlpha: 1, y: 0, duration: 0.3, ease: "power2.out" }, 0.2)
+    .to(".boot-caret", { autoAlpha: 0, duration: 0.09, ease: "power2.in" }, 0.56)
     .to(".boot", { yPercent: -100, duration: 0.9, ease: "power4.inOut" }, 0.65)
     .add(() => boot.remove())
     .fromTo(".hero-klein", { autoAlpha: 0, y: 90 }, { autoAlpha: 1, y: 0, duration: 1.05, ease: "expo.out" }, 1.05)
