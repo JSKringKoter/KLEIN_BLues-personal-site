@@ -6,7 +6,8 @@
     <meta name="theme-color" content="#f1eadf" />
     <meta name="description" content="KLEIN BLues 的小说、角色、摄影与技术随笔档案。" />
     <title>KLEIN BLues — Fiction, Portrait, Photography & Notes</title>
-    <link rel="stylesheet" href="./styles.css?v=35" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=49" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -175,16 +176,21 @@
         <div class="about-number reveal">05</div>
         <div class="about-copy reveal">
           <p class="eyebrow">About the archive</p>
-          <h2 id="aboutTitle">写故事，<br />也收藏光。</h2>
-          <p>这里收录小说、人物、图像、摄影与技术随笔。它不是结论，更像一间持续变化的工作室：文字留下时间，图像保留光，代码记录问题如何被解决。</p>
+          <h2 id="aboutTitle"><span>诗歌、文字与画，</span><span>还有画中的人们。</span></h2>
+          <p class="about-intro">这里收留写完与未写完的故事，也保存从人物眼中、旅途光影与寻常日子里经过的片刻。文字替时间留下回声，画面让想象中的人拥有面容；偶尔，代码与笔记也记录一个问题被慢慢解开的过程。它们共同构成我所看见、所记得，也仍想继续抵达的世界。</p>
         </div>
-        <div class="about-seal reveal" aria-hidden="true">
-          <svg viewBox="0 0 180 180">
-            <defs><path id="sealPath" d="M90,90 m-65,0 a65,65 0 1,1 130,0 a65,65 0 1,1 -130,0" /></defs>
-            <text><textPath href="#sealPath">FICTION · PORTRAITS · PHOTOGRAPHY · CODE · </textPath></text>
-            <text class="seal-kb" x="90" y="101" text-anchor="middle">KB</text>
-          </svg>
-        </div>
+        <address class="about-contact reveal" aria-label="联系方式">
+          <header><span>Correspondence</span><small>05 / 联系与来信</small></header>
+          <a href="https://github.com/JSKringKoter" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>GitHub</span><strong>JSKringKoter</strong><i>↗</i></a>
+          <div><span>QQ</span><strong>2265757077</strong><i>—</i></div>
+          <a href="https://steamcommunity.com/id/JS_KringKoter/" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Steam</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <a href="https://space.bilibili.com/456757086" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Bilibili</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <div class="about-email">
+            <span>Email</span>
+            <strong><a href="mailto:kringkoter@gmail.com">kringkoter@gmail.com</a><a href="mailto:2265757077@qq.com">2265757077@qq.com</a></strong>
+            <i>↗</i>
+          </div>
+        </address>
         <footer class="site-footer">
           <span>© 2026 KLEIN BLues</span>
           <a href="#top" data-cursor="UP">Back to top ↑</a>
@@ -204,11 +210,13 @@
         <div class="reader-progress"><i id="readerProgress"></i></div>
         <span id="readerPosition">00%</span>
       </header>
+      <nav class="reader-toc" id="readerToc" aria-label="文章章节" hidden></nav>
       <article class="reader-sheet">
         <header class="reader-title-block">
           <p id="readerMeta"></p>
           <h2 id="readerTitle"></h2>
           <p id="readerSubtitle"></p>
+          <div class="reader-publication" id="readerPublication" hidden></div>
         </header>
         <div class="reader-body" id="readerBody"></div>
       </article>
@@ -266,6 +274,6 @@
     <script src="./data.js"></script>
     <script src="./notion-notes.js?v=1"></script>
     <script src="./notion-content.js?v=1"></script>
-    <script src="./app.js?v=30"></script>
+    <script src="./app.js?v=40"></script>
   </body>
 </html>

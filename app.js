@@ -18,10 +18,10 @@ const additionalPortraits = [
 ];
 const allPaintings = [...data.paintings, ...additionalPortraits];
 const localUnfinishedNovels = [
-  { id: "u01", title: "且听风雪", subtitle: "未尽之稿", charCount: 1386, textSrc: "assets/text/unfinished/qieting-fengxue.txt", cover: "assets/images/novel-covers/qieting-fengxue.svg", excerpt: "铺开纸笔，墨水饱蘸，本想就此落笔，你却犹豫了。窗外初雪纷飞，旧信与思念都被封存在同一个寒冬。" },
-  { id: "u02", title: "南城往事", subtitle: "未尽之稿", charCount: 441, textSrc: "assets/text/unfinished/nancheng-wangshi.txt", cover: "assets/images/novel-covers/nancheng-wangshi.svg", excerpt: "太阳晒着港口，运河是绿的。繁华的南城巷在雨幕里一闪而过，只剩破败小楼与一盏没有熄灭的烛。" },
-  { id: "u03", title: "尘埃深处", subtitle: "天空之梦 · 未尽", charCount: 28149, textSrc: "assets/text/unfinished/chenai-shenchu.txt", cover: "assets/images/novel-covers/chenai-shenchu.svg", excerpt: "在没有四季、没有生命的荒漠星球 EHIS-4，人们早已忘记地球与秋天。一点意外出现的生机，却让细雨重新有了可能。" },
-  { id: "u04", title: "猫屿咖啡屋", subtitle: "未尽之稿", charCount: 19532, textSrc: "assets/text/unfinished/maoyu-kafeiwu.txt", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。" }
+  { id: "u01", title: "且听风雪", subtitle: "未尽之稿 · KLEIN BLues", charCount: 1155, textSrc: "assets/text/unfinished/qieting-fengxue.txt?v=2", cover: "assets/images/novel-covers/qieting-fengxue.svg", excerpt: "铺开纸笔，墨水饱蘸，本想就此落笔，你却犹豫了。窗外初雪纷飞，旧信与思念都被封存在同一个寒冬。", publication: [{ label: "写于", value: "2022.10.06" }, { label: "文档更新", value: "2026.05.27" }] },
+  { id: "u02", title: "南城往事", subtitle: "未尽之稿 · KLEIN BLues", charCount: 391, textSrc: "assets/text/unfinished/nancheng-wangshi.txt?v=2", cover: "assets/images/novel-covers/nancheng-wangshi.svg", excerpt: "太阳晒着港口，运河是绿的。繁华的南城巷在雨幕里一闪而过，只剩破败小楼与一盏没有熄灭的烛。", publication: [{ label: "文档更新", value: "2026.05.27" }] },
+  { id: "u03", title: "尘埃深处", subtitle: "天空之梦 · 未尽 · KLEIN BLues", charCount: 26978, textSrc: "assets/text/unfinished/chenai-shenchu.txt?v=2", cover: "assets/images/novel-covers/chenai-shenchu.svg", excerpt: "在没有四季、没有生命的荒漠星球 EHIS-4，人们早已忘记地球与秋天。一点意外出现的生机，却让细雨重新有了可能。", publication: [{ label: "最近修改", value: "2026.07.13" }] },
+  { id: "u04", title: "猫屿咖啡屋", subtitle: "未尽之稿 · KLEIN BLues", charCount: 30853, textSrc: "assets/text/unfinished/maoyu-kafeiwu.txt?v=2", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。", publication: [{ label: "最近修改", value: "2026.07.13" }] }
 ];
 const unfinishedNovels = [...localUnfinishedNovels, ...(Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [])];
 const completedNovelOrder = ["深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
@@ -43,13 +43,28 @@ const completedNovelExcerpts = {
   "黄昏的魔术师": "失意的旅人在斯通古城外遇见继承父亲旧梦的少女。一次筹备于麦田与落日之间的魔术表演，让两个人重新理解离别、承诺，以及平凡生活中仍然存在的奇迹。",
   "永远的铁道": "一条从未迎来列车的铁路穿过常年落雪的小镇。枫与神秘少女白沿着铁轨寻找它的终点，也在现实与时间的缝隙里，追逐一班只为真正想要离开的人停靠的列车。"
 };
+const completedNovelSubtitles = {
+  "山海行人": "The Demigod of Mountain and Sea · KLEIN BLues",
+  "永远的铁道": "The Permafrozen Railway · KLEIN BLues"
+};
+const completedNovelSources = {
+  "深蓝": { textSrc: "assets/text/finished/deep-blue.txt?v=2", charCount: 20171, publication: [{ label: "完成", value: "2025.04.21—04.27" }, { label: "第一次修改", value: "2025.05.01" }, { label: "文档更新", value: "2026.07.13" }] },
+  "白鸟之泪": { textSrc: "assets/text/finished/white-bird.txt?v=2", charCount: 4067, publication: [{ label: "完成", value: "2026.05.28" }, { label: "文档更新", value: "2026.07.13" }] },
+  "彼岸之冬": { textSrc: "assets/text/finished/winter-shore.txt?v=2", charCount: 23477, publication: [{ label: "文档更新", value: "2026.07.13" }] },
+  "空箱": { textSrc: "assets/text/finished/empty-box.txt?v=2", charCount: 2675, publication: [{ label: "成稿", value: "2023.08.29" }, { label: "文档更新", value: "2026.07.13" }] },
+  "山海行人": { textSrc: "assets/text/finished/mountain-sea.txt?v=2", charCount: 4883, publication: [{ label: "成稿", value: "2023.07.23" }] },
+  "黄昏的魔术师": { textSrc: "assets/text/finished/twilight-magician.txt?v=2", charCount: 8693, publication: [{ label: "成稿", value: "2023.09.12" }, { label: "修订", value: "2023.09.18" }, { label: "文档更新", value: "2026.07.13" }] },
+  "永远的铁道": { textSrc: "assets/text/finished/eternal-railway.txt?v=2", charCount: 5009, publication: [{ label: "成稿", value: "2023.01.25" }] }
+};
 const completedNovels = [
   ...completedNovelOrder.map((title) => data.novels.find((novel) => novel.title === title)).filter(Boolean),
   ...data.novels.filter((novel) => !completedNovelOrder.includes(novel.title))
 ].map((novel) => ({
   ...novel,
+  ...(completedNovelSources[novel.title] || {}),
   cover: completedNovelCovers[novel.title] || "",
-  excerpt: completedNovelExcerpts[novel.title] || novel.excerpt || ""
+  excerpt: completedNovelExcerpts[novel.title] || novel.excerpt || "",
+  subtitle: completedNovelSubtitles[novel.title] || novel.subtitle || "Original fiction · KLEIN BLues"
 }));
 
 const app = document.querySelector("#app");
@@ -1107,30 +1122,162 @@ function syncReaderBackdropHeight() {
   curtain.style.height = `${Math.max(reader.clientHeight, head.offsetHeight + sheet.offsetHeight)}px`;
 }
 
-async function loadNovelParagraphs(novel) {
-  if (Array.isArray(novel.paragraphs) && novel.paragraphs.length) return novel.paragraphs;
-  if (!novel.textSrc) return [];
-  const response = await fetch(novel.textSrc);
-  if (!response.ok) throw new Error(`Unable to load ${novel.textSrc}`);
-  const text = (await response.text()).replace(/^\uFEFF/, "").trim();
-  const paragraphs = text
-    .split(/\r?\n\s*\r?\n+/)
-    .map((block) => block.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).join("\n"))
-    .filter(Boolean);
-  if (paragraphs[0] && (paragraphs[0] === novel.title || paragraphs[0].endsWith(`-${novel.title}`))) paragraphs.shift();
-  novel.paragraphs = paragraphs;
-  return paragraphs;
+function isNovelFooterLine(line) {
+  return /^(?:By\s+)?KLEIN\s*BLues\.?$/i.test(line)
+    || /^KringKoter\b.*$/i.test(line)
+    || /^淼然\s*20\d{2}[./年]/.test(line)
+    || /^(?:\(End\)|END)$/i.test(line)
+    || /^20\d{2}[./年-]\d{1,2}(?:[./月-]\d{1,2}日?)?(?:\s*~\s*20\d{2}[./年-]\d{1,2}(?:[./月-]\d{1,2}日?)?)?\s*(?:完成|第.*修改|修订|Revise)?$/i.test(line);
+}
+
+function isMusicNotationLine(line) {
+  const compact = String(line).replace(/\s+/g, "");
+  return /^(?:变?[宫商角徵羽]){2,}$/.test(compact);
+}
+
+function parseNovelHeading(rawHeading, level, novel) {
+  let heading = rawHeading.trim().replace(/^<|>$/g, "").trim();
+  heading = heading.replace(/^[-—]+|[-—]+$/g, "").trim();
+  let resolvedLevel = level;
+  let title = heading;
+  let english = "";
+  let kicker = "";
+
+  if (novel.title === "猫屿咖啡屋") {
+    if (heading === "来时路") resolvedLevel = 1;
+    if (/^[ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩIVXLCDM]+\.?$/i.test(heading)) resolvedLevel = 2;
+  }
+
+  if (novel.title === "猫屿咖啡屋" && heading === "第二章·行将近") {
+    kicker = "第二章";
+    title = "行将近";
+    english = "Soon to Leave";
+  } else {
+    const divider = heading.indexOf("·");
+    if (divider > 0 && /[A-Za-z]/.test(heading.slice(divider + 1))) {
+      title = heading.slice(0, divider).trim();
+      english = heading.slice(divider + 1).trim();
+    }
+  }
+
+  return { type: "heading", level: resolvedLevel, title, english, kicker };
+}
+
+function parseNovelDocument(source, novel) {
+  const lines = String(source).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [];
+  let firstContentFound = false;
+  let headingIndex = 0;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const original = lines[index].replace(/[\u200B-\u200D\uFEFF]/g, "");
+    const line = original.trim();
+    if (!line) {
+      if (blocks.length && blocks[blocks.length - 1].type !== "spacer") blocks.push({ type: "spacer" });
+      continue;
+    }
+
+    if (!firstContentFound) {
+      firstContentFound = true;
+      if (!line.startsWith("#") && line.startsWith(novel.title)) continue;
+    }
+    if (isNovelFooterLine(line)) continue;
+
+    const headingMatch = line.match(/^(#{1,2})\s+(.+)$/);
+    if (headingMatch) {
+      if (blocks.at(-1)?.type === "spacer" && blocks.at(-2)?.type === "heading") blocks.pop();
+      const heading = parseNovelHeading(headingMatch[2], headingMatch[1].length, novel);
+      headingIndex += 1;
+      blocks.push({ ...heading, id: `novel-chapter-${headingIndex}` });
+      continue;
+    }
+
+    const nextLine = (lines[index + 1] || "").trim();
+    if (nextLine && isMusicNotationLine(nextLine) && !isMusicNotationLine(line)) {
+      blocks.push({ type: "notation", lyric: line, notation: nextLine });
+      index += 1;
+      continue;
+    }
+
+    blocks.push({ type: "paragraph", text: line });
+  }
+
+  while (blocks[0]?.type === "spacer") blocks.shift();
+  while (blocks.at(-1)?.type === "spacer") blocks.pop();
+  return { blocks, headings: blocks.filter((block) => block.type === "heading") };
+}
+
+function renderNovelDocument(documentData) {
+  return documentData.blocks.map((block) => {
+    if (block.type === "spacer") return '<div class="reader-spacer" aria-hidden="true"></div>';
+    if (block.type === "notation") {
+      const lyricUnits = block.lyric.trim().split(/\s+/).filter(Boolean);
+      const notationUnits = block.notation.match(/变?[宫商角徵羽]/g) || [];
+      const paired = lyricUnits.length > 0 && lyricUnits.length === notationUnits.length;
+      return `<figure class="reader-notation" aria-label="古典音律歌词">
+        <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>
+        ${paired ? `<div class="reader-notation-score" style="--notation-count:${lyricUnits.length}">
+          ${lyricUnits.map((lyric, index) => `<span class="reader-notation-pair"><b>${escapeHtml(lyric)}</b><i>${escapeHtml(notationUnits[index])}</i></span>`).join("")}
+        </div>` : `<div class="reader-notation-raw"><p>${escapeHtml(block.lyric)}</p><small>${escapeHtml(block.notation)}</small></div>`}
+      </figure>`;
+    }
+    if (block.type === "heading") {
+      const tag = block.level === 1 ? "h2" : "h3";
+      const chapterClass = block.level === 1 ? "reader-chapter--major" : "reader-chapter--minor";
+      return `<header class="reader-chapter ${chapterClass}" id="${block.id}">
+        <div>
+          ${block.kicker ? `<small>${escapeHtml(block.kicker)}</small>` : ""}
+          <${tag}>${escapeHtml(block.title)}</${tag}>
+          ${block.english ? `<em lang="en">${escapeHtml(block.english)}</em>` : ""}
+        </div>
+      </header>`;
+    }
+    return `<p>${escapeHtml(block.text)}</p>`;
+  }).join("");
+}
+
+function renderReaderPublication(novel) {
+  const publication = document.querySelector("#readerPublication");
+  const details = Array.isArray(novel.publication) ? novel.publication : [];
+  publication.hidden = details.length === 0;
+  publication.innerHTML = details.map((item) => `<span><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.value)}</strong></span>`).join("");
+}
+
+function renderReaderToc(headings) {
+  const toc = document.querySelector("#readerToc");
+  toc.hidden = headings.length === 0;
+  toc.innerHTML = headings.map((heading, index) => `<button class="${index === 0 ? "is-active" : ""}" type="button" data-reader-chapter="${heading.id}">
+    <strong>${escapeHtml(heading.kicker ? `${heading.kicker} · ${heading.title}` : heading.title)}</strong>
+  </button>`).join("");
+  toc.querySelectorAll("[data-reader-chapter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelector(`#${button.dataset.readerChapter}`)?.scrollIntoView({ behavior: useMotion() ? "smooth" : "auto", block: "start" });
+    });
+  });
+}
+
+async function loadNovelDocument(novel) {
+  if (novel.documentData) return novel.documentData;
+  if (novel.textSrc) {
+    const response = await fetch(novel.textSrc);
+    if (!response.ok) throw new Error(`Unable to load ${novel.textSrc}`);
+    novel.documentData = parseNovelDocument(await response.text(), novel);
+    return novel.documentData;
+  }
+  const fallback = Array.isArray(novel.paragraphs) ? novel.paragraphs.join("\n") : novel.excerpt || "";
+  novel.documentData = parseNovelDocument(fallback, novel);
+  return novel.documentData;
 }
 
 async function openReader(novel, trigger, position, total = completedNovels.length) {
   if (reader.classList.contains("is-open")) return;
   trigger.classList.add("is-loading");
   trigger.setAttribute("aria-busy", "true");
-  let paragraphs = [];
+  let documentData;
   try {
-    paragraphs = await loadNovelParagraphs(novel);
+    documentData = await loadNovelDocument(novel);
   } catch {
-    paragraphs = [novel.excerpt || "正文暂时无法加载。"];
+    documentData = parseNovelDocument(novel.excerpt || "正文暂时无法加载。", novel);
   } finally {
     trigger.classList.remove("is-loading");
     trigger.removeAttribute("aria-busy");
@@ -1138,8 +1285,10 @@ async function openReader(novel, trigger, position, total = completedNovels.leng
   readerTrigger = trigger;
   document.querySelector("#readerMeta").textContent = `${String(position + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")} · ${Number(novel.charCount).toLocaleString("zh-CN")} 字`;
   document.querySelector("#readerTitle").textContent = novel.title;
-  document.querySelector("#readerSubtitle").textContent = novel.subtitle || "Original fiction by KLEIN BLues";
-  document.querySelector("#readerBody").innerHTML = paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`).join("");
+  document.querySelector("#readerSubtitle").textContent = novel.subtitle || "Original fiction · KLEIN BLues";
+  renderReaderPublication(novel);
+  renderReaderToc(documentData.headings);
+  document.querySelector("#readerBody").innerHTML = renderNovelDocument(documentData);
   const readerOrnaments = renderReaderOrnaments(novel);
   reader.scrollTop = 0;
   updateReaderProgress();
@@ -1210,6 +1359,16 @@ function updateReaderProgress() {
   reader.style.setProperty("--reading-progress", progress.toFixed(4));
   document.querySelector("#readerProgress").style.transform = `scaleX(${progress})`;
   document.querySelector("#readerPosition").textContent = `${String(Math.round(progress * 100)).padStart(2, "0")}%`;
+  const chapterButtons = Array.from(document.querySelectorAll("#readerToc [data-reader-chapter]"));
+  if (chapterButtons.length) {
+    const readingLine = reader.scrollTop + reader.clientHeight * 0.34;
+    let activeChapter = chapterButtons[0].dataset.readerChapter;
+    chapterButtons.forEach((button) => {
+      const chapter = document.querySelector(`#${button.dataset.readerChapter}`);
+      if (chapter && chapter.offsetTop <= readingLine) activeChapter = button.dataset.readerChapter;
+    });
+    chapterButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.readerChapter === activeChapter));
+  }
 }
 
 function getViewerSize(item) {
