@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#f1eadf" />
     <meta name="description" content="KLEIN BLues 的小说、角色、摄影与技术随笔档案。" />
     <title>KLEIN BLues — Fiction, Portrait, Photography & Notes</title>
-    <link rel="stylesheet" href="./styles.css?v=33" />
+    <link rel="stylesheet" href="./styles.css?v=35" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -156,7 +156,7 @@
               <p id="techPreviewSummary"></p>
               <div class="tech-tags" id="techPreviewTags"></div>
               <pre><code id="techPreviewCode"></code></pre>
-              <footer><span id="techPreviewRead"></span><i></i><a id="techPreviewSource" href="#" target="_blank" rel="noreferrer" data-cursor="ENTER">在 Notion 阅读 ↗</a></footer>
+              <footer><span id="techPreviewRead"></span><i></i><button id="techPreviewOpen" type="button" data-cursor="ENTER">阅读全文 ↗</button></footer>
             </article>
           </div>
         </div>
@@ -214,6 +214,25 @@
       </article>
     </section>
 
+    <section class="note-reader" id="noteReader" aria-hidden="true" aria-label="技术笔记阅读器">
+      <header class="note-reader-head">
+        <button id="noteReaderClose" type="button" aria-label="关闭技术笔记" data-cursor="BACK">
+          <svg viewBox="0 0 32 32"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+          <span>返回随笔</span>
+        </button>
+        <div class="note-reader-progress"><i id="noteReaderProgress"></i></div>
+        <span id="noteReaderPosition">00%</span>
+      </header>
+      <article class="note-reader-sheet">
+        <header class="note-reader-title">
+          <div><span id="noteReaderCategory"></span><b id="noteReaderStatus"></b><time id="noteReaderDate"></time></div>
+          <h2 id="noteReaderTitle"></h2>
+          <div class="note-reader-tags" id="noteReaderTags"></div>
+        </header>
+        <div class="note-reader-body" id="noteReaderBody"></div>
+      </article>
+    </section>
+
     <section class="viewer" id="viewer" aria-hidden="true" aria-label="图像查看器">
       <div class="viewer-color" id="viewerColor" aria-hidden="true"></div>
       <div class="viewer-blur" aria-hidden="true"><img id="viewerBlur" alt="" /></div>
@@ -246,6 +265,7 @@
     <script src="./vendor/gsap.min.js"></script>
     <script src="./data.js"></script>
     <script src="./notion-notes.js?v=1"></script>
-    <script src="./app.js?v=29"></script>
+    <script src="./notion-content.js?v=1"></script>
+    <script src="./app.js?v=30"></script>
   </body>
 </html>

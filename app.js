@@ -55,6 +55,7 @@ const completedNovels = [
 const app = document.querySelector("#app");
 const masthead = document.querySelector("#masthead");
 const reader = document.querySelector("#reader");
+const noteReader = document.querySelector("#noteReader");
 const viewer = document.querySelector("#viewer");
 
 const storyColors = ["#1746d1", "#d84c2f", "#2e6659", "#8a5c28", "#633e6b", "#283f66", "#171715"];
@@ -76,9 +77,14 @@ const fallbackTechnicalNotes = [
   { id: "t09", category: "图形", title: "WebGL 中的一次色彩空间误判", date: "2026.01.19", read: "8 MIN", summary: "同一张纹理在设计稿与浏览器里颜色不同，问题可能并不在调色，而在采样、混合与输出编码。", tags: ["WebGL", "Color", "Shader"], code: "vec3 linear = pow(srgb, vec3(2.2));\nvec3 outputColor = pow(linear, vec3(1.0 / 2.2));" },
   { id: "t10", category: "工程", title: "把故障复盘写成可执行的改进", date: "2025.12.30", read: "13 MIN", summary: "好的复盘不寻找一个承担责任的人，而是识别哪些系统条件让错误得以发生，并为每项改进指定验证方式。", tags: ["Incident", "SRE", "Process"], code: "action_item = {\n  owner, deadline,\n  verification, rollback\n};" }
 ];
-const technicalNotes = Array.isArray(window.NOTION_NOTES) && window.NOTION_NOTES.length
+const baseTechnicalNotes = Array.isArray(window.NOTION_NOTES) && window.NOTION_NOTES.length
   ? window.NOTION_NOTES
   : fallbackTechnicalNotes;
+const notionNoteContent = window.NOTION_NOTE_CONTENT || {};
+const technicalNotes = baseTechnicalNotes.map((note) => ({
+  ...note,
+  content: notionNoteContent[note.title] || ""
+}));
 const defaultHeroIndices = [0, 6, 13, 22, 31, 38];
 const weatherHeroIndices = {
   clear: [1, 13, 19, 23, 31, 36],
@@ -97,6 +103,7 @@ let isSwitchingNovelCollection = false;
 let portraitImages = [];
 let portraitIndex = 0;
 let readerTrigger = null;
+let noteReaderTrigger = null;
 let viewerTrigger = null;
 let viewerImages = [];
 let viewerIndex = 0;
@@ -215,6 +222,7 @@ function setInterfaceLocked(locked, activeOverlay) {
   app.inert = locked;
   masthead.inert = locked;
   if (activeOverlay !== reader) reader.inert = locked;
+  if (activeOverlay !== noteReader) noteReader.inert = locked;
   if (activeOverlay !== viewer) viewer.inert = locked;
 }
 
@@ -818,12 +826,173 @@ function renderPhotography() {
   });
 }
 
+function renderNoteInline(value) {
+  const codeTokens = [];
+  const linkTokens = [];
+  let source = String(value || "")
+    .replace(/`([^`]+)`/g, (_, code) => {
+      const token = `@@CODE${codeTokens.length}@@`;
+      codeTokens.push(`<code>${escapeHtml(code)}</code>`);
+      return token;
+    })
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
+      const token = `@@LINK${linkTokens.length}@@`;
+      const safeHref = /^(https?:\/\/|mailto:|#|assets\/)/i.test(href) ? href : "#";
+      linkTokens.push(`<a href="${escapeHtml(safeHref)}" target="_blank" rel="noreferrer">${escapeHtml(label)}</a>`);
+      return token;
+    });
+
+  source = escapeHtml(source)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/~~([^~]+)~~/g, "<del>$1</del>")
+    .replace(/(^|\s)\*([^*]+)\*(?=\s|$)/g, "$1<em>$2</em>")
+    .replace(/&lt;br\s*\/?&gt;/gi, "<br />");
+
+  codeTokens.forEach((html, index) => { source = source.replace(`@@CODE${index}@@`, html); });
+  linkTokens.forEach((html, index) => { source = source.replace(`@@LINK${index}@@`, html); });
+  return source;
+}
+
+function renderNoteMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r/g, "").split("\n");
+  const output = [];
+  let inCode = false;
+  let codeLanguage = "";
+  let codeLines = [];
+  let listType = "";
+
+  const closeList = () => {
+    if (!listType) return;
+    output.push(`</${listType}>`);
+    listType = "";
+  };
+
+  for (const originalLine of lines) {
+    const line = originalLine.trimEnd();
+    const trimmed = line.trimStart();
+    const fence = trimmed.match(/^```(.*)$/);
+
+    if (fence) {
+      if (inCode) {
+        output.push(`<pre><code data-language="${escapeHtml(codeLanguage)}">${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+        inCode = false;
+        codeLanguage = "";
+        codeLines = [];
+      } else {
+        closeList();
+        inCode = true;
+        codeLanguage = fence[1].trim();
+      }
+      continue;
+    }
+    if (inCode) {
+      codeLines.push(line.replace(/^\s{0,4}/, ""));
+      continue;
+    }
+    if (!trimmed) {
+      closeList();
+      continue;
+    }
+
+    const imageMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+    if (imageMatch) {
+      closeList();
+      const safeSrc = /^(https?:\/\/|assets\/)/i.test(imageMatch[2]) ? imageMatch[2] : "";
+      if (safeSrc) output.push(`<figure><img src="${escapeHtml(safeSrc)}" alt="${escapeHtml(imageMatch[1])}" loading="lazy" /></figure>`);
+      continue;
+    }
+
+    const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+    if (heading) {
+      closeList();
+      const level = Math.min(4, heading[1].length + 1);
+      output.push(`<h${level}>${renderNoteInline(heading[2])}</h${level}>`);
+      continue;
+    }
+    if (/^---+$/.test(trimmed)) {
+      closeList();
+      output.push("<hr />");
+      continue;
+    }
+    if (trimmed.startsWith("> ")) {
+      closeList();
+      output.push(`<blockquote>${renderNoteInline(trimmed.slice(2))}</blockquote>`);
+      continue;
+    }
+
+    const unordered = trimmed.match(/^[-*]\s+(.+)$/);
+    const ordered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    if (unordered || ordered) {
+      const nextType = unordered ? "ul" : "ol";
+      if (listType !== nextType) {
+        closeList();
+        listType = nextType;
+        output.push(`<${listType}>`);
+      }
+      output.push(`<li>${renderNoteInline((unordered || ordered)[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    output.push(`<p>${renderNoteInline(trimmed)}</p>`);
+  }
+
+  if (inCode) output.push(`<pre><code data-language="${escapeHtml(codeLanguage)}">${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+  closeList();
+  return output.join("");
+}
+
+function updateNoteReaderProgress() {
+  const max = noteReader.scrollHeight - noteReader.clientHeight;
+  const progress = max > 0 ? Math.min(1, noteReader.scrollTop / max) : 0;
+  document.querySelector("#noteReaderProgress").style.transform = `scaleX(${progress})`;
+  document.querySelector("#noteReaderPosition").textContent = `${String(Math.round(progress * 100)).padStart(2, "0")}%`;
+}
+
+function openTechNoteReader(note, trigger) {
+  if (!note?.content || noteReader.classList.contains("is-open")) return;
+  noteReaderTrigger = trigger;
+  document.querySelector("#noteReaderCategory").textContent = note.category;
+  document.querySelector("#noteReaderStatus").textContent = note.status || "已同步";
+  document.querySelector("#noteReaderDate").textContent = note.date;
+  document.querySelector("#noteReaderTitle").textContent = note.title;
+  document.querySelector("#noteReaderTags").innerHTML = note.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+  document.querySelector("#noteReaderBody").innerHTML = renderNoteMarkdown(note.content);
+  noteReader.scrollTop = 0;
+  updateNoteReaderProgress();
+
+  if (useMotion()) gsap.set(noteReader, { autoAlpha: 1, xPercent: 100 });
+  noteReader.classList.add("is-open");
+  noteReader.setAttribute("aria-hidden", "false");
+  noteReader.inert = false;
+  setInterfaceLocked(true, noteReader);
+
+  if (!useMotion()) {
+    document.querySelector("#noteReaderClose").focus({ preventScroll: true });
+    return;
+  }
+  gsap.to(noteReader, { xPercent: 0, duration: 0.72, ease: "power4.out", onComplete: () => document.querySelector("#noteReaderClose").focus({ preventScroll: true }) });
+}
+
+function closeTechNoteReader() {
+  if (!noteReader.classList.contains("is-open")) return;
+  const finish = () => {
+    noteReader.classList.remove("is-open");
+    noteReader.setAttribute("aria-hidden", "true");
+    if (gsap) gsap.set(noteReader, { clearProps: "opacity,visibility,transform" });
+    setInterfaceLocked(false);
+    noteReaderTrigger?.focus({ preventScroll: true });
+  };
+  if (!useMotion()) finish();
+  else gsap.to(noteReader, { xPercent: 100, duration: 0.55, ease: "power3.in", onComplete: finish });
+}
+
 function updateTechPreview(note, instant = false) {
   if (!note) return;
   const preview = document.querySelector("#techPreview");
   const applyContent = () => {
     const codeBlock = document.querySelector("#techPreviewCode").closest("pre");
-    const source = document.querySelector("#techPreviewSource");
+    const openButton = document.querySelector("#techPreviewOpen");
     document.querySelector("#techPreviewCategory").textContent = note.category;
     document.querySelector("#techPreviewDate").textContent = note.date;
     document.querySelector("#techPreviewStatus").textContent = note.status || "已同步";
@@ -833,8 +1002,8 @@ function updateTechPreview(note, instant = false) {
     document.querySelector("#techPreviewCode").textContent = note.code || "";
     codeBlock.hidden = !note.code;
     document.querySelector("#techPreviewRead").textContent = note.status || note.read || "NOTION";
-    source.href = note.url || "#";
-    source.hidden = !note.url;
+    openButton.hidden = !note.content;
+    openButton.setAttribute("aria-label", `阅读《${note.title}》全文`);
   };
 
   if (instant || !useMotion()) {
@@ -1260,15 +1429,22 @@ function setupCursor() {
 
 function setupGlobalEvents() {
   document.querySelector("#readerClose").addEventListener("click", closeReader);
+  document.querySelector("#noteReaderClose").addEventListener("click", closeTechNoteReader);
+  document.querySelector("#techPreviewOpen").addEventListener("click", (event) => {
+    const note = technicalNotes.find((item) => item.id === activeTechNoteId);
+    openTechNoteReader(note, event.currentTarget);
+  });
   document.querySelector("#viewerClose").addEventListener("click", closeViewer);
   document.querySelector("#viewerPrev").addEventListener("click", () => moveViewer(-1));
   document.querySelector("#viewerNext").addEventListener("click", () => moveViewer(1));
   document.querySelector("#portraitCover").addEventListener("click", (event) => openViewer(portraitImages, portraitIndex, event.currentTarget));
   reader.addEventListener("scroll", updateReaderProgress, { passive: true });
+  noteReader.addEventListener("scroll", updateNoteReaderProgress, { passive: true });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       if (viewer.classList.contains("is-open")) closeViewer();
+      else if (noteReader.classList.contains("is-open")) closeTechNoteReader();
       else if (reader.classList.contains("is-open")) closeReader();
     }
     if (!viewer.classList.contains("is-open")) return;
