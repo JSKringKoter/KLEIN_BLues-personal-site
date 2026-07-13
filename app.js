@@ -14,7 +14,17 @@ const additionalPortraits = [
   { id: "p048", title: "斯通古堡的晚宴", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-01.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
   { id: "p049", title: "暮光曲", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-02.png", width: 2400, height: 1792, ratio: "2400 / 1792" },
   { id: "p050", title: "暮野梦", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-03.png", width: 2560, height: 3840, ratio: "2560 / 3840" },
-  { id: "p051", title: "紫罗兰与白日梦", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-04.png", width: 1280, height: 1856, ratio: "1280 / 1856" }
+  { id: "p051", title: "紫罗兰与白日梦", group: "琉璃·斯通古", src: "assets/images/liuli-stonegu/liuli-04.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
+  { id: "p052", title: "喵步城市中·南京", group: "九日", src: "assets/images/jiuri/jiuri-15.png", width: 2000, height: 2670, ratio: "2000 / 2670" },
+  { id: "p053", title: "冬雪", group: "八月", src: "assets/images/bayue/bayue-28.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
+  { id: "p054", title: "喵步城市中·伊犁", group: "八月", src: "assets/images/bayue/bayue-29.png", width: 2000, height: 2670, ratio: "2000 / 2670" },
+  { id: "p055", title: "喵步城市中·南京", group: "八月", src: "assets/images/bayue/bayue-30.png", width: 2000, height: 2670, ratio: "2000 / 2670" },
+  { id: "p056", title: "夏日的呢喃", group: "欧姆", src: "assets/images/ohm/ohm-01.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
+  { id: "p057", title: "春花", group: "欧姆", src: "assets/images/ohm/ohm-02.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
+  { id: "p058", title: "问雪", group: "欧姆", src: "assets/images/ohm/ohm-03.png", width: 896, height: 1344, ratio: "896 / 1344" },
+  { id: "p059", title: "雪后残阳", group: "欧姆", src: "assets/images/ohm/ohm-04.png", width: 1280, height: 1856, ratio: "1280 / 1856" },
+  { id: "p060", title: "尘埃深处", group: "羽梦", src: "assets/images/yumeng/yumeng-01.png", width: 1672, height: 2508, ratio: "1672 / 2508" },
+  { id: "p061", title: "彼岸之冬", group: "铃·克里斯汀", src: "assets/images/ling-christine/ling-christine-01.png", width: 1280, height: 1856, ratio: "1280 / 1856" }
 ];
 const allPaintings = [...data.paintings, ...additionalPortraits];
 const localUnfinishedNovels = [
@@ -76,9 +86,11 @@ const viewer = document.querySelector("#viewer");
 const storyColors = ["#1746d1", "#d84c2f", "#2e6659", "#8a5c28", "#633e6b", "#283f66", "#171715"];
 const viewerColorCache = new Map();
 const photoWorks = [
-  { id: "ph01", title: "云际", src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "拍摄时间未记录" } },
-  { id: "ph02", title: "前路", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "拍摄时间未记录" } },
-  { id: "ph03", title: "华灯初上", src: "./assets/images/photography/huadeng-chushang.jpg", thumb: "./assets/images/photography/huadeng-chushang-thumb.jpg", width: 3072, height: 4080, group: "南京 · 中国", color: "#735544", exif: { coordinates: "中国 · 南京", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/238 s · ISO 50 · EV 0", captured: "拍摄时间未记录" } }
+  { id: "ph01", title: "云际", src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "2026.05.07" } },
+  { id: "ph02", title: "前路", note: "出发，然后再次出发", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "2026.04.18" } },
+  { id: "ph03", title: "华灯初上", src: "./assets/images/photography/huadeng-chushang.jpg", thumb: "./assets/images/photography/huadeng-chushang-thumb.jpg", width: 3072, height: 4080, group: "南京 · 中国", color: "#735544", exif: { coordinates: "中国 · 南京", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/238 s · ISO 50 · EV 0", captured: "2026.03.13" } },
+  { id: "ph04", title: "人间清醒梦", note: "在中国最东边的小岛上，寻找最深邃的蓝。", src: "./assets/images/photography/renjian-qingxingmeng.jpg", thumb: "./assets/images/photography/renjian-qingxingmeng-thumb.jpg", width: 3072, height: 4096, group: "花鸟岛 · 浙江 · 中国", color: "#3f597d", exif: { coordinates: "中国 · 浙江 · 花鸟岛", camera: "Vivo X300 Pro", lens: "48 mm", exposure: "f/1.57 · 1/25 s · ISO 900 · EV 0", captured: "2026.05.03" } },
+  { id: "ph05", title: "江山", note: "于长江畔。", src: "./assets/images/photography/jiangshan.jpg", thumb: "./assets/images/photography/jiangshan-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#8a7974", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/200 s · ISO 7863 · EV 0", captured: "2026.02.08" } }
 ];
 const fallbackTechnicalNotes = [
   { id: "t01", category: "前端", title: "把网页动画留在合成层", date: "2026.06.18", read: "8 MIN", summary: "从一次滚动卡顿出发，整理 transform、opacity、布局抖动与图层提升之间真正值得记住的边界。", tags: ["Performance", "GSAP", "CSS"], code: "const frame = () => {\n  element.style.transform = `translate3d(0, ${offset}px, 0)`;\n  requestAnimationFrame(frame);\n};" },
@@ -678,7 +690,7 @@ function renderCharacters() {
   tabs.innerHTML = characters.map((character, index) => `
     <button class="character-tab${index === 0 ? " is-active" : ""}" type="button" role="tab" data-character="${escapeHtml(character.group)}" data-cursor="ENTER" aria-selected="${index === 0}">
       <span class="character-visual">
-        <img src="${character.images[0].src}" alt="${escapeHtml(character.group)}角色代表图" loading="${index < 4 ? "eager" : "lazy"}" />
+        <img src="${portraitThumbnailSrc(character.images[0])}" alt="${escapeHtml(character.group)}角色代表图" loading="${index < 4 ? "eager" : "lazy"}" />
         <i aria-hidden="true">${String(index + 1).padStart(2, "0")}</i>
       </span>
       <span class="character-meta">
@@ -839,6 +851,19 @@ function renderPhotography() {
   grid.querySelectorAll("[data-photo-index]").forEach((card) => {
     card.addEventListener("click", () => openViewer(photoWorks, Number(card.dataset.photoIndex), card));
   });
+}
+
+function setupHorizontalWheel(scroller) {
+  scroller.addEventListener("wheel", (event) => {
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    if (Math.abs(delta) < 1) return;
+    const max = scroller.scrollWidth - scroller.clientWidth;
+    const atStart = delta < 0 && scroller.scrollLeft <= 0;
+    const atEnd = delta > 0 && scroller.scrollLeft >= max - 1;
+    if (max <= 1 || atStart || atEnd) return;
+    event.preventDefault();
+    scroller.scrollLeft += delta;
+  }, { passive: false });
 }
 
 function renderNoteInline(value) {
@@ -1088,13 +1113,9 @@ function renderTechnicalNotes() {
 
 function setupPortraitRail() {
   const rail = document.querySelector("#portraitRail");
-  rail.addEventListener("wheel", (event) => {
-    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-    const max = rail.scrollWidth - rail.clientWidth;
-    if ((event.deltaY < 0 && rail.scrollLeft <= 0) || (event.deltaY > 0 && rail.scrollLeft >= max - 1)) return;
-    event.preventDefault();
-    rail.scrollLeft += event.deltaY;
-  }, { passive: false });
+  setupHorizontalWheel(document.querySelector("#characterTabs"));
+  setupHorizontalWheel(document.querySelector("#photoGrid"));
+  setupHorizontalWheel(rail);
 
   let dragging = false;
   let startX = 0;
@@ -1396,7 +1417,7 @@ async function setViewerContent(index) {
   image.alt = item.title;
   document.querySelector("#viewerBlur").src = item.src;
   document.querySelector("#viewerTitle").textContent = item.title;
-  document.querySelector("#viewerGroup").textContent = item.group || "Selected work";
+  document.querySelector("#viewerGroup").textContent = item.note || item.group || "Selected work";
   const exif = document.querySelector("#viewerExif");
   const isPhotography = Boolean(item.exif);
   viewer.classList.toggle("is-photography", isPhotography);

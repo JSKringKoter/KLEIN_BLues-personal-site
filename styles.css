@@ -1356,9 +1356,12 @@ img {
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(77, 115, 232, 0.72) rgba(241, 234, 223, 0.08);
+  scrollbar-width: none;
 }
+
+.character-tabs::-webkit-scrollbar,
+.portrait-rail::-webkit-scrollbar,
+.photo-grid::-webkit-scrollbar { display: none; }
 
 .character-tab {
   position: relative;
@@ -1621,8 +1624,7 @@ img {
   padding: 1rem 12vw 2rem 0;
   overflow-x: auto;
   outline: none;
-  scrollbar-width: thin;
-  scrollbar-color: var(--signal) rgba(241, 234, 223, 0.12);
+  scrollbar-width: none;
   scroll-snap-type: x proximity;
 }
 
@@ -1744,21 +1746,25 @@ img {
 .photo-grid {
   position: relative;
   z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(2rem, 6vw, 7rem);
-  width: min(100%, 76rem);
-  min-height: 0;
-  margin: clamp(5rem, 8vw, 8rem) auto 0;
-  padding: clamp(3rem, 5vw, 5rem) clamp(1.5rem, 4vw, 4rem);
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(2.5rem, 5vw, 5.5rem);
+  width: calc(100% + clamp(1rem, 3.5vw, 4.5rem));
+  min-height: clamp(28rem, 40vw, 35rem);
+  margin: clamp(5rem, 8vw, 8rem) calc(clamp(1rem, 3.5vw, 4.5rem) * -1) 0 0;
+  padding: clamp(4rem, 6vw, 6rem) clamp(4rem, 8vw, 9rem) clamp(3rem, 5vw, 5rem) 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
   border-top: 1px solid rgba(238, 232, 220, 0.24);
   border-bottom: 1px solid rgba(238, 232, 220, 0.14);
   background:
-    linear-gradient(90deg, transparent 33.2%, rgba(238, 232, 220, 0.08) 33.3%, transparent 33.4%, transparent 66.5%, rgba(238, 232, 220, 0.08) 66.6%, transparent 66.7%);
+    repeating-linear-gradient(90deg, transparent 0 calc(25vw - 1px), rgba(238, 232, 220, 0.055) calc(25vw - 1px) 25vw);
 }
 
 .photo-grid::before {
-  content: "SELECTED PHOTOGRAPHS · 01—03";
+  content: "SELECTED PHOTOGRAPHS · 01—05";
   position: absolute;
   top: 0.9rem;
   left: 1.5rem;
@@ -1770,31 +1776,30 @@ img {
 .photo-card {
   position: relative;
   display: grid;
+  flex: 0 0 auto;
   grid-template-columns: 1fr auto;
-  grid-template-rows: 18rem auto;
+  grid-template-rows: auto auto;
   gap: 1.1rem;
   align-items: end;
-  justify-self: center;
-  width: min(100%, 13rem);
+  width: max-content;
   min-width: 0;
   padding: 0;
   color: inherit;
   text-align: left;
   background: none;
   cursor: pointer;
+  scroll-snap-align: start;
 }
 
-.photo-card:nth-child(1),
-.photo-card:nth-child(2),
-.photo-card:nth-child(3) { grid-column: auto; margin-top: 0; }
+.photo-card:nth-child(even) { margin-top: clamp(3rem, 6vw, 5.5rem); }
 
 .photo-frame {
   grid-column: 1 / -1;
-  align-self: center;
   grid-row: 1;
   display: block;
   overflow: hidden;
-  width: 100%;
+  width: auto;
+  height: clamp(13rem, 19vw, 18rem);
   aspect-ratio: var(--photo-ratio);
   padding: 0.35rem;
   background: rgba(238, 232, 220, 0.07);
@@ -3603,8 +3608,16 @@ img {
 
   .photography-heading h2 { margin-top: 3rem; font-size: 17vw; }
   .photo-grid { display: flex; flex-direction: column; align-items: center; min-height: 0; margin-top: 6rem; }
+  .photo-grid {
+    width: 100%;
+    margin-right: 0;
+    padding: 3rem 1rem;
+    overflow: visible;
+    background: none;
+  }
   .photo-card,
-  .photo-card:nth-child(n) { grid-template-rows: 16rem auto; width: min(52vw, 13rem); margin: 0 0 3.5rem; }
+  .photo-card:nth-child(n) { grid-template-rows: auto auto; width: max-content; max-width: 72vw; margin: 0 0 3.5rem; }
+  .photo-frame { width: auto; max-width: 72vw; height: min(62vw, 16rem); }
   .photo-card:nth-child(even) { align-self: flex-end; }
   .photo-card:nth-child(odd) { align-self: flex-start; }
 
