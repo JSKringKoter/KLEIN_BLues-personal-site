@@ -684,13 +684,17 @@ function portraitThumbnailSrc(item) {
   return `assets/images/portrait-thumbs/${item.id}.jpg`;
 }
 
+function characterCardSrc(item) {
+  return `assets/images/character-cards/${item.id}.webp`;
+}
+
 function renderCharacters() {
   const characters = getCharacters();
   const tabs = document.querySelector("#characterTabs");
   tabs.innerHTML = characters.map((character, index) => `
     <button class="character-tab${index === 0 ? " is-active" : ""}" type="button" role="tab" data-character="${escapeHtml(character.group)}" data-cursor="ENTER" aria-selected="${index === 0}">
       <span class="character-visual">
-        <img src="${portraitThumbnailSrc(character.images[0])}" alt="${escapeHtml(character.group)}角色代表图" loading="${index < 4 ? "eager" : "lazy"}" />
+        <img src="${characterCardSrc(character.images[0])}" alt="${escapeHtml(character.group)}角色代表图" loading="${index < 4 ? "eager" : "lazy"}" decoding="async" />
         <i aria-hidden="true">${String(index + 1).padStart(2, "0")}</i>
       </span>
       <span class="character-meta">
