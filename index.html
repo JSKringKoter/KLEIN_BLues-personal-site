@@ -50,7 +50,7 @@
       }
     </script>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=54" />
+    <link rel="stylesheet" href="./styles.css?v=58" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -64,7 +64,7 @@
     </div>
 
     <div class="noise" aria-hidden="true"></div>
-    <div class="cursor" id="cursor" aria-hidden="true"><span></span></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i></div>
 
     <header class="masthead" id="masthead">
       <a class="wordmark" href="#top" aria-label="返回首页" data-cursor="HOME">
@@ -165,8 +165,8 @@
 
         <div class="portrait-stage" id="portraitStage">
           <div class="portrait-cover-wrap reveal">
-            <button class="portrait-cover" id="portraitCover" type="button" data-cursor="OPEN">
-              <span class="portrait-media" id="portraitMedia">
+            <button class="portrait-cover" id="portraitCover" type="button">
+              <span class="portrait-media" id="portraitMedia" data-cursor="IMAGE">
                 <img id="portraitCoverImage" alt="" />
                 <span class="cover-index" id="coverIndex">01 / 01</span>
               </span>
@@ -219,6 +219,9 @@
           <div class="photography-statement">光线经过世界，<br />快门只留下它短暂的停顿。</div>
         </header>
         <div class="photo-grid" id="photoGrid" tabindex="0" aria-label="摄影作品横向画廊"></div>
+        <div class="archive-scrollbar photography-scrollbar reveal" id="photoScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览摄影作品" aria-controls="photoGrid" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+          <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+        </div>
       </section>
 
       <section class="about section" id="about" aria-labelledby="aboutTitle">
@@ -323,6 +326,6 @@
     <script src="./data.js"></script>
     <script src="./notion-notes.js?v=1"></script>
     <script src="./notion-content.js?v=1"></script>
-    <script src="./app.js?v=44"></script>
+    <script src="./app.js?v=50"></script>
   </body>
 </html>

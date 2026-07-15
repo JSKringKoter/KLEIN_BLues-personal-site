@@ -153,6 +153,8 @@ img {
   transition: opacity 180ms ease, transform 350ms var(--ease);
 }
 
+.cursor > i { display: none; }
+
 .cursor.is-visible {
   opacity: 1;
 }
@@ -179,6 +181,71 @@ img {
   height: 2.35rem;
   border-radius: 999px;
 }
+
+/* Experimental: frame the active drag handle instead of following the pointer. */
+.cursor[data-mode="DRAG"] {
+  width: var(--drag-frame-width, 6rem);
+  height: var(--drag-frame-height, 1.1rem);
+  color: var(--blue);
+  background: rgba(23, 70, 209, 0.035);
+  border: 1px solid rgba(23, 70, 209, 0.72);
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px rgba(23, 70, 209, 0.055), 0 0.7rem 2rem rgba(23, 70, 209, 0.12);
+  backdrop-filter: blur(2px);
+  transition:
+    opacity 180ms ease,
+    left 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 440ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 480ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 480ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 300ms var(--ease),
+    background 250ms ease;
+}
+
+.cursor[data-mode="DRAG"]::before,
+.cursor[data-mode="DRAG"]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 1px;
+  background: currentColor;
+}
+
+.cursor[data-mode="DRAG"]::before { left: 4px; }
+.cursor[data-mode="DRAG"]::after { right: 4px; }
+.cursor[data-mode="DRAG"] span { display: none; }
+
+.cursor[data-mode="IMAGE"] {
+  width: var(--image-frame-width, 1.6rem);
+  height: var(--image-frame-height, 1.6rem);
+  background: transparent;
+  border-radius: 0;
+  transition:
+    opacity 180ms ease,
+    left 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 520ms cubic-bezier(0.16, 1, 0.3, 1),
+    width 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 250ms ease;
+}
+
+.cursor[data-mode="IMAGE"] span { display: none; }
+
+.cursor[data-mode="IMAGE"] > i {
+  position: absolute;
+  display: block;
+  width: clamp(0.9rem, 1.4vw, 1.35rem);
+  height: clamp(0.9rem, 1.4vw, 1.35rem);
+  opacity: 1;
+  filter: drop-shadow(0 0.2rem 0.45rem rgba(5, 19, 59, 0.25));
+  transition: transform 620ms cubic-bezier(0.16, 1, 0.3, 1), opacity 320ms ease;
+}
+
+.cursor[data-mode="IMAGE"] > i:nth-of-type(1) { top: 0; left: 0; border-top: 2px solid var(--blue); border-left: 2px solid var(--blue); transform: translate(-2px, -2px); }
+.cursor[data-mode="IMAGE"] > i:nth-of-type(2) { top: 0; right: 0; border-top: 2px solid var(--blue); border-right: 2px solid var(--blue); transform: translate(2px, -2px); }
+.cursor[data-mode="IMAGE"] > i:nth-of-type(3) { right: 0; bottom: 0; border-right: 2px solid var(--blue); border-bottom: 2px solid var(--blue); transform: translate(2px, 2px); }
+.cursor[data-mode="IMAGE"] > i:nth-of-type(4) { bottom: 0; left: 0; border-bottom: 2px solid var(--blue); border-left: 2px solid var(--blue); transform: translate(-2px, 2px); }
 
 .cursor[data-mode="ENTER"] span,
 .cursor[data-mode="BACK"] span,
@@ -699,8 +766,7 @@ img {
   left: 3.4%;
   width: min(31rem, 43vw);
   margin: 0;
-  padding-top: 1rem;
-  border-top: 1px solid color-mix(in srgb, var(--hero-secondary) 46%, transparent);
+  padding-top: 0;
 }
 
 .hero-intro strong {
@@ -892,6 +958,7 @@ img {
   position: relative;
   z-index: 30;
   overflow: hidden;
+  margin-top: clamp(-0.4rem, -0.32vw, -0.2rem);
   color: var(--paper);
   background: var(--blue);
   transform: rotate(-1.2deg) scale(1.02);
@@ -1451,6 +1518,12 @@ img {
 .archive-scrollbar[hidden] { display: none; }
 .character-scrollbar { margin: 0 0 clamp(3.5rem, 6vw, 5.5rem); }
 .portrait-scrollbar { margin-top: 0.35rem; }
+.photography-scrollbar {
+  --scrollbar-color: #9fc2d5;
+  z-index: 3;
+  width: calc(100% + clamp(1rem, 3.5vw, 4.5rem));
+  margin: 1rem calc(clamp(1rem, 3.5vw, 4.5rem) * -1) 0 0;
+}
 
 .character-tab {
   position: relative;
@@ -1581,6 +1654,12 @@ img {
 
 .character-tabs.is-moving {
   pointer-events: none;
+}
+
+.character-tabs.is-track-dragging,
+.portrait-rail.is-track-dragging,
+.photo-grid.is-track-dragging {
+  scroll-snap-type: none;
 }
 
 .portrait-stage {
@@ -3620,7 +3699,7 @@ img {
   .hero-note .cross { display: none; }
   .hero-note strong { font-size: 1.05rem; }
   .hero-note small { display: block; margin-top: 0.4rem; font-size: 0.56rem; line-height: 1.4; }
-  .hero-intro { bottom: 1.5rem; left: 1rem; width: calc(100% - 2rem); padding-top: 0.75rem; }
+  .hero-intro { bottom: 1.5rem; left: 1rem; width: calc(100% - 2rem); padding-top: 0; }
   .hero-intro strong { font-size: 0.95rem; }
   .hero-intro span { margin-top: 0.3rem; font-size: 0.7rem; line-height: 1.55; }
   .weather-control { top: 4.5rem; bottom: auto; left: 1rem; transform: none; }
@@ -3698,6 +3777,7 @@ img {
     overflow: visible;
     background: none;
   }
+  .photography-scrollbar { display: none; }
   .photo-card,
   .photo-card:nth-child(n) { grid-template-rows: auto auto; width: max-content; max-width: 72vw; margin: 0 0 3.5rem; }
   .photo-frame { width: auto; max-width: 72vw; height: min(62vw, 16rem); }

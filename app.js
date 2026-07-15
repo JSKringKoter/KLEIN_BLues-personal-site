@@ -261,7 +261,7 @@ function renderHero(indices = defaultHeroIndices, weatherTransition = false) {
   const collage = document.querySelector("#heroCollage");
 
   collage.innerHTML = picks.map((item, index) => `
-    <button class="hero-card${weatherTransition ? " is-weather-entering" : ""}" type="button" data-hero-image="${item.id}" data-index="${index}" data-cursor="OPEN" style="--weather-order:${index}" aria-label="查看${escapeHtml(item.title)}">
+    <button class="hero-card${weatherTransition ? " is-weather-entering" : ""}" type="button" data-hero-image="${item.id}" data-index="${index}" data-cursor="IMAGE" style="--weather-order:${index}" aria-label="查看${escapeHtml(item.title)}">
       <img src="${item.src}" alt="" ${index < 2 ? 'fetchpriority="high"' : 'loading="lazy"'} />
     </button>
   `).join("");
@@ -693,7 +693,7 @@ function renderCharacters() {
   const tabs = document.querySelector("#characterTabs");
   tabs.innerHTML = characters.map((character, index) => `
     <button class="character-tab${index === 0 ? " is-active" : ""}" type="button" role="tab" data-character="${escapeHtml(character.group)}" data-cursor="ENTER" aria-selected="${index === 0}">
-      <span class="character-visual">
+      <span class="character-visual" data-cursor="IMAGE">
         <img src="${characterCardSrc(character.images[0])}" alt="${escapeHtml(character.group)}角色代表图" loading="${index < 4 ? "eager" : "lazy"}" decoding="async" />
         <i aria-hidden="true">${String(index + 1).padStart(2, "0")}</i>
       </span>
@@ -785,7 +785,7 @@ async function setCharacter(group, instant = false) {
   const rail = document.querySelector("#portraitRail");
   rail.scrollLeft = 0;
   rail.innerHTML = portraitImages.map((item, index) => `
-    <button class="portrait-thumb${index === 0 ? " is-current" : ""}" type="button" data-portrait="${item.id}" data-index="${index}" data-cursor="OPEN" style="--thumb-ratio:${Number(item.width) || 1} / ${Number(item.height) || 1}" aria-label="查看${escapeHtml(item.title)}">
+    <button class="portrait-thumb${index === 0 ? " is-current" : ""}" type="button" data-portrait="${item.id}" data-index="${index}" data-cursor="IMAGE" style="--thumb-ratio:${Number(item.width) || 1} / ${Number(item.height) || 1}" aria-label="查看${escapeHtml(item.title)}">
       <img src="${portraitThumbnailSrc(item)}" alt="" loading="${index < 4 ? "eager" : "lazy"}" />
       <span>${String(index + 1).padStart(2, "0")}</span>
     </button>
@@ -845,8 +845,8 @@ async function selectPortrait(index) {
 function renderPhotography() {
   const grid = document.querySelector("#photoGrid");
   grid.innerHTML = photoWorks.map((item, index) => `
-    <button class="photo-card reveal" type="button" data-photo-index="${index}" data-cursor="OPEN" aria-label="查看摄影作品《${escapeHtml(item.title)}》">
-      <span class="photo-frame" style="--photo-ratio:${item.width} / ${item.height}"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
+    <button class="photo-card reveal" type="button" data-photo-index="${index}" aria-label="查看摄影作品《${escapeHtml(item.title)}》">
+      <span class="photo-frame" data-cursor="IMAGE" style="--photo-ratio:${item.width} / ${item.height}"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
       <span class="photo-card-meta"><b>${String(index + 1).padStart(2, "0")}</b><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.group)}</small></span>
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
     </button>
@@ -857,24 +857,13 @@ function renderPhotography() {
   });
 }
 
-function setupHorizontalWheel(scroller) {
-  scroller.addEventListener("wheel", (event) => {
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    if (Math.abs(delta) < 1) return;
-    const max = scroller.scrollWidth - scroller.clientWidth;
-    const atStart = delta < 0 && scroller.scrollLeft <= 0;
-    const atEnd = delta > 0 && scroller.scrollLeft >= max - 1;
-    if (max <= 1 || atStart || atEnd) return;
-    event.preventDefault();
-    scroller.scrollLeft += delta;
-  }, { passive: false });
-}
-
 function setupArchiveScrollbar(scroller, scrollbar) {
   const thumb = scrollbar.querySelector(".archive-scrollbar-thumb");
   let dragging = false;
   let startX = 0;
   let startScroll = 0;
+  let targetScroll = scroller.scrollLeft;
+  let glideFrame = 0;
 
   const getMetrics = () => {
     const trackWidth = scrollbar.clientWidth;
@@ -890,6 +879,27 @@ function setupArchiveScrollbar(scroller, scrollbar) {
     scrollbar.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
     thumb.style.width = `${thumbWidth}px`;
     thumb.style.transform = `translate3d(${progress * maxThumbX}px, 0, 0)`;
+    scrollbar.dispatchEvent(new Event("archive-scroll-update", { bubbles: true }));
+  };
+
+  const glideTo = (value) => {
+    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    targetScroll = Math.min(maxScroll, Math.max(0, value));
+    scroller.classList.add("is-track-dragging");
+    if (glideFrame) return;
+
+    const glide = () => {
+      const distance = targetScroll - scroller.scrollLeft;
+      if (Math.abs(distance) < 0.35) {
+        scroller.scrollLeft = targetScroll;
+        glideFrame = 0;
+        if (!dragging) scroller.classList.remove("is-track-dragging");
+        return;
+      }
+      scroller.scrollLeft += distance * 0.24;
+      glideFrame = requestAnimationFrame(glide);
+    };
+    glideFrame = requestAnimationFrame(glide);
   };
 
   const endDrag = () => {
@@ -905,11 +915,11 @@ function setupArchiveScrollbar(scroller, scrollbar) {
     const thumbRect = thumb.getBoundingClientRect();
     if (event.clientX < thumbRect.left || event.clientX > thumbRect.right) {
       const targetX = Math.min(metrics.maxThumbX, Math.max(0, event.clientX - trackRect.left - metrics.thumbWidth / 2));
-      scroller.scrollLeft = metrics.maxThumbX > 0 ? (targetX / metrics.maxThumbX) * metrics.maxScroll : 0;
+      glideTo(metrics.maxThumbX > 0 ? (targetX / metrics.maxThumbX) * metrics.maxScroll : 0);
     }
     dragging = true;
     startX = event.clientX;
-    startScroll = scroller.scrollLeft;
+    startScroll = targetScroll;
     scrollbar.classList.add("is-dragging");
     scrollbar.setPointerCapture(event.pointerId);
     event.preventDefault();
@@ -918,7 +928,7 @@ function setupArchiveScrollbar(scroller, scrollbar) {
   scrollbar.addEventListener("pointermove", (event) => {
     if (!dragging) return;
     const { maxScroll, maxThumbX } = getMetrics();
-    scroller.scrollLeft = startScroll + (event.clientX - startX) * (maxThumbX > 0 ? maxScroll / maxThumbX : 0);
+    glideTo(startScroll + (event.clientX - startX) * (maxThumbX > 0 ? maxScroll / maxThumbX : 0));
   });
   scrollbar.addEventListener("pointerup", endDrag);
   scrollbar.addEventListener("pointercancel", endDrag);
@@ -933,7 +943,10 @@ function setupArchiveScrollbar(scroller, scrollbar) {
     event.preventDefault();
   });
 
-  scroller.addEventListener("scroll", update, { passive: true });
+  scroller.addEventListener("scroll", () => {
+    if (!dragging && !glideFrame) targetScroll = scroller.scrollLeft;
+    update();
+  }, { passive: true });
   new ResizeObserver(update).observe(scroller);
   new MutationObserver(() => requestAnimationFrame(update)).observe(scroller, { childList: true });
   requestAnimationFrame(update);
@@ -1186,9 +1199,9 @@ function renderTechnicalNotes() {
 
 function setupPortraitRail() {
   const rail = document.querySelector("#portraitRail");
-  setupHorizontalWheel(document.querySelector("#photoGrid"));
   setupArchiveScrollbar(document.querySelector("#characterTabs"), document.querySelector("#characterScrollbar"));
   setupArchiveScrollbar(rail, document.querySelector("#portraitScrollbar"));
+  setupArchiveScrollbar(document.querySelector("#photoGrid"), document.querySelector("#photoScrollbar"));
 }
 
 function syncReaderBackdropHeight() {
@@ -1624,6 +1637,9 @@ function setupCursor() {
   if (window.matchMedia("(pointer: coarse)").matches) return;
   const cursor = document.querySelector("#cursor");
   const label = cursor.querySelector("span");
+  let activeCursorTarget = null;
+  let cursorX = 0;
+  let cursorY = 0;
   const cursorLabels = {
     OPEN: "OPEN",
     ENTER: "↗",
@@ -1637,18 +1653,68 @@ function setupCursor() {
     SWITCH: "↔"
   };
 
+  const syncDragFrame = () => {
+    if (cursor.dataset.mode !== "DRAG" || !activeCursorTarget) return false;
+    const thumb = activeCursorTarget.querySelector(".archive-scrollbar-thumb");
+    if (!thumb) return false;
+    const rect = thumb.getBoundingClientRect();
+    cursor.style.left = `${rect.left + rect.width / 2}px`;
+    cursor.style.top = `${rect.top + rect.height / 2}px`;
+    cursor.style.setProperty("--drag-frame-width", `${rect.width + 14}px`);
+    cursor.style.setProperty("--drag-frame-height", `${Math.max(16, rect.height + 12)}px`);
+    return true;
+  };
+
+  const syncImageFrame = () => {
+    if (cursor.dataset.mode !== "IMAGE" || !activeCursorTarget) return false;
+    const rect = activeCursorTarget.getBoundingClientRect();
+    cursor.style.left = `${rect.left + rect.width / 2}px`;
+    cursor.style.top = `${rect.top + rect.height / 2}px`;
+    cursor.style.setProperty("--image-frame-width", `${rect.width + 14}px`);
+    cursor.style.setProperty("--image-frame-height", `${rect.height + 14}px`);
+    return true;
+  };
+
+  const syncTargetFrame = () => syncDragFrame() || syncImageFrame();
+
   const setCursorTarget = (source) => {
     const target = source?.closest?.("[data-cursor]");
     const mode = target?.dataset.cursor || "";
+    activeCursorTarget = target || null;
     cursor.classList.toggle("is-active", Boolean(mode));
     if (mode) cursor.dataset.mode = mode;
     else delete cursor.dataset.mode;
     label.textContent = cursorLabels[mode] || "";
+    if (mode === "DRAG" || mode === "IMAGE") {
+      cursor.style.left = `${cursorX}px`;
+      cursor.style.top = `${cursorY}px`;
+      if (mode === "DRAG") {
+        cursor.style.setProperty("--drag-frame-width", "1.6rem");
+        cursor.style.setProperty("--drag-frame-height", "1.1rem");
+      } else {
+        cursor.style.setProperty("--image-frame-width", "1.6rem");
+        cursor.style.setProperty("--image-frame-height", "1.6rem");
+      }
+      requestAnimationFrame(syncTargetFrame);
+    } else {
+      cursor.style.removeProperty("--drag-frame-width");
+      cursor.style.removeProperty("--drag-frame-height");
+      cursor.style.removeProperty("--image-frame-width");
+      cursor.style.removeProperty("--image-frame-height");
+      cursor.style.left = `${cursorX}px`;
+      cursor.style.top = `${cursorY}px`;
+    }
   };
 
   window.addEventListener("pointermove", (event) => {
-    cursor.style.left = `${event.clientX}px`;
-    cursor.style.top = `${event.clientY}px`;
+    cursorX = event.clientX;
+    cursorY = event.clientY;
+    const hoveredTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-cursor]") || null;
+    if (hoveredTarget !== activeCursorTarget) setCursorTarget(hoveredTarget);
+    if (!syncTargetFrame()) {
+      cursor.style.left = `${event.clientX}px`;
+      cursor.style.top = `${event.clientY}px`;
+    }
     cursor.classList.add("is-visible");
   });
   document.addEventListener("pointerover", (event) => {
@@ -1659,6 +1725,11 @@ function setupCursor() {
   });
   document.addEventListener("focusin", (event) => setCursorTarget(event.target));
   document.addEventListener("focusout", (event) => setCursorTarget(event.relatedTarget));
+  document.addEventListener("archive-scroll-update", (event) => {
+    if (event.target === activeCursorTarget) syncDragFrame();
+  });
+  window.addEventListener("scroll", syncTargetFrame, { passive: true });
+  window.addEventListener("resize", syncTargetFrame, { passive: true });
   window.addEventListener("blur", () => cursor.classList.remove("is-visible"));
 }
 
