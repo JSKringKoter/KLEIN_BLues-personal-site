@@ -870,6 +870,75 @@ function setupHorizontalWheel(scroller) {
   }, { passive: false });
 }
 
+function setupArchiveScrollbar(scroller, scrollbar) {
+  const thumb = scrollbar.querySelector(".archive-scrollbar-thumb");
+  let dragging = false;
+  let startX = 0;
+  let startScroll = 0;
+
+  const getMetrics = () => {
+    const trackWidth = scrollbar.clientWidth;
+    const maxScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+    const thumbWidth = Math.min(trackWidth, Math.max(42, trackWidth * (scroller.clientWidth / Math.max(scroller.scrollWidth, 1))));
+    return { trackWidth, maxScroll, thumbWidth, maxThumbX: Math.max(0, trackWidth - thumbWidth) };
+  };
+
+  const update = () => {
+    const { maxScroll, thumbWidth, maxThumbX } = getMetrics();
+    const progress = maxScroll > 0 ? scroller.scrollLeft / maxScroll : 0;
+    scrollbar.hidden = maxScroll <= 1;
+    scrollbar.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
+    thumb.style.width = `${thumbWidth}px`;
+    thumb.style.transform = `translate3d(${progress * maxThumbX}px, 0, 0)`;
+  };
+
+  const endDrag = () => {
+    dragging = false;
+    scrollbar.classList.remove("is-dragging");
+  };
+
+  scrollbar.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const metrics = getMetrics();
+    if (metrics.maxScroll <= 0) return;
+    const trackRect = scrollbar.getBoundingClientRect();
+    const thumbRect = thumb.getBoundingClientRect();
+    if (event.clientX < thumbRect.left || event.clientX > thumbRect.right) {
+      const targetX = Math.min(metrics.maxThumbX, Math.max(0, event.clientX - trackRect.left - metrics.thumbWidth / 2));
+      scroller.scrollLeft = metrics.maxThumbX > 0 ? (targetX / metrics.maxThumbX) * metrics.maxScroll : 0;
+    }
+    dragging = true;
+    startX = event.clientX;
+    startScroll = scroller.scrollLeft;
+    scrollbar.classList.add("is-dragging");
+    scrollbar.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  });
+
+  scrollbar.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    const { maxScroll, maxThumbX } = getMetrics();
+    scroller.scrollLeft = startScroll + (event.clientX - startX) * (maxThumbX > 0 ? maxScroll / maxThumbX : 0);
+  });
+  scrollbar.addEventListener("pointerup", endDrag);
+  scrollbar.addEventListener("pointercancel", endDrag);
+
+  scrollbar.addEventListener("keydown", (event) => {
+    const amount = scroller.clientWidth * (event.shiftKey ? 0.6 : 0.18);
+    if (event.key === "ArrowLeft") scroller.scrollBy({ left: -amount, behavior: useMotion() ? "smooth" : "auto" });
+    else if (event.key === "ArrowRight") scroller.scrollBy({ left: amount, behavior: useMotion() ? "smooth" : "auto" });
+    else if (event.key === "Home") scroller.scrollTo({ left: 0, behavior: useMotion() ? "smooth" : "auto" });
+    else if (event.key === "End") scroller.scrollTo({ left: scroller.scrollWidth, behavior: useMotion() ? "smooth" : "auto" });
+    else return;
+    event.preventDefault();
+  });
+
+  scroller.addEventListener("scroll", update, { passive: true });
+  new ResizeObserver(update).observe(scroller);
+  new MutationObserver(() => requestAnimationFrame(update)).observe(scroller, { childList: true });
+  requestAnimationFrame(update);
+}
+
 function renderNoteInline(value) {
   const codeTokens = [];
   const linkTokens = [];
@@ -1117,27 +1186,9 @@ function renderTechnicalNotes() {
 
 function setupPortraitRail() {
   const rail = document.querySelector("#portraitRail");
-  setupHorizontalWheel(document.querySelector("#characterTabs"));
   setupHorizontalWheel(document.querySelector("#photoGrid"));
-  setupHorizontalWheel(rail);
-
-  let dragging = false;
-  let startX = 0;
-  let startScroll = 0;
-
-  rail.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    dragging = true;
-    startX = event.clientX;
-    startScroll = rail.scrollLeft;
-    rail.setPointerCapture(event.pointerId);
-  });
-  rail.addEventListener("pointermove", (event) => {
-    if (!dragging) return;
-    rail.scrollLeft = startScroll - (event.clientX - startX);
-  });
-  rail.addEventListener("pointerup", () => { dragging = false; });
-  rail.addEventListener("pointercancel", () => { dragging = false; });
+  setupArchiveScrollbar(document.querySelector("#characterTabs"), document.querySelector("#characterScrollbar"));
+  setupArchiveScrollbar(rail, document.querySelector("#portraitScrollbar"));
 }
 
 function syncReaderBackdropHeight() {

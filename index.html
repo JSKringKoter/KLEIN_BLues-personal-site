@@ -4,10 +4,53 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f1eadf" />
-    <meta name="description" content="KLEIN BLues 的小说、角色、摄影与技术随笔档案。" />
-    <title>KLEIN BLues — Fiction, Portrait, Photography & Notes</title>
+    <title>KLEIN BLues 个人作品收录 | Personal Site</title>
+    <meta name="description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta name="author" content="KLEIN BLues" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.kleinblues.site/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="KLEIN BLues" />
+    <meta property="og:url" content="https://www.kleinblues.site/" />
+    <meta property="og:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta property="og:description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta property="og:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:secure_url" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta name="twitter:description" content="原创小说、人物绘画、摄影作品与程序设计随笔的个人作品档案。" />
+    <meta name="twitter:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta name="twitter:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "KLEIN BLues 个人作品收录",
+        "alternateName": "KLEIN BLues Personal Site",
+        "url": "https://www.kleinblues.site/",
+        "description": "KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔。",
+        "inLanguage": "zh-CN",
+        "author": {
+          "@type": "Person",
+          "name": "KLEIN BLues",
+          "alternateName": "KringKoter",
+          "sameAs": [
+            "https://github.com/JSKringKoter",
+            "https://space.bilibili.com/456757086"
+          ]
+        }
+      }
+    </script>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=51" />
+    <link rel="stylesheet" href="./styles.css?v=54" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -50,16 +93,16 @@
           <div class="weather-flash"></div>
         </div>
         <div class="hero-orbit" id="heroCollage" aria-label="精选图像"></div>
-        <div class="hero-title" id="heroTitle">
+        <h1 class="hero-title" id="heroTitle">
           <span class="hero-klein">KLEIN</span>
           <span class="hero-blues">BL<span>u</span>es</span>
-        </div>
+          <span class="sr-only">个人作品收录 | Personal Site</span>
+        </h1>
         <div class="hero-note">
           <span class="cross" aria-hidden="true"></span>
-          <p>文字负责时间，<br />图像负责光线。</p>
-          <small>Fiction / Character / Photography / Code</small>
+          <p><strong>山河皆有幸</strong><small lang="en">There is lucky in all mountains and rivers.</small></p>
         </div>
-        <p class="hero-intro">一个关于故事与人物的私人档案。<br />在阅读与凝视之间，寻找未完成的叙事。</p>
+        <p class="hero-intro"><strong>人物与往事的收藏集。</strong><span>在尘封的信笺之间，寻找未完成的故事。</span></p>
         <div class="weather-control" id="weatherControl">
           <div class="weather-reading" id="weatherReading" aria-live="polite">
             <strong id="weatherTemperature">LIVE</strong>
@@ -116,6 +159,9 @@
         </header>
 
         <div class="character-tabs reveal" id="characterTabs" role="tablist" aria-label="选择人物"></div>
+        <div class="archive-scrollbar character-scrollbar reveal" id="characterScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物" aria-controls="characterTabs" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+          <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+        </div>
 
         <div class="portrait-stage" id="portraitStage">
           <div class="portrait-cover-wrap reveal">
@@ -132,8 +178,11 @@
           </div>
 
           <div class="portrait-rail-wrap reveal">
-            <div class="rail-instruction"><span>Drag / Wheel</span><i></i><span>Click to inspect</span></div>
+            <div class="rail-instruction"><span>Drag the rail</span><i></i><span>Click to inspect</span></div>
             <div class="portrait-rail" id="portraitRail" tabindex="0" aria-label="人物图像列表"></div>
+            <div class="archive-scrollbar portrait-scrollbar" id="portraitScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物作品" aria-controls="portraitRail" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+              <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
       </section>
@@ -274,6 +323,6 @@
     <script src="./data.js"></script>
     <script src="./notion-notes.js?v=1"></script>
     <script src="./notion-content.js?v=1"></script>
-    <script src="./app.js?v=43"></script>
+    <script src="./app.js?v=44"></script>
   </body>
 </html>

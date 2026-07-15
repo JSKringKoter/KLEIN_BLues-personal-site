@@ -535,7 +535,21 @@ img {
   z-index: 10;
   inset: 12vh 1.5vw auto;
   height: 70vh;
+  margin: 0;
+  font-weight: 400;
   pointer-events: none;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }
 
 .hero-klein,
@@ -629,9 +643,9 @@ img {
 .hero-note {
   position: absolute;
   z-index: 15;
-  top: 19%;
+  top: 17%;
   right: 3.5%;
-  width: 12rem;
+  width: min(20rem, 26vw);
 }
 
 .cross {
@@ -653,26 +667,57 @@ img {
 .cross::after { top: 0; left: 50%; width: 1px; height: 100%; }
 
 .hero-note p {
-  margin: 0 0 0.8rem;
+  margin: 0;
+}
+
+.hero-note strong {
+  display: block;
   font-family: var(--serif);
-  font-size: 1.15rem;
-  line-height: 1.55;
+  font-size: clamp(1.25rem, 1.75vw, 1.75rem);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.1em;
 }
 
 .hero-note small {
-  font-size: 0.55rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  display: block;
+  max-width: 17rem;
+  margin-top: 0.65rem;
+  color: color-mix(in srgb, currentColor 68%, transparent);
+  font-family: var(--serif);
+  font-size: clamp(0.62rem, 0.72vw, 0.75rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0.025em;
 }
 
 .hero-intro {
   position: absolute;
   z-index: 15;
-  bottom: 7%;
+  bottom: 6%;
   left: 3.4%;
+  width: min(31rem, 43vw);
   margin: 0;
-  font-size: clamp(0.75rem, 1vw, 0.95rem);
-  line-height: 1.75;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--hero-secondary) 46%, transparent);
+}
+
+.hero-intro strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 1.35vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.045em;
+}
+
+.hero-intro span {
+  display: block;
+  margin-top: 0.45rem;
+  color: color-mix(in srgb, currentColor 72%, transparent);
+  font-size: clamp(0.78rem, 0.9vw, 0.92rem);
+  line-height: 1.7;
   letter-spacing: 0.04em;
 }
 
@@ -1352,7 +1397,7 @@ img {
   display: flex;
   gap: clamp(1rem, 2vw, 2rem);
   margin-right: calc(clamp(1rem, 3.5vw, 4.5rem) * -1);
-  padding: clamp(3.5rem, 6vw, 5.5rem) clamp(1rem, 3.5vw, 4.5rem) clamp(4rem, 7vw, 6rem) 0;
+  padding: clamp(3.5rem, 6vw, 5.5rem) clamp(1rem, 3.5vw, 4.5rem) 2.25rem 0;
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-snap-type: inline mandatory;
@@ -1362,6 +1407,50 @@ img {
 .character-tabs::-webkit-scrollbar,
 .portrait-rail::-webkit-scrollbar,
 .photo-grid::-webkit-scrollbar { display: none; }
+
+.archive-scrollbar {
+  --scrollbar-color: #7194ff;
+  position: relative;
+  z-index: 4;
+  height: 1.25rem;
+  outline: none;
+  touch-action: none;
+}
+
+.archive-scrollbar::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 0.5px);
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(241, 234, 223, 0.18);
+}
+
+.archive-scrollbar-thumb {
+  position: absolute;
+  top: calc(50% - 2px);
+  left: 0;
+  min-width: 2.625rem;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(113, 148, 255, 0.62), var(--scrollbar-color));
+  box-shadow: 0 0 1.2rem rgba(77, 115, 232, 0.22);
+  will-change: width, transform;
+  transition: height 220ms ease, top 220ms ease, box-shadow 220ms ease;
+}
+
+.archive-scrollbar:hover .archive-scrollbar-thumb,
+.archive-scrollbar:focus-visible .archive-scrollbar-thumb,
+.archive-scrollbar.is-dragging .archive-scrollbar-thumb {
+  top: calc(50% - 3px);
+  height: 6px;
+  box-shadow: 0 0 1.6rem rgba(77, 115, 232, 0.42);
+}
+
+.archive-scrollbar[hidden] { display: none; }
+.character-scrollbar { margin: 0 0 clamp(3.5rem, 6vw, 5.5rem); }
+.portrait-scrollbar { margin-top: 0.35rem; }
 
 .character-tab {
   position: relative;
@@ -1392,20 +1481,12 @@ img {
   transition: border-color 350ms ease, box-shadow 550ms var(--ease);
 }
 
-.character-visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(5, 8, 18, 0.7), transparent 42%);
-  pointer-events: none;
-}
-
 .character-visual img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center 18%;
-  filter: saturate(0.82) contrast(1.04);
+  filter: none;
   transform: scale(1.025);
   transition: filter 500ms ease, transform 800ms var(--ease);
 }
@@ -1486,7 +1567,7 @@ img {
 .character-tab:hover .character-visual img,
 .character-tab:focus-visible .character-visual img,
 .character-tab.is-active .character-visual img {
-  filter: saturate(1) contrast(1.02);
+  filter: none;
   transform: scale(1.075);
 }
 
@@ -1621,7 +1702,7 @@ img {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 12vw 2rem 0;
+  padding: 1rem 12vw 1rem 0;
   overflow-x: auto;
   outline: none;
   scrollbar-width: none;
@@ -1646,8 +1727,8 @@ img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0.78;
-  filter: grayscale(0.35);
+  opacity: 1;
+  filter: none;
   transition: transform 700ms var(--ease), opacity 350ms ease, filter 350ms ease;
 }
 
@@ -1655,7 +1736,7 @@ img {
 .portrait-thumb:focus-visible img,
 .portrait-thumb.is-current img {
   opacity: 1;
-  filter: grayscale(0);
+  filter: none;
   transform: none;
 }
 
@@ -1810,12 +1891,12 @@ img {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: saturate(0.82) contrast(1.03);
+  filter: none;
   transition: transform 900ms var(--ease), filter 600ms ease;
 }
 
 .photo-card:hover .photo-frame img,
-.photo-card:focus-visible .photo-frame img { filter: saturate(1) contrast(1.02) brightness(1.04); }
+.photo-card:focus-visible .photo-frame img { filter: none; }
 
 .photo-card-meta {
   display: grid;
@@ -3466,8 +3547,8 @@ img {
 /* Rebalance display type against explanatory copy across the archive. */
 .hero-klein { font-size: clamp(7rem, 18.5vw, 20rem); }
 .hero-blues { font-size: clamp(6.2rem, 15.5vw, 16.5rem); }
-.hero-note p { font-size: 1.3rem; }
-.hero-intro { font-size: clamp(0.94rem, 1.12vw, 1.08rem); line-height: 1.85; }
+.hero-intro strong { font-size: clamp(1.08rem, 1.4vw, 1.4rem); }
+.hero-intro span { font-size: clamp(0.84rem, 0.98vw, 0.98rem); }
 .section-head h2 { font-size: clamp(4.5rem, 9vw, 9.5rem); }
 .section-deck,
 .portrait-statement { font-size: clamp(1.1rem, 1.3vw, 1.25rem); line-height: 1.8; }
@@ -3535,11 +3616,13 @@ img {
   .hero-title { top: 17%; right: 0.5rem; left: 0.5rem; height: 48%; }
   .hero-klein { font-size: 24vw; }
   .hero-blues { right: 0.03em; font-size: 22vw; }
-  .hero-note { top: auto; right: 1rem; bottom: 8rem; width: 9rem; }
+  .hero-note { top: auto; right: 1rem; bottom: 8.5rem; width: 11rem; }
   .hero-note .cross { display: none; }
-  .hero-note p { font-size: 1.05rem; }
-  .hero-note small { display: none; }
-  .hero-intro { bottom: 2rem; left: 1rem; font-size: 0.86rem; }
+  .hero-note strong { font-size: 1.05rem; }
+  .hero-note small { display: block; margin-top: 0.4rem; font-size: 0.56rem; line-height: 1.4; }
+  .hero-intro { bottom: 1.5rem; left: 1rem; width: calc(100% - 2rem); padding-top: 0.75rem; }
+  .hero-intro strong { font-size: 0.95rem; }
+  .hero-intro span { margin-top: 0.3rem; font-size: 0.7rem; line-height: 1.55; }
   .weather-control { top: 4.5rem; bottom: auto; left: 1rem; transform: none; }
   .weather-request { padding: 0.62rem 0.8rem; }
   .weather-request span { font-size: 0.55rem; }
