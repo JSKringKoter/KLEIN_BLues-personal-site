@@ -487,6 +487,140 @@ const readerThemes = {
 
 const readerThemeClasses = Object.values(readerThemes).map((theme) => `is-${theme}`);
 
+let readerMusicRequestToken = 0;
+
+function formatMusicTime(value) {
+  if (!Number.isFinite(value) || value < 0) return "0:00";
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.floor(value % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
+function resetReaderMusicUi() {
+  const music = document.querySelector("#readerMusic");
+  const toggle = document.querySelector("#readerMusicToggle");
+  const progress = document.querySelector("#readerMusicProgress");
+  music.classList.remove("is-playing", "is-ready", "is-error");
+  toggle.disabled = true;
+  toggle.setAttribute("aria-label", "播放 Falling into Presence");
+  progress.value = "0";
+  progress.style.setProperty("--music-progress", "0%");
+  document.querySelector("#readerMusicStatus").textContent = "CONNECTING";
+  document.querySelector("#readerMusicTime").textContent = "0:00 / 4:16";
+}
+
+async function loadReaderMusicSource() {
+  const music = document.querySelector("#readerMusic");
+  const audio = document.querySelector("#readerMusicAudio");
+  const toggle = document.querySelector("#readerMusicToggle");
+  const status = document.querySelector("#readerMusicStatus");
+  const token = ++readerMusicRequestToken;
+  music.classList.remove("is-error");
+  music.dataset.loading = "true";
+  toggle.disabled = true;
+  status.textContent = "LOADING SCORE";
+
+  try {
+    const response = await fetch("/api/netease-track", { headers: { Accept: "application/json" } });
+    if (!response.ok) throw new Error("Music source unavailable");
+    const track = await response.json();
+    if (token !== readerMusicRequestToken || music.hidden) return;
+    audio.src = track.url;
+    audio.dataset.duration = String((Number(track.duration) || 256182) / 1000);
+    audio.load();
+    music.classList.add("is-ready");
+    toggle.disabled = false;
+    status.textContent = "READY · BORRTEX";
+  } catch {
+    if (token !== readerMusicRequestToken || music.hidden) return;
+    music.classList.add("is-error");
+    status.textContent = "SOURCE UNAVAILABLE";
+  } finally {
+    if (token === readerMusicRequestToken) delete music.dataset.loading;
+  }
+}
+
+function updateReaderMusic(novel) {
+  const music = document.querySelector("#readerMusic");
+  const audio = document.querySelector("#readerMusicAudio");
+  const isDeepBlue = String(novel?.title || "").trim() === "深蓝";
+  music.hidden = !isDeepBlue;
+
+  if (isDeepBlue) {
+    resetReaderMusicUi();
+    loadReaderMusicSource();
+  } else {
+    readerMusicRequestToken += 1;
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    resetReaderMusicUi();
+  }
+  return isDeepBlue ? music : null;
+}
+
+function setupReaderMusic() {
+  const music = document.querySelector("#readerMusic");
+  const audio = document.querySelector("#readerMusicAudio");
+  const toggle = document.querySelector("#readerMusicToggle");
+  const progress = document.querySelector("#readerMusicProgress");
+  const status = document.querySelector("#readerMusicStatus");
+  const time = document.querySelector("#readerMusicTime");
+
+  const updateTime = () => {
+    const duration = Number.isFinite(audio.duration) ? audio.duration : Number(audio.dataset.duration) || 256.182;
+    const ratio = duration > 0 ? Math.min(1, audio.currentTime / duration) : 0;
+    progress.value = String(Math.round(ratio * 1000));
+    progress.style.setProperty("--music-progress", `${ratio * 100}%`);
+    time.textContent = `${formatMusicTime(audio.currentTime)} / ${formatMusicTime(duration)}`;
+  };
+
+  toggle.addEventListener("click", async () => {
+    if (!audio.getAttribute("src")) return;
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        music.classList.add("is-error");
+        status.textContent = "PLAYBACK BLOCKED";
+      }
+    } else {
+      audio.pause();
+    }
+  });
+
+  audio.addEventListener("play", () => {
+    music.classList.add("is-playing");
+    toggle.setAttribute("aria-label", "暂停 Falling into Presence");
+    status.textContent = "PLAYING · BORRTEX";
+  });
+  audio.addEventListener("pause", () => {
+    music.classList.remove("is-playing");
+    toggle.setAttribute("aria-label", "播放 Falling into Presence");
+    if (!audio.ended && audio.currentTime > 0) status.textContent = "PAUSED · BORRTEX";
+  });
+  audio.addEventListener("ended", () => {
+    audio.currentTime = 0;
+    status.textContent = "READY · BORRTEX";
+    updateTime();
+  });
+  audio.addEventListener("loadedmetadata", updateTime);
+  audio.addEventListener("durationchange", updateTime);
+  audio.addEventListener("timeupdate", updateTime);
+  audio.addEventListener("error", () => {
+    if (music.hidden || !audio.getAttribute("src")) return;
+    music.classList.remove("is-playing", "is-ready");
+    music.classList.add("is-error");
+    toggle.disabled = true;
+    status.textContent = "SOURCE UNAVAILABLE";
+  });
+  progress.addEventListener("input", () => {
+    if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    audio.currentTime = (Number(progress.value) / 1000) * audio.duration;
+    updateTime();
+  });
+}
+
 function renderReaderOrnaments(novel) {
   const ornaments = document.querySelector("#readerOrnaments");
   const theme = readerThemes[String(novel.title).trim()] || "default";
@@ -1391,6 +1525,7 @@ async function openReader(novel, trigger, position, total = completedNovels.leng
   renderReaderPublication(novel);
   renderReaderToc(documentData.headings);
   document.querySelector("#readerBody").innerHTML = renderNovelDocument(documentData);
+  const readerMusic = updateReaderMusic(novel);
   const readerOrnaments = renderReaderOrnaments(novel);
   reader.scrollTop = 0;
   updateReaderProgress();
@@ -1404,6 +1539,7 @@ async function openReader(novel, trigger, position, total = completedNovels.leng
     gsap.set(reader, { autoAlpha: 1, yPercent: 100 });
     gsap.set(head, { autoAlpha: 0, y: -14 });
     gsap.set(titleItems, { autoAlpha: 0, y: 28 });
+    if (readerMusic) gsap.set(readerMusic, { autoAlpha: 0, y: 24, scale: 0.985 });
     if (readerOrnaments.length) gsap.set(readerOrnaments, { autoAlpha: 0 });
   }
 
@@ -1428,6 +1564,9 @@ async function openReader(novel, trigger, position, total = completedNovels.leng
     .to(reader, { yPercent: 0, duration: 0.82, ease: "power3.out" }, 0)
     .to(head, { autoAlpha: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.2)
     .to(titleItems, { autoAlpha: 1, y: 0, duration: 0.64, stagger: 0.07, ease: "power3.out" }, 0.28);
+  if (readerMusic) {
+    timeline.to(readerMusic, { autoAlpha: 1, y: 0, scale: 1, duration: 0.74, ease: "expo.out" }, 0.5);
+  }
   if (readerOrnaments.length) {
     timeline.to(readerOrnaments, { autoAlpha: 1, duration: 0.8, stagger: 0.045, ease: "power2.out" }, 0.34);
   }
@@ -1440,6 +1579,7 @@ function closeReader() {
     reader.classList.remove(...readerThemeClasses);
     delete reader.dataset.phase;
     document.querySelector("#readerOrnaments").innerHTML = "";
+    updateReaderMusic(null);
     reader.setAttribute("aria-hidden", "true");
     if (gsap) gsap.set(reader, { clearProps: "opacity,visibility,transform" });
     setInterfaceLocked(false);
@@ -1858,6 +1998,7 @@ function init() {
   setupReveals();
   setupHeroMotion();
   setupCursor();
+  setupReaderMusic();
   setupGlobalEvents();
   animateEntrance();
   initWeather();
