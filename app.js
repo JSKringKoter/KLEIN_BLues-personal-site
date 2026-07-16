@@ -864,6 +864,7 @@ function setupArchiveScrollbar(scroller, scrollbar) {
   let startScroll = 0;
   let targetScroll = scroller.scrollLeft;
   let glideFrame = 0;
+  let activePointerId = null;
 
   const getMetrics = () => {
     const trackWidth = scrollbar.clientWidth;
@@ -903,8 +904,14 @@ function setupArchiveScrollbar(scroller, scrollbar) {
   };
 
   const endDrag = () => {
+    if (!dragging) return;
     dragging = false;
     scrollbar.classList.remove("is-dragging");
+    if (activePointerId !== null && scrollbar.hasPointerCapture?.(activePointerId)) {
+      scrollbar.releasePointerCapture(activePointerId);
+    }
+    activePointerId = null;
+    document.dispatchEvent(new CustomEvent("archive-drag-end", { detail: { scrollbar } }));
   };
 
   scrollbar.addEventListener("pointerdown", (event) => {
@@ -921,6 +928,8 @@ function setupArchiveScrollbar(scroller, scrollbar) {
     startX = event.clientX;
     startScroll = targetScroll;
     scrollbar.classList.add("is-dragging");
+    activePointerId = event.pointerId;
+    document.dispatchEvent(new CustomEvent("archive-drag-start", { detail: { scrollbar } }));
     scrollbar.setPointerCapture(event.pointerId);
     event.preventDefault();
   });
@@ -932,6 +941,10 @@ function setupArchiveScrollbar(scroller, scrollbar) {
   });
   scrollbar.addEventListener("pointerup", endDrag);
   scrollbar.addEventListener("pointercancel", endDrag);
+  scrollbar.addEventListener("lostpointercapture", endDrag);
+  window.addEventListener("pointerup", endDrag, { passive: true });
+  window.addEventListener("pointercancel", endDrag, { passive: true });
+  window.addEventListener("blur", endDrag);
 
   scrollbar.addEventListener("keydown", (event) => {
     const amount = scroller.clientWidth * (event.shiftKey ? 0.6 : 0.18);
@@ -1638,6 +1651,7 @@ function setupCursor() {
   const cursor = document.querySelector("#cursor");
   const label = cursor.querySelector("span");
   let activeCursorTarget = null;
+  let lockedDragTarget = null;
   let cursorX = 0;
   let cursorY = 0;
   const cursorLabels = {
@@ -1678,6 +1692,18 @@ function setupCursor() {
   const syncTargetFrame = () => syncDragFrame() || syncImageFrame();
 
   const setCursorTarget = (source) => {
+    if (lockedDragTarget) {
+      activeCursorTarget = lockedDragTarget;
+      cursor.classList.add("is-active");
+      cursor.dataset.mode = "DRAG";
+      label.textContent = cursorLabels.DRAG || "";
+      cursor.style.removeProperty("--image-frame-width");
+      cursor.style.removeProperty("--image-frame-height");
+      cursor.style.setProperty("--drag-frame-width", "1.6rem");
+      cursor.style.setProperty("--drag-frame-height", "1.1rem");
+      requestAnimationFrame(syncTargetFrame);
+      return;
+    }
     const target = source?.closest?.("[data-cursor]");
     const mode = target?.dataset.cursor || "";
     activeCursorTarget = target || null;
@@ -1709,8 +1735,10 @@ function setupCursor() {
   window.addEventListener("pointermove", (event) => {
     cursorX = event.clientX;
     cursorY = event.clientY;
-    const hoveredTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-cursor]") || null;
-    if (hoveredTarget !== activeCursorTarget) setCursorTarget(hoveredTarget);
+    if (!lockedDragTarget) {
+      const hoveredTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-cursor]") || null;
+      if (hoveredTarget !== activeCursorTarget) setCursorTarget(hoveredTarget);
+    }
     if (!syncTargetFrame()) {
       cursor.style.left = `${event.clientX}px`;
       cursor.style.top = `${event.clientY}px`;
@@ -1722,6 +1750,16 @@ function setupCursor() {
   });
   document.addEventListener("pointerout", (event) => {
     setCursorTarget(event.relatedTarget);
+  });
+  document.addEventListener("archive-drag-start", (event) => {
+    lockedDragTarget = event.detail?.scrollbar || null;
+    setCursorTarget(lockedDragTarget);
+  });
+  document.addEventListener("archive-drag-end", (event) => {
+    if (!lockedDragTarget || event.detail?.scrollbar !== lockedDragTarget) return;
+    lockedDragTarget = null;
+    const target = document.elementFromPoint(cursorX, cursorY)?.closest?.("[data-cursor]") || null;
+    setCursorTarget(target);
   });
   document.addEventListener("focusin", (event) => setCursorTarget(event.target));
   document.addEventListener("focusout", (event) => setCursorTarget(event.relatedTarget));

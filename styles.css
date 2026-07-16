@@ -215,7 +215,6 @@ img {
 .cursor[data-mode="DRAG"]::before { left: 4px; }
 .cursor[data-mode="DRAG"]::after { right: 4px; }
 .cursor[data-mode="DRAG"] span { display: none; }
-
 .cursor[data-mode="IMAGE"] {
   width: var(--image-frame-width, 1.6rem);
   height: var(--image-frame-height, 1.6rem);
