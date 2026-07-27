@@ -3656,6 +3656,7 @@ img {
   letter-spacing: -0.025em;
 }
 
+.note-reader-body h1 { margin: 2.3em 0 0.85em; font-family: var(--serif); font-size: clamp(2.35rem, 4.6vw, 4rem); font-weight: 400; line-height: 1.08; letter-spacing: -0.035em; }
 .note-reader-body h2 { font-size: clamp(2rem, 4vw, 3.6rem); }
 .note-reader-body h3 { font-size: clamp(1.6rem, 2.8vw, 2.5rem); }
 .note-reader-body h4 { font-size: clamp(1.25rem, 2vw, 1.8rem); }
@@ -3666,6 +3667,9 @@ img {
 .note-reader-body ul,
 .note-reader-body ol { margin: 0 0 1.5rem; padding-left: 1.5rem; }
 .note-reader-body li { margin: 0.35rem 0; }
+.note-reader-body li > ul,
+.note-reader-body li > ol { margin: 0.45rem 0 0.65rem; }
+.note-reader-body li::marker { color: var(--blue); }
 .note-reader-body blockquote { margin: 1.8rem 0; padding: 1rem 1.4rem; color: rgba(17, 16, 14, 0.68); background: rgba(23, 70, 209, 0.06); border-left: 3px solid var(--blue); }
 .note-reader-body hr { margin: 3rem 0; border: 0; border-top: 1px solid rgba(17, 16, 14, 0.2); }
 .note-reader-body code { padding: 0.12em 0.35em; color: #173f91; background: rgba(23, 70, 209, 0.08); font-family: Consolas, "Courier New", monospace; font-size: 0.9em; }
@@ -3673,6 +3677,36 @@ img {
 .note-reader-body pre code { padding: 0; color: inherit; background: none; font-size: 0.82rem; white-space: pre; }
 .note-reader-body figure { margin: 2.5rem 0; padding: 0.8rem; background: rgba(255, 255, 255, 0.36); border: 1px solid rgba(17, 16, 14, 0.14); }
 .note-reader-body figure img { display: block; width: auto; max-width: 100%; max-height: 70vh; margin: 0 auto; object-fit: contain; }
+.note-reader-body > p > img,
+.note-reader-body > img { display: block; width: auto; max-width: 100%; max-height: 72vh; margin: 2.5rem auto; padding: 0.75rem; background: rgba(255, 255, 255, 0.36); border: 1px solid rgba(17, 16, 14, 0.14); object-fit: contain; }
+
+.note-reader-body table {
+  display: block;
+  width: 100%;
+  margin: 2rem 0 2.5rem;
+  overflow-x: auto;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.note-reader-body th,
+.note-reader-body td { min-width: 7rem; padding: 0.72rem 0.85rem; border: 1px solid rgba(17, 16, 14, 0.16); text-align: left; vertical-align: top; }
+.note-reader-body th { color: var(--blue-deep); background: rgba(23, 70, 209, 0.075); font-weight: 600; }
+.note-reader-body tr:nth-child(even) td { background: rgba(255, 255, 255, 0.2); }
+
+.note-accent { padding: 0.02em 0.18em; border-radius: 0.12em; }
+.note-accent--yellow { color: #6d5314; background: rgba(192, 149, 45, 0.13); }
+.note-accent--red { color: #913f37; background: rgba(159, 55, 42, 0.1); }
+.note-accent--blue { color: var(--blue-deep); background: rgba(23, 70, 209, 0.09); }
+.note-accent--green { color: #376a59; background: rgba(55, 106, 89, 0.11); }
+
+.note-reader-body .katex { font-size: 1.08em; }
+.note-reader-body .katex-display { margin: 2rem 0; padding: 1.2rem 1rem; overflow-x: auto; overflow-y: hidden; background: rgba(255, 255, 255, 0.28); border: 1px solid rgba(23, 70, 209, 0.14); }
+.note-reader-body .katex-display > .katex { min-width: max-content; text-align: center; }
+
+#techPreviewOpen.is-loading { opacity: 0.55; pointer-events: none; }
+#techPreviewOpen.is-loading::after { content: " · LOADING"; letter-spacing: 0.08em; }
 
 .viewer {
   display: grid;

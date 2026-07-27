@@ -104,13 +104,15 @@ const fallbackTechnicalNotes = [
   { id: "t09", category: "图形", title: "WebGL 中的一次色彩空间误判", date: "2026.01.19", read: "8 MIN", summary: "同一张纹理在设计稿与浏览器里颜色不同，问题可能并不在调色，而在采样、混合与输出编码。", tags: ["WebGL", "Color", "Shader"], code: "vec3 linear = pow(srgb, vec3(2.2));\nvec3 outputColor = pow(linear, vec3(1.0 / 2.2));" },
   { id: "t10", category: "工程", title: "把故障复盘写成可执行的改进", date: "2025.12.30", read: "13 MIN", summary: "好的复盘不寻找一个承担责任的人，而是识别哪些系统条件让错误得以发生，并为每项改进指定验证方式。", tags: ["Incident", "SRE", "Process"], code: "action_item = {\n  owner, deadline,\n  verification, rollback\n};" }
 ];
-const baseTechnicalNotes = Array.isArray(window.NOTION_NOTES) && window.NOTION_NOTES.length
+const notionTechnicalNotes = Array.isArray(window.NOTION_NOTES) && window.NOTION_NOTES.length
   ? window.NOTION_NOTES
   : fallbackTechnicalNotes;
+const legacyTechnicalNotes = Array.isArray(window.LEGACY_NOTES) ? window.LEGACY_NOTES : [];
+const baseTechnicalNotes = [...notionTechnicalNotes, ...legacyTechnicalNotes];
 const notionNoteContent = window.NOTION_NOTE_CONTENT || {};
 const technicalNotes = baseTechnicalNotes.map((note) => ({
   ...note,
-  content: notionNoteContent[note.title] || ""
+  content: note.content || notionNoteContent[note.title] || ""
 }));
 const defaultHeroIndices = [0, 6, 13, 22, 31, 38];
 const weatherHeroIndices = {
@@ -1126,7 +1128,7 @@ function renderNoteInline(value) {
   return source;
 }
 
-function renderNoteMarkdown(markdown) {
+function renderNoteMarkdownFallback(markdown) {
   const lines = String(markdown || "").replace(/\r/g, "").split("\n");
   const output = [];
   let inCode = false;
@@ -1215,6 +1217,106 @@ function renderNoteMarkdown(markdown) {
   return output.join("");
 }
 
+function normalizeLegacyFormula(value) {
+  const literalLeftBrace = "@@NOTE_LITERAL_LEFT_BRACE@@";
+  const literalRightBrace = "@@NOTE_LITERAL_RIGHT_BRACE@@";
+  return String(value || "")
+    .replace(/\\\\\\\{/g, literalLeftBrace)
+    .replace(/\\\\\\\}/g, literalRightBrace)
+    .replace(/\\\\/g, "\\")
+    .replace(/\\([{}])/g, "$1")
+    .replace(/\\\^/g, "^")
+    .replace(/\\_/g, "_")
+    .replace(/\\infin\b/g, "\\infty")
+    .replaceAll(literalLeftBrace, "\\{")
+    .replaceAll(literalRightBrace, "\\}")
+    .trim();
+}
+
+function normalizeNoteMarkdown(markdown) {
+  let source = String(markdown || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/^---\s*\n[\s\S]*?\n---\s*(?:\n|$)/, "")
+    .replace(/<span\s+color=["']?(yellow|red|blue|green)["']?\s*>/gi, (_, color) => `<span class="note-accent note-accent--${color.toLowerCase()}">`)
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/\\\$/g, "$");
+
+  source = source.replace(/\$\$([\s\S]*?)\$\$/g, (_, formula) => `\n$$\n${normalizeLegacyFormula(formula)}\n$$\n`);
+  source = source.replace(/\\\(([\s\S]*?)\\\)/g, (_, formula) => `\\(${normalizeLegacyFormula(formula)}\\)`);
+  source = source.replace(/(?<!\$)\$([^$\n]+?)\$(?!\$)/g, (_, formula) => `$${normalizeLegacyFormula(formula)}$`);
+  return source;
+}
+
+function sanitizeNoteHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+  template.content.querySelectorAll("script, iframe, object, embed, style, link, meta, form, input, button").forEach((element) => element.remove());
+  template.content.querySelectorAll("*").forEach((element) => {
+    Array.from(element.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const tag = element.tagName;
+      const globallyAllowed = ["class", "id", "title", "lang", "aria-label"].includes(name);
+      const tagAllowed = (tag === "A" && ["href", "target", "rel"].includes(name))
+        || (tag === "IMG" && ["src", "alt", "loading", "width", "height"].includes(name))
+        || (["TD", "TH"].includes(tag) && ["colspan", "rowspan"].includes(name))
+        || (tag === "CODE" && name === "data-language");
+      if (!globallyAllowed && !tagAllowed) element.removeAttribute(attribute.name);
+    });
+
+    if (element.tagName === "A") {
+      const href = element.getAttribute("href") || "";
+      if (!/^(https?:\/\/|mailto:|#|assets\/)/i.test(href)) element.removeAttribute("href");
+      if (/^https?:\/\//i.test(href)) {
+        element.target = "_blank";
+        element.rel = "noopener noreferrer";
+      }
+    }
+    if (element.tagName === "IMG") {
+      const src = element.getAttribute("src") || "";
+      if (!/^(https?:\/\/|assets\/)/i.test(src)) element.remove();
+      else element.loading = "lazy";
+    }
+  });
+  return template.innerHTML;
+}
+
+function renderNoteMarkdown(markdown) {
+  const normalized = normalizeNoteMarkdown(markdown);
+  if (!window.marked?.parse) return renderNoteMarkdownFallback(normalized);
+  const html = window.marked.parse(normalized, { gfm: true, breaks: false });
+  return sanitizeNoteHtml(html);
+}
+
+function renderNoteMath(container) {
+  if (typeof window.renderMathInElement !== "function") return;
+  window.renderMathInElement(container, {
+    delimiters: [
+      { left: "$$", right: "$$", display: true },
+      { left: "\\(", right: "\\)", display: false },
+      { left: "$", right: "$", display: false }
+    ],
+    ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
+    throwOnError: false,
+    strict: false
+  });
+}
+
+const techNoteContentCache = new Map();
+let techNoteRequestToken = 0;
+
+async function loadTechNoteContent(note) {
+  if (note.content) return note.content;
+  if (!note.contentSrc) return "";
+  if (techNoteContentCache.has(note.contentSrc)) return techNoteContentCache.get(note.contentSrc);
+  const response = await fetch(note.contentSrc);
+  if (!response.ok) throw new Error(`Unable to load ${note.contentSrc}`);
+  const content = await response.text();
+  techNoteContentCache.set(note.contentSrc, content);
+  note.content = content;
+  return content;
+}
+
 function updateNoteReaderProgress() {
   const max = noteReader.scrollHeight - noteReader.clientHeight;
   const progress = max > 0 ? Math.min(1, noteReader.scrollTop / max) : 0;
@@ -1222,15 +1324,30 @@ function updateNoteReaderProgress() {
   document.querySelector("#noteReaderPosition").textContent = `${String(Math.round(progress * 100)).padStart(2, "0")}%`;
 }
 
-function openTechNoteReader(note, trigger) {
-  if (!note?.content || noteReader.classList.contains("is-open")) return;
+async function openTechNoteReader(note, trigger) {
+  if ((!note?.content && !note?.contentSrc) || noteReader.classList.contains("is-open")) return;
+  const token = ++techNoteRequestToken;
+  trigger.classList.add("is-loading");
+  trigger.setAttribute("aria-busy", "true");
+  let content = "";
+  try {
+    content = await loadTechNoteContent(note);
+  } catch {
+    content = "> 这篇归档笔记暂时无法读取，请刷新页面后重试。";
+  } finally {
+    trigger.classList.remove("is-loading");
+    trigger.removeAttribute("aria-busy");
+  }
+  if (token !== techNoteRequestToken || noteReader.classList.contains("is-open")) return;
   noteReaderTrigger = trigger;
   document.querySelector("#noteReaderCategory").textContent = note.category;
   document.querySelector("#noteReaderStatus").textContent = note.status || "已同步";
   document.querySelector("#noteReaderDate").textContent = note.date;
   document.querySelector("#noteReaderTitle").textContent = note.title;
   document.querySelector("#noteReaderTags").innerHTML = note.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
-  document.querySelector("#noteReaderBody").innerHTML = renderNoteMarkdown(note.content);
+  const noteBody = document.querySelector("#noteReaderBody");
+  noteBody.innerHTML = renderNoteMarkdown(content);
+  renderNoteMath(noteBody);
   noteReader.scrollTop = 0;
   updateNoteReaderProgress();
 
@@ -1275,7 +1392,7 @@ function updateTechPreview(note, instant = false) {
     document.querySelector("#techPreviewCode").textContent = note.code || "";
     codeBlock.hidden = !note.code;
     document.querySelector("#techPreviewRead").textContent = note.status || note.read || "NOTION";
-    openButton.hidden = !note.content;
+    openButton.hidden = !note.content && !note.contentSrc;
     openButton.setAttribute("aria-label", `阅读《${note.title}》全文`);
   };
 
