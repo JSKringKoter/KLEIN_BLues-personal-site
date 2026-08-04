@@ -86,12 +86,30 @@ const viewer = document.querySelector("#viewer");
 const storyColors = ["#1746d1", "#d84c2f", "#2e6659", "#8a5c28", "#633e6b", "#283f66", "#171715"];
 const viewerColorCache = new Map();
 const photoWorks = [
-  { id: "ph01", title: "云际", src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "2026.05.07" } },
-  { id: "ph02", title: "前路", note: "出发，然后再次出发", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "2026.04.18" } },
-  { id: "ph03", title: "华灯初上", src: "./assets/images/photography/huadeng-chushang.jpg", thumb: "./assets/images/photography/huadeng-chushang-thumb.jpg", width: 3072, height: 4080, group: "南京 · 中国", color: "#735544", exif: { coordinates: "中国 · 南京", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/238 s · ISO 50 · EV 0", captured: "2026.03.13" } },
-  { id: "ph04", title: "人间清醒梦", note: "在中国最东边的小岛上，寻找最深邃的蓝。", src: "./assets/images/photography/renjian-qingxingmeng.jpg", thumb: "./assets/images/photography/renjian-qingxingmeng-thumb.jpg", width: 3072, height: 4096, group: "花鸟岛 · 浙江 · 中国", color: "#3f597d", exif: { coordinates: "中国 · 浙江 · 花鸟岛", camera: "Vivo X300 Pro", lens: "48 mm", exposure: "f/1.57 · 1/25 s · ISO 900 · EV 0", captured: "2026.05.03" } },
-  { id: "ph05", title: "江山", note: "于长江畔。", src: "./assets/images/photography/jiangshan.jpg", thumb: "./assets/images/photography/jiangshan-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#8a7974", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/200 s · ISO 7863 · EV 0", captured: "2026.02.08" } }
+  { id: "ph01", title: "云际", province: "辽宁省", geo: [123.4315, 41.8057], src: "./assets/images/photography/yunji.jpg", thumb: "./assets/images/photography/yunji-thumb.jpg", width: 3072, height: 4080, group: "沈阳 · 中国", color: "#526b82", exif: { coordinates: "中国 · 沈阳", camera: "Vivo X300 Pro", lens: "516 mm", exposure: "f/2.67 · 1/100 s · ISO 109 · EV 0", captured: "2026.05.07" } },
+  { id: "ph02", title: "前路", province: "江苏省", geo: [119.4129, 32.3942], note: "出发，然后再次出发", src: "./assets/images/photography/qianlu.jpg", thumb: "./assets/images/photography/qianlu-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#5f6259", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "200 mm", exposure: "f/2.67 · 1/113 s · ISO 50 · EV 0", captured: "2026.04.18" } },
+  { id: "ph03", title: "华灯初上", province: "江苏省", geo: [118.7969, 32.0603], src: "./assets/images/photography/huadeng-chushang.jpg", thumb: "./assets/images/photography/huadeng-chushang-thumb.jpg", width: 3072, height: 4080, group: "南京 · 中国", color: "#735544", exif: { coordinates: "中国 · 南京", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/238 s · ISO 50 · EV 0", captured: "2026.03.13" } },
+  { id: "ph04", title: "人间清醒梦", province: "浙江省", geo: [122.684, 30.856], note: "在中国最东边的小岛上，寻找最深邃的蓝。", src: "./assets/images/photography/renjian-qingxingmeng.jpg", thumb: "./assets/images/photography/renjian-qingxingmeng-thumb.jpg", width: 3072, height: 4096, group: "花鸟岛 · 浙江 · 中国", color: "#3f597d", exif: { coordinates: "中国 · 浙江 · 花鸟岛", camera: "Vivo X300 Pro", lens: "48 mm", exposure: "f/1.57 · 1/25 s · ISO 900 · EV 0", captured: "2026.05.03" } },
+  { id: "ph05", title: "江山", province: "江苏省", geo: [119.4129, 32.3942], note: "于长江畔。", src: "./assets/images/photography/jiangshan.jpg", thumb: "./assets/images/photography/jiangshan-thumb.jpg", width: 4080, height: 3072, group: "扬州 · 中国", color: "#8a7974", exif: { coordinates: "中国 · 扬州", camera: "Vivo X300 Pro", lens: "85 mm", exposure: "f/2.67 · 1/200 s · ISO 7863 · EV 0", captured: "2026.02.08" } }
 ];
+
+const atlasProvinceCopy = {
+  "辽宁省": {
+    display: "辽宁",
+    english: "LIAONING",
+    summary: "北方的云层从城市上空经过，一次长焦把遥远天际收进了画面。"
+  },
+  "江苏省": {
+    display: "江苏",
+    english: "JIANGSU",
+    summary: "长江与运河交汇的地方，三次快门留下了城市、灯火与远路。"
+  },
+  "浙江省": {
+    display: "浙江",
+    english: "ZHEJIANG",
+    summary: "越过海面抵达花鸟岛，岛屿在夜色里保留了一场清醒的蓝色梦境。"
+  }
+};
 const fallbackTechnicalNotes = [
   { id: "t01", category: "前端", title: "把网页动画留在合成层", date: "2026.06.18", read: "8 MIN", summary: "从一次滚动卡顿出发，整理 transform、opacity、布局抖动与图层提升之间真正值得记住的边界。", tags: ["Performance", "GSAP", "CSS"], code: "const frame = () => {\n  element.style.transform = `translate3d(0, ${offset}px, 0)`;\n  requestAnimationFrame(frame);\n};" },
   { id: "t02", category: "前端", title: "React 并发渲染中的状态优先级", date: "2026.05.27", read: "11 MIN", summary: "用搜索、筛选和昂贵列表渲染作为例子，区分立即反馈与可延迟更新，避免把所有优化都塞进 memo。", tags: ["React", "Concurrency", "UX"], code: "startTransition(() => {\n  setQuery(nextQuery);\n});\n\nconst visible = useDeferredValue(results);" },
@@ -978,19 +996,389 @@ async function selectPortrait(index) {
   });
 }
 
-function renderPhotography() {
-  const grid = document.querySelector("#photoGrid");
-  grid.innerHTML = photoWorks.map((item, index) => `
-    <button class="photo-card reveal" type="button" data-photo-index="${index}" aria-label="查看摄影作品《${escapeHtml(item.title)}》">
-      <span class="photo-frame" data-cursor="IMAGE" style="--photo-ratio:${item.width} / ${item.height}"><img src="${item.thumb || item.src}" alt="${escapeHtml(item.title)}" loading="${index < 2 ? "eager" : "lazy"}" /></span>
-      <span class="photo-card-meta"><b>${String(index + 1).padStart(2, "0")}</b><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.group)}</small></span>
-      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
-    </button>
-  `).join("");
+function getProvinceDisplayName(name) {
+  return name.replace(/(壮族自治区|回族自治区|维吾尔自治区|自治区|特别行政区|省|市)$/u, "");
+}
 
-  grid.querySelectorAll("[data-photo-index]").forEach((card) => {
-    card.addEventListener("click", () => openViewer(photoWorks, Number(card.dataset.photoIndex), card));
+function visitGeoPositions(node, callback) {
+  if (!Array.isArray(node)) return;
+  if (typeof node[0] === "number" && typeof node[1] === "number") {
+    callback(node);
+    return;
+  }
+  node.forEach((child) => visitGeoPositions(child, callback));
+}
+
+function createAtlasProjection(features, width, height, padding) {
+  let minLongitude = Infinity;
+  let maxLongitude = -Infinity;
+  let minLatitude = Infinity;
+  let maxLatitude = -Infinity;
+
+  features.forEach((feature) => {
+    visitGeoPositions(feature.geometry.coordinates, ([longitude, latitude]) => {
+      minLongitude = Math.min(minLongitude, longitude);
+      maxLongitude = Math.max(maxLongitude, longitude);
+      minLatitude = Math.min(minLatitude, latitude);
+      maxLatitude = Math.max(maxLatitude, latitude);
+    });
   });
+
+  const longitudeFactor = Math.cos((((minLatitude + maxLatitude) / 2) * Math.PI) / 180);
+  const geographicWidth = (maxLongitude - minLongitude) * longitudeFactor;
+  const geographicHeight = maxLatitude - minLatitude;
+  const scale = Math.min(
+    (width - padding * 2) / geographicWidth,
+    (height - padding * 2) / geographicHeight
+  );
+  const drawingWidth = geographicWidth * scale;
+  const drawingHeight = geographicHeight * scale;
+  const offsetX = (width - drawingWidth) / 2;
+  const offsetY = (height - drawingHeight) / 2;
+
+  return ([longitude, latitude]) => [
+    offsetX + (longitude - minLongitude) * longitudeFactor * scale,
+    offsetY + (maxLatitude - latitude) * scale
+  ];
+}
+
+function geoFeatureToPath(feature, project) {
+  const polygons = feature.geometry.type === "MultiPolygon"
+    ? feature.geometry.coordinates
+    : [feature.geometry.coordinates];
+
+  return polygons.map((polygon) => polygon.map((ring) => {
+    const points = ring.map((position) => project(position));
+    if (!points.length) return "";
+    return `M${points.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join("L")}Z`;
+  }).join("")).join("");
+}
+
+function getProjectedFeatureBounds(feature, project) {
+  const bounds = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  visitGeoPositions(feature.geometry.coordinates, (position) => {
+    const [x, y] = project(position);
+    bounds.minX = Math.min(bounds.minX, x);
+    bounds.minY = Math.min(bounds.minY, y);
+    bounds.maxX = Math.max(bounds.maxX, x);
+    bounds.maxY = Math.max(bounds.maxY, y);
+  });
+  return bounds;
+}
+
+function getAtlasFocusViewBox(feature, project, shell) {
+  const bounds = getProjectedFeatureBounds(feature, project);
+  const featureWidth = Math.max(8, bounds.maxX - bounds.minX);
+  const featureHeight = Math.max(8, bounds.maxY - bounds.minY);
+  const aspect = Math.max(0.7, shell.clientWidth / Math.max(shell.clientHeight, 1));
+  let width = Math.max(118, featureWidth * 2.8, featureHeight * 1.75);
+  let height = Math.max(88, featureHeight * 2.35, featureWidth * 1.08);
+
+  if (width / height < aspect) width = height * aspect;
+  else height = width / aspect;
+
+  const centerX = (bounds.minX + bounds.maxX) / 2;
+  const centerY = (bounds.minY + bounds.maxY) / 2;
+  return { x: centerX - width / 2, y: centerY - height / 2, width, height };
+}
+
+function readAtlasViewBox(svg) {
+  const values = svg.getAttribute("viewBox").trim().split(/\s+/u).map(Number);
+  return { x: values[0], y: values[1], width: values[2], height: values[3] };
+}
+
+function projectAtlasPointToShell(point, viewBox, shell) {
+  const scale = Math.min(shell.clientWidth / viewBox.width, shell.clientHeight / viewBox.height);
+  const renderedWidth = viewBox.width * scale;
+  const renderedHeight = viewBox.height * scale;
+  return {
+    x: (shell.clientWidth - renderedWidth) / 2 + (point[0] - viewBox.x) * scale,
+    y: (shell.clientHeight - renderedHeight) / 2 + (point[1] - viewBox.y) * scale
+  };
+}
+
+function layoutAtlasConnections(works, project, svg, shell, connections, photoCallouts) {
+  if (!works.length || photoCallouts.hidden) return;
+  const viewBox = readAtlasViewBox(svg);
+  const width = shell.clientWidth;
+  const height = shell.clientHeight;
+  const markerKeys = new Set();
+  const paths = [];
+
+  connections.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  works.forEach((work, index) => {
+    const card = photoCallouts.querySelector(`[data-atlas-callout="${index}"]`);
+    if (!card || !work.geo) return;
+    const anchor = projectAtlasPointToShell(project(work.geo), viewBox, shell);
+    const left = card.offsetLeft;
+    const top = card.offsetTop;
+    const right = left + card.offsetWidth;
+    const bottom = top + card.offsetHeight;
+    const centerX = (left + right) / 2;
+    const endX = anchor.x <= centerX ? left : right;
+    const endY = Math.max(top + 12, Math.min(bottom - 12, anchor.y));
+    const controlX = anchor.x + (endX - anchor.x) * 0.58;
+    const markerKey = work.geo.join(",");
+
+    paths.push(`<path class="atlas-connection-line" pathLength="1" d="M ${anchor.x.toFixed(1)} ${anchor.y.toFixed(1)} C ${controlX.toFixed(1)} ${anchor.y.toFixed(1)}, ${controlX.toFixed(1)} ${endY.toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}"></path>`);
+    if (!markerKeys.has(markerKey)) {
+      markerKeys.add(markerKey);
+      paths.push(`<circle class="atlas-place-ring" cx="${anchor.x.toFixed(1)}" cy="${anchor.y.toFixed(1)}" r="8"></circle>`);
+      paths.push(`<circle class="atlas-place-dot" cx="${anchor.x.toFixed(1)}" cy="${anchor.y.toFixed(1)}" r="2.7"></circle>`);
+    }
+  });
+  connections.innerHTML = paths.join("");
+}
+
+function renderAtlasCallouts(works, project, svg, shell, calloutLayer, connections, photoCallouts) {
+  if (!works.length) {
+    calloutLayer.hidden = true;
+    return;
+  }
+
+  const desktopPositions = [
+    [5, 21], [76, 15], [75, 66], [6, 67], [40, 6]
+  ];
+  const mobilePositions = [
+    [3, 18], [62, 13], [61, 69], [4, 68], [35, 5]
+  ];
+  const positions = shell.clientWidth <= 700 ? mobilePositions : desktopPositions;
+  calloutLayer.hidden = false;
+  photoCallouts.hidden = false;
+  photoCallouts.innerHTML = works.map((work, index) => {
+    const [left, top] = positions[index % positions.length];
+    return `
+      <button class="atlas-photo-callout" type="button" data-atlas-callout="${index}" aria-label="查看摄影作品《${escapeHtml(work.title)}》" style="left:${left}%;top:${top}%;--atlas-callout-ratio:${work.width} / ${work.height}">
+        <span class="atlas-callout-image" data-cursor="IMAGE"><img src="${work.thumb || work.src}" alt="${escapeHtml(work.title)}" loading="eager" decoding="async" /></span>
+        <span class="atlas-callout-copy"><small>${escapeHtml(work.exif?.coordinates || work.group)}</small><strong>${escapeHtml(work.title)}</strong></span>
+      </button>
+    `;
+  }).join("");
+
+  photoCallouts.querySelectorAll("[data-atlas-callout]").forEach((card) => {
+    card.addEventListener("click", () => openViewer(works, Number(card.dataset.atlasCallout), card));
+  });
+
+  requestAnimationFrame(() => {
+    layoutAtlasConnections(works, project, svg, shell, connections, photoCallouts);
+    calloutLayer.classList.add("is-visible");
+    if (!window.gsap) return;
+    gsap.fromTo(photoCallouts.children,
+      { autoAlpha: 0, scale: 0.88, y: 16 },
+      { autoAlpha: 1, scale: 1, y: 0, duration: 0.72, stagger: 0.09, ease: "expo.out", overwrite: true }
+    );
+  });
+}
+
+async function renderTravelMap() {
+  const svg = document.querySelector("#atlasMap");
+  const shell = document.querySelector("#atlasMapShell");
+  const provinceLayer = document.querySelector("#atlasProvinceLayer");
+  const markerLayer = document.querySelector("#atlasMarkerLayer");
+  const status = document.querySelector("#atlasMapStatus");
+  const resetButton = document.querySelector("#atlasReset");
+  const focusCaption = document.querySelector("#atlasFocusCaption");
+  const calloutLayer = document.querySelector("#atlasCalloutLayer");
+  const connections = document.querySelector("#atlasConnections");
+  const photoCallouts = document.querySelector("#atlasPhotoCallouts");
+  if (!svg || !shell || !provinceLayer || !markerLayer || !status || !resetButton || !focusCaption || !calloutLayer || !connections || !photoCallouts) return;
+
+  const provinceWorks = photoWorks.reduce((groups, work) => {
+    if (!work.province) return groups;
+    if (!groups.has(work.province)) groups.set(work.province, []);
+    groups.get(work.province).push(work);
+    return groups;
+  }, new Map());
+
+  document.querySelector("#atlasCoverage").textContent = `${String(provinceWorks.size).padStart(2, "0")} REGIONS / ${String(photoWorks.length).padStart(2, "0")} WORKS`;
+
+  try {
+    const response = await fetch("./assets/maps/china-provinces.json", { cache: "force-cache" });
+    if (!response.ok) throw new Error(`Map request failed with ${response.status}`);
+    const geoJson = await response.json();
+    const features = geoJson.features.filter((feature) => feature.properties?.name && feature.geometry?.coordinates);
+    const project = createAtlasProjection(features, 900, 650, 32);
+    const svgNamespace = "http://www.w3.org/2000/svg";
+    const fullViewBox = { x: 0, y: 0, width: 900, height: 650 };
+    let selectedFeature = null;
+    let selectedWorks = [];
+    let atlasTransitionVersion = 0;
+
+    const clearCallouts = () => {
+      calloutLayer.classList.remove("is-visible");
+      calloutLayer.hidden = true;
+      photoCallouts.hidden = true;
+      photoCallouts.innerHTML = "";
+      connections.innerHTML = "";
+    };
+
+    const animateViewBox = (target, onComplete) => {
+      const value = `${target.x} ${target.y} ${target.width} ${target.height}`;
+      if (!window.gsap) {
+        svg.setAttribute("viewBox", value);
+        onComplete?.();
+        return;
+      }
+      gsap.killTweensOf(svg);
+      gsap.to(svg, { attr: { viewBox: value }, duration: 0.88, ease: "power3.inOut", overwrite: true, onComplete });
+    };
+
+    const updateCaption = (feature, works) => {
+      const name = feature.properties.name;
+      const copy = atlasProvinceCopy[name];
+      document.querySelector("#atlasProvinceEn").textContent = copy?.english || "UNRECORDED TERRITORY";
+      document.querySelector("#atlasProvinceName").textContent = copy?.display || getProvinceDisplayName(name);
+      document.querySelector("#atlasProvinceSummary").textContent = copy?.summary
+        || "这片地域尚未留下影像。地图先为它保留一处空白，等待未来的抵达。";
+      document.querySelector("#atlasWorkCount").textContent = works.length
+        ? `${String(works.length).padStart(2, "0")} ${works.length === 1 ? "WORK" : "WORKS"}`
+        : "NO PHOTOGRAPH YET";
+      focusCaption.hidden = false;
+      if (window.gsap) gsap.fromTo(focusCaption, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.7, delay: 0.35, ease: "power3.out", overwrite: true });
+    };
+
+    const selectProvince = (feature) => {
+      const name = feature.properties.name;
+      const works = provinceWorks.get(name) || [];
+      const transitionVersion = ++atlasTransitionVersion;
+      const provincePaths = Array.from(provinceLayer.querySelectorAll(".atlas-province"));
+      selectedFeature = feature;
+      selectedWorks = works;
+      clearCallouts();
+      shell.classList.add("is-focused");
+      svg.classList.add("is-focused", "is-zooming");
+      markerLayer.style.display = "none";
+      resetButton.hidden = false;
+      updateCaption(feature, works);
+
+      provincePaths.forEach((path) => {
+        const isSelected = path.dataset.province === name;
+        path.style.display = "";
+        path.classList.toggle("is-selected", isSelected);
+        path.setAttribute("aria-pressed", String(isSelected));
+      });
+
+      const nonSelectedPaths = provincePaths.filter((path) => path.dataset.province !== name);
+      if (window.gsap) {
+        gsap.killTweensOf(provincePaths);
+        gsap.to(nonSelectedPaths, {
+          opacity: 0,
+          duration: 0.14,
+          ease: "power2.out",
+          overwrite: true,
+          onComplete: () => {
+            if (transitionVersion !== atlasTransitionVersion) return;
+            nonSelectedPaths.forEach((path) => { path.style.display = "none"; });
+          }
+        });
+      } else {
+        nonSelectedPaths.forEach((path) => { path.style.display = "none"; });
+      }
+
+      const focusViewBox = getAtlasFocusViewBox(feature, project, shell);
+      animateViewBox(focusViewBox, () => {
+        if (selectedFeature !== feature || transitionVersion !== atlasTransitionVersion) return;
+        svg.classList.remove("is-zooming");
+        renderAtlasCallouts(works, project, svg, shell, calloutLayer, connections, photoCallouts);
+      });
+    };
+
+    const resetMap = () => {
+      if (!selectedFeature) return;
+      const transitionVersion = ++atlasTransitionVersion;
+      const provincePaths = Array.from(provinceLayer.querySelectorAll(".atlas-province"));
+      selectedFeature = null;
+      selectedWorks = [];
+      clearCallouts();
+      svg.classList.add("is-zooming");
+      if (window.gsap) gsap.killTweensOf(provincePaths);
+      if (window.gsap) gsap.to(focusCaption, { autoAlpha: 0, y: 10, duration: 0.35, ease: "power2.in", overwrite: true, onComplete: () => { focusCaption.hidden = true; } });
+      else focusCaption.hidden = true;
+      animateViewBox(fullViewBox, () => {
+        if (transitionVersion !== atlasTransitionVersion) return;
+        provincePaths.forEach((path) => {
+          path.style.display = "";
+          path.classList.remove("is-selected");
+          path.setAttribute("aria-pressed", "false");
+        });
+        markerLayer.style.display = "";
+        shell.classList.remove("is-focused");
+        svg.classList.remove("is-focused", "is-zooming");
+        resetButton.hidden = true;
+        if (window.gsap) {
+          gsap.fromTo(provincePaths,
+            { opacity: 0 },
+            { opacity: 1, duration: 0.3, stagger: 0.004, ease: "power2.out", overwrite: true, clearProps: "opacity" }
+          );
+        }
+      });
+    };
+
+    features.forEach((feature, index) => {
+      const name = feature.properties.name;
+      const works = provinceWorks.get(name) || [];
+      const path = document.createElementNS(svgNamespace, "path");
+      const title = document.createElementNS(svgNamespace, "title");
+      title.textContent = `${name}，${works.length ? `${works.length} 件摄影作品` : "暂无摄影作品"}`;
+      path.append(title);
+      path.setAttribute("d", geoFeatureToPath(feature, project));
+      path.setAttribute("fill-rule", "evenodd");
+      path.setAttribute("role", "button");
+      path.setAttribute("tabindex", "0");
+      path.setAttribute("aria-pressed", "false");
+      path.setAttribute("aria-label", title.textContent);
+      path.setAttribute("data-cursor", works.length ? "VIEW" : "EXPLORE");
+      path.dataset.province = name;
+      path.style.setProperty("--atlas-order", index);
+      path.classList.add("atlas-province");
+      if (works.length) path.classList.add("has-works");
+
+      path.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.currentTarget.blur();
+        selectProvince(feature);
+      });
+      path.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        selectProvince(feature);
+      });
+      provinceLayer.append(path);
+
+      if (!works.length) return;
+      const anchor = feature.properties.centroid || feature.properties.center;
+      if (!anchor) return;
+      const [x, y] = project(anchor);
+      const marker = document.createElementNS(svgNamespace, "g");
+      marker.setAttribute("class", "atlas-marker");
+      marker.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
+      marker.dataset.province = name;
+      marker.innerHTML = `<circle class="atlas-marker-ring" r="10"></circle><circle class="atlas-marker-core" r="3.2"></circle>`;
+      markerLayer.append(marker);
+    });
+
+    resetButton.addEventListener("click", resetMap);
+    svg.addEventListener("click", (event) => {
+      if (event.target === svg) resetMap();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && selectedFeature) resetMap();
+    });
+    const resizeObserver = new ResizeObserver(() => {
+      if (!selectedFeature) return;
+      const nextViewBox = getAtlasFocusViewBox(selectedFeature, project, shell);
+      svg.setAttribute("viewBox", `${nextViewBox.x} ${nextViewBox.y} ${nextViewBox.width} ${nextViewBox.height}`);
+      layoutAtlasConnections(selectedWorks, project, svg, shell, connections, photoCallouts);
+    });
+    resizeObserver.observe(shell);
+
+    status.hidden = true;
+    svg.classList.add("is-ready");
+  } catch (error) {
+    console.warn("Unable to render travel map", error);
+    status.classList.add("is-error");
+    status.querySelector("p").textContent = "地图暂时未能展开，请稍后刷新重试";
+  }
 }
 
 function setupArchiveScrollbar(scroller, scrollbar) {
@@ -1465,7 +1853,6 @@ function setupPortraitRail() {
   const rail = document.querySelector("#portraitRail");
   setupArchiveScrollbar(document.querySelector("#characterTabs"), document.querySelector("#characterScrollbar"));
   setupArchiveScrollbar(rail, document.querySelector("#portraitScrollbar"));
-  setupArchiveScrollbar(document.querySelector("#photoGrid"), document.querySelector("#photoScrollbar"));
 }
 
 function syncReaderBackdropHeight() {
@@ -2109,7 +2496,7 @@ function init() {
   renderNovels();
   setupFictionSwitch();
   renderCharacters();
-  renderPhotography();
+  renderTravelMap();
   renderTechnicalNotes();
   setupPortraitRail();
   setupReveals();

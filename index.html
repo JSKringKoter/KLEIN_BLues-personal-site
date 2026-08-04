@@ -51,7 +51,7 @@
     </script>
     <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./vendor/katex/katex.min.css" />
-    <link rel="stylesheet" href="./styles.css?v=63" />
+    <link rel="stylesheet" href="./styles.css?v=68" />
   </head>
   <body>
     <div class="boot" id="boot" aria-hidden="true">
@@ -75,7 +75,7 @@
         <a href="#fiction"><span>01</span>文字</a>
         <a href="#portraits"><span>02</span>画中人</a>
         <a href="#notes"><span>03</span>随笔</a>
-        <a href="#photography"><span>04</span>浮光记</a>
+        <a href="#travel-map"><span>04</span>山河行迹</a>
         <a href="#about"><span>05</span>关于</a>
       </nav>
       <div class="edition"><span>Independent archive</span><b>MMXXVI</b></div>
@@ -213,15 +213,44 @@
         </div>
       </section>
 
-      <section class="photography section" id="photography" aria-labelledby="photographyTitle">
-        <header class="photography-heading reveal">
-          <p><span>04</span> Notes of borrowed light</p>
-          <h2 id="photographyTitle">浮光<em>记</em></h2>
-          <div class="photography-statement">光线经过世界，<br />快门只留下它短暂的停顿。</div>
+      <section class="travel-map section" id="travel-map" aria-labelledby="travelMapTitle">
+        <header class="atlas-heading reveal">
+          <p><span>04</span> Atlas of travelled light</p>
+          <h2 id="travelMapTitle">山河<em>行迹</em></h2>
+          <div class="atlas-statement">让光影回到它发生的地方。<br />沿着山河，重访快门停驻的片刻。</div>
         </header>
-        <div class="photo-grid" id="photoGrid" tabindex="0" aria-label="摄影作品横向画廊"></div>
-        <div class="archive-scrollbar photography-scrollbar reveal" id="photoScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览摄影作品" aria-controls="photoGrid" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
-          <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+
+        <div class="atlas-map-shell reveal" id="atlasMapShell">
+          <div class="atlas-map-meta" aria-hidden="true">
+            <span>CHINA · PROVINCIAL ARCHIVE</span>
+            <i></i>
+            <span id="atlasCoverage">03 REGIONS / 05 WORKS</span>
+          </div>
+          <button class="atlas-reset" id="atlasReset" type="button" hidden data-cursor="BACK" aria-label="返回全国地图">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg>
+            <span>返回全国</span>
+          </button>
+          <svg class="atlas-map" id="atlasMap" viewBox="0 0 900 650" role="img" aria-labelledby="atlasMapLabel atlasMapDescription">
+            <title id="atlasMapLabel">中国摄影足迹地图</title>
+            <desc id="atlasMapDescription">选择省级行政区，地图会放大到该区域，并以连线展示当地摄影作品。</desc>
+            <g id="atlasProvinceLayer"></g>
+            <g id="atlasMarkerLayer"></g>
+          </svg>
+          <div class="atlas-callout-layer" id="atlasCalloutLayer" aria-live="polite" hidden>
+            <svg class="atlas-connections" id="atlasConnections" aria-hidden="true"></svg>
+            <div class="atlas-photo-callouts" id="atlasPhotoCallouts"></div>
+          </div>
+          <div class="atlas-focus-caption" id="atlasFocusCaption" aria-live="polite" hidden>
+            <span id="atlasProvinceEn">JIANGSU</span>
+            <h3 id="atlasProvinceName">江苏</h3>
+            <p id="atlasProvinceSummary"></p>
+            <small id="atlasWorkCount">3 works</small>
+          </div>
+          <div class="atlas-map-status" id="atlasMapStatus" role="status">
+            <span></span>
+            <p>正在展开山河经纬</p>
+          </div>
+          <p class="atlas-map-hint"><span aria-hidden="true"></span>选择一处省份，让镜头靠近</p>
         </div>
       </section>
 
@@ -355,6 +384,6 @@
     <script src="./notion-notes.js?v=1"></script>
     <script src="./notion-content.js?v=1"></script>
     <script src="./legacy-notes.js?v=1"></script>
-    <script src="./app.js?v=57"></script>
+    <script src="./app.js?v=62"></script>
   </body>
 </html>
