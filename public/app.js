@@ -2408,7 +2408,7 @@ function setupCursor() {
     cursorY = event.clientY;
     if (!lockedDragTarget) {
       const hoveredTarget = document.elementFromPoint(event.clientX, event.clientY)?.closest?.("[data-cursor]") || null;
-      if (hoveredTarget !== activeCursorTarget) setCursorTarget(hoveredTarget);
+      if (hoveredTarget !== activeCursorTarget || (hoveredTarget?.dataset.cursor || "") !== (cursor.dataset.mode || "")) setCursorTarget(hoveredTarget);
     }
     if (!syncTargetFrame()) {
       cursor.style.left = `${event.clientX}px`;
@@ -2431,6 +2431,20 @@ function setupCursor() {
     lockedDragTarget = null;
     const target = document.elementFromPoint(cursorX, cursorY)?.closest?.("[data-cursor]") || null;
     setCursorTarget(target);
+  });
+  // 三维舞台会在同一元素上动态改写 data-cursor
+  document.addEventListener("kb:cursor-refresh", () => {
+    if (lockedDragTarget) return;
+    const target = document.elementFromPoint(cursorX, cursorY)?.closest?.("[data-cursor]") || null;
+    setCursorTarget(target);
+    if (!syncTargetFrame()) {
+      cursor.style.left = `${cursorX}px`;
+      cursor.style.top = `${cursorY}px`;
+    }
+  });
+  // 三维场景里的目标（卡片、画作）在移动：只让四角框跟上，不重置光标
+  document.addEventListener("kb:cursor-frame", () => {
+    if (!syncTargetFrame()) return;
   });
   document.addEventListener("focusin", (event) => setCursorTarget(event.target));
   document.addEventListener("focusout", (event) => setCursorTarget(event.relatedTarget));
@@ -2482,7 +2496,13 @@ function setupGlobalEvents() {
 
 function animateEntrance() {
   const boot = document.querySelector("#boot");
-  if (!useMotion()) {
+  let seen = false;
+  try {
+    // 开屏只在本次会话第一次打开首页时播放；从子页面返回、刷新都不再重播
+    seen = sessionStorage.getItem("kb-booted") === "1";
+    sessionStorage.setItem("kb-booted", "1");
+  } catch {}
+  if (!useMotion() || seen) {
     boot.remove();
     return;
   }
@@ -2520,6 +2540,12 @@ function animateEntrance() {
 }
 
 function init() {
+  // 世界观子页面：只需要站点光标与图片查看器，内容由三维模块自己渲染
+  if (document.querySelector("[data-kb-lite]")) {
+    setupCursor();
+    setupGlobalEvents();
+    return;
+  }
   if (document.querySelector("[data-portrait-page]")) {
     renderCharacters();
     setupPortraitRail();
@@ -2529,20 +2555,33 @@ function init() {
     return;
   }
   renderHero();
-  renderNovels();
-  setupFictionSwitch();
+  // 小说、随笔与地图已迁移到三维舞台（src/scripts/stage），旧 DOM 不存在时跳过
+  if (document.querySelector("#novelIndex")) {
+    renderNovels();
+    setupFictionSwitch();
+  }
   if (document.querySelector("#characterTabs")) renderCharacters();
-  renderTravelMap();
-  renderTechnicalNotes();
+  if (document.querySelector("#atlasMap")) renderTravelMap();
+  if (document.querySelector("#techFilters")) renderTechnicalNotes();
   if (document.querySelector("#portraitRail")) setupPortraitRail();
   setupReveals();
   setupHeroMotion();
   setupCursor();
-  setupReaderMusic();
+  if (document.querySelector("#readerMusic")) setupReaderMusic();
   setupGlobalEvents();
   animateEntrance();
   initWeather();
 }
+
+// 供 src/scripts/stage 的三维模块共用：查看器与数据
+window.KB = {
+  openViewer,
+  closeViewer,
+  photoWorks,
+  atlasProvinceCopy,
+  allPaintings,
+  technicalNotes
+};
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", init, { once: true });

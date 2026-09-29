@@ -1,0 +1,71 @@
+---
+// 世界观：两张静态的蓝图线稿——左：苍穹的核心（晶体 + 两道晶环）；右：核心战机。
+// 线稿在构建时由 src/scripts/stage/worlds/linework.ts 投影生成；交互见 src/scripts/stage/worlds/worlds.ts。
+import { coreLinework, jetLinework } from "../../scripts/stage/worlds/linework";
+
+const core = coreLinework();
+const jet = jetLinework();
+const items = [
+  { no: "01", en: "THE UNIVERSE", title: "苍穹", sub: "世界观", desc: "一颗晶体，是另一个世界在此处的投影。", href: "/worldbuildings/cangqiong/", cta: "进入世界", sheet: "KB-00  苍穹 · 核心", scale: "SHARD OF ANOTHER WORLD" },
+  { no: "02", en: "GAME DESIGN", title: "核心战机", sub: "游戏设计", desc: "从设定到机制，一份仍在绘制的设计图。", href: "/worldbuildings/game-design/", cta: "展开图纸", sheet: "KB-01  核心战机", scale: "SCALE 1:48" },
+];
+---
+
+<section class="stage-track stage-track--worlds" id="worldbuildings" data-stage="worlds" aria-labelledby="worldsTitle">
+  <div class="stage-overlay wl" data-overlay>
+    <header class="wl-head stage-rise">
+      <p class="stage-eyebrow"><span>02</span> Worlds &amp; their inhabitants</p>
+      <h2 id="worldsTitle" data-sample="#1d1b17">WORLDBUILDINGS</h2>
+      <p class="wl-sub">世界，与生活其中的人。</p>
+    </header>
+    <p class="wl-intro stage-rise">在想象的边界，<br />为每一个故事留下一处容身之所。</p>
+
+    <div class="wl-cards stage-rise">
+      {
+        items.map((it, i) => (
+          <a class:list={["wl-card", i === 0 ? "wl-card--core" : "wl-card--jet"]} href={it.href} data-wl={i} data-cursor="ENTER">
+            <div class="wl-art">
+              <div class="wl-sheet" data-sample="#1746d1" aria-hidden="true">
+                <span class="wl-sheet-title">{it.sheet}</span>
+                <span class="wl-sheet-scale">{it.scale}</span>
+              </div>
+              {i === 0 ? (
+                <svg class="wl-draw" viewBox={core.viewBox} aria-hidden="true" data-sample="#1746d1">
+                  <g class="wl-rings">
+                    {core.rings.map((ring, k) => (
+                      <g class={`wl-ring wl-ring--${k}`}>
+                        <path class="wl-ring-back" d={ring.back} />
+                        <path class="wl-ring-front" d={ring.front} />
+                      </g>
+                    ))}
+                  </g>
+                  <path class="wl-axis" d={core.axis} />
+                  <g class="wl-gem">
+                    <path class="wl-gem-back" d={core.back} />
+                    <path class="wl-gem-inner" d={core.inner} />
+                    <path class="wl-gem-front" d={core.front} />
+                  </g>
+                  <circle class="wl-gem-dot" cx={core.center.x} cy={core.center.y} r="2.6" />
+                </svg>
+              ) : (
+                <svg class="wl-draw" viewBox="0 0 600 420" aria-hidden="true" data-sample="#1746d1">
+                  <path class="wl-jet" d={jet.main} />
+                  <path class="wl-jet wl-jet--accent" d={jet.accent} />
+                  <path class="wl-jet wl-jet--core" d={jet.core} />
+                </svg>
+              )}
+            </div>
+            <div class="wl-caption">
+              <span class="wl-no">{it.no} / {it.en}</span>
+              <strong>{it.title}<small>{it.sub}</small></strong>
+              <em>{it.desc}</em>
+              <b>{it.cta} →</b>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+    <div class="wl-colophon stage-rise"><span>KLEIN BLues / IMAGINARY ARCHIVES</span><span>从一个世界，到每一个人。</span></div>
+    <div class="wl-veil" aria-hidden="true"></div>
+  </div>
+</section>

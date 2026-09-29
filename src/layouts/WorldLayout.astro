@@ -3,11 +3,16 @@ interface Props {
   title: string;
   description: string;
   canonicalPath: string;
-  variant?: "portraits" | "sky";
+  variant?: "portraits" | "sky" | "design";
 }
 const { title, description, canonicalPath, variant = "sky" } = Astro.props;
 const canonical = new URL(canonicalPath, Astro.site);
 const socialImage = new URL("/assets/images/social/kleinblues-og-v2.jpg", Astro.site);
+const index = {
+  sky: { label: "01 / THE UNIVERSE", href: "/worldbuildings/game-design/", text: "核心战机 ↗" },
+  design: { label: "02 / GAME DESIGN", href: "/worldbuildings/portraits/", text: "画中人 ↗" },
+  portraits: { label: "03 / ORIGINAL CHARACTERS", href: "/worldbuildings/cangqiong/", text: "苍穹 ↗" },
+}[variant];
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -16,7 +21,7 @@ const socialImage = new URL("/assets/images/social/kleinblues-og-v2.jpg", Astro.
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content={variant === "sky" ? "#eef1f6" : "#172544"} />
+    <meta name="theme-color" content={variant === "sky" ? "#eef1f6" : variant === "design" ? "#eef2fb" : "#f3efe8"} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <meta property="og:type" content="website" />
@@ -27,27 +32,66 @@ const socialImage = new URL("/assets/images/social/kleinblues-og-v2.jpg", Astro.
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={socialImage} />
     <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline define:vars={{ variant }}>
+      // 从首页点进来：先铺一层与首页离场终点同色的幕布，再慢慢揭开
+      try {
+        if (sessionStorage.getItem("kb-veil") === variant) {
+          sessionStorage.removeItem("kb-veil");
+          document.documentElement.classList.add("kb-veiled");
+        }
+      } catch {}
+    </script>
     <link rel="stylesheet" href="/styles.css?v=71" />
-    <link rel="stylesheet" href="/worldbuildings.css?v=2" />
+    <link rel="stylesheet" href="/worldbuildings.css?v=3" />
+    <style is:global>
+      .kb-veil {
+        display: none;
+      }
+
+      html.kb-veiled .kb-veil {
+        display: block;
+        position: fixed;
+        z-index: 1200;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(120% 95% at 60% 40%, #f7f8fb 0%, #d9dfec 100%);
+      }
+
+      html.kb-veiled .world-page-design .kb-veil,
+      html.kb-veiled body.world-page-design .kb-veil {
+        background: #eef2fb;
+      }
+
+      html.kb-unveil .kb-veil {
+        opacity: 0;
+        transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+      }
+    </style>
   </head>
-  <body class:list={["world-page", `world-page-${variant}`]}>
+  <body class:list={["world-page", `world-page-${variant}`, "world-page-light"]}>
     <div class="noise" aria-hidden="true"></div>
     <div class="cursor" id="cursor" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i></div>
     <header class="masthead world-masthead" id="masthead">
       <a class="wordmark" href="/" aria-label="返回首页" data-cursor="HOME"><strong>KLEIN</strong><span>BLues</span></a>
-      <a class="world-back" href="/#worldbuildings" data-cursor="BACK"><span aria-hidden="true">←</span> WORLDBUILDINGS</a>
-      {variant === "portraits"
-        ? <span class="world-page-index">02 / THE PEOPLE</span>
-        : <a class="world-page-index world-page-next" href="/worldbuildings/portraits/" data-cursor="ENTER"><span>01 / THE WORLD</span><b>画中人 ↗</b></a>}
+      <a class="world-back" href={variant === "portraits" ? "/#portraits" : "/#worldbuildings"} data-cursor="BACK"><span aria-hidden="true">←</span> WORLDBUILDINGS</a>
+      <a class="world-page-index world-page-next" href={index.href} data-cursor="ENTER"><span>{index.label}</span><b>{index.text}</b></a>
     </header>
     <main id="app"><slot /></main>
+    <div class="kb-veil" aria-hidden="true"></div>
+    <script is:inline>
+      if (document.documentElement.classList.contains("kb-veiled")) {
+        requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add("kb-unveil")));
+      }
+    </script>
     <slot name="overlays" />
     <slot name="scripts" />
-    {variant === "sky" && (
-      <script>
-        import { setupSiteCursor } from "../scripts/site-cursor";
-        setupSiteCursor();
-      </script>
-    )}
+    {
+      variant !== "portraits" && (
+        <script>
+          import { setupSiteCursor } from "../scripts/site-cursor";
+          setupSiteCursor();
+        </script>
+      )
+    }
   </body>
 </html>

@@ -81,6 +81,28 @@ export class SkyStage implements Stage {
     this.invalidate();
   }
 
+  /** 首屏不在画面上时时钟也照常走，开场的镜头推进只播一次 */
+  advance(seconds: number) {
+    this.clock += seconds;
+  }
+
+  /** 本次会话已经看过开场：直接落在终点 */
+  skipIntro() {
+    this.clock = Math.max(this.clock, introDelay + introSeconds);
+    this.invalidate();
+  }
+
+  /** 当前天气的配色，供跨场景形变的粒子取色 */
+  palette() {
+    return {
+      top: this.state.skyTop,
+      horizon: this.state.skyHorizon,
+      cloud: this.state.cloudLit,
+      ridges: this.state.ridges,
+      precip: this.state.precipColor
+    };
+  }
+
   resize(width: number, height: number) {
     this.aspect = width / height;
     this.height = height;

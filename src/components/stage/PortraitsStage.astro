@@ -1,0 +1,47 @@
+---
+// 画中人：桌上摊开的全息角色卡。三维部分见 src/scripts/stage/portraits/portraits.ts。
+// standalone：用于 /worldbuildings/portraits/ 独立页面（自带画布与渲染循环）。
+interface Props {
+  standalone?: boolean;
+}
+const { standalone = false } = Astro.props;
+const Heading = standalone ? "h1" : "h2";
+---
+
+<section
+  class:list={["stage-track stage-track--portraits", { "pt-page": standalone }]}
+  id={standalone ? undefined : "portraits"}
+  data-stage={standalone ? undefined : "portraits"}
+  aria-labelledby="portraitsTitle"
+>
+  {standalone && <canvas class="pt-canvas" aria-hidden="true"></canvas>}
+  <div class:list={["stage-overlay pt", { "is-active": standalone }]} data-overlay data-pt>
+    <div class="pt-hit" data-pt-hit aria-hidden="true"></div>
+    <div class="pt-frame" data-pt-frame data-cursor="IMAGE" hidden aria-hidden="true"></div>
+
+    <header class="pt-head stage-rise">
+      <p class="stage-eyebrow"><span>03</span> Original characters</p>
+      <Heading id="portraitsTitle">画中人</Heading>
+      <p class="pt-sub">一幅画，一次相逢，一段仍在继续的往事。</p>
+      <small data-pt-count></small>
+    </header>
+
+    <div class="pt-tools stage-rise">
+      <button class="pt-holo" type="button" data-pt-holo aria-pressed="true" data-cursor="SWITCH">
+        <i aria-hidden="true"></i><span>镭射效果</span><b>ON</b>
+      </button>
+      <small class="pt-hint">悬停查看 · 点击拿起</small>
+    </div>
+
+    <aside class="pt-held" data-pt-held aria-live="polite">
+      <span class="pt-held-kicker">CHARACTER</span>
+      <h3 data-pt-name></h3>
+      <small data-pt-meta></small>
+      <button type="button" data-pt-close data-cursor="CLOSE">放回桌面 <span aria-hidden="true">×</span></button>
+    </aside>
+
+    <nav class="pt-fallback" aria-label="原创角色">
+      <a href="/worldbuildings/portraits/">翻阅全部人物 ↗</a>
+    </nav>
+  </div>
+</section>

@@ -1,0 +1,1371 @@
+/* 首页三维舞台。全部规则以 html.stage-on 为前提：没有 WebGL 时各模块退化为普通的文档流。 */
+
+:root {
+  --stage-ink: #1d1b17;
+  --stage-soft: #6f695f;
+  --stage-faint: rgba(29, 27, 23, 0.12);
+  --stage-blue: #1746d1;
+  --stage-paper: #f7f2e8;
+}
+
+.stage-backdrop {
+  display: none;
+}
+
+/* ---------------- 无 WebGL 的退化 ---------------- */
+
+.stage-track {
+  position: relative;
+  padding: clamp(5rem, 8vw, 8rem) clamp(1rem, 3vw, 3rem);
+}
+
+.stage-band {
+  display: none;
+}
+
+.stage-eyebrow {
+  margin: 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--stage-soft);
+}
+
+.stage-eyebrow > span {
+  margin-right: 1.2rem;
+  color: var(--stage-blue);
+  font: italic 1rem var(--serif);
+}
+
+.fl-body {
+  margin-top: 2rem;
+}
+
+/* ---------------- 舞台开启 ---------------- */
+
+html.stage-on {
+  scrollbar-gutter: stable;
+}
+
+html.stage-on body {
+  background: #ece6db;
+}
+
+html.stage-on .stage-backdrop {
+  display: block;
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 62% 38%, var(--bd-a, #f4efe5) 0%, var(--bd-b, #e4dccd) 100%);
+}
+
+html.stage-on .world3d-canvas {
+  opacity: 1;
+}
+
+html.stage-on .stage-band {
+  display: block;
+  height: 115vh;
+}
+
+html.stage-on .stage-band--short {
+  height: 70vh;
+}
+
+html.stage-on .stage-band--end {
+  height: 70vh;
+}
+
+html.stage-on .stage-track {
+  height: 60vh;
+  padding: 0;
+}
+
+html.stage-on .stage-track--fiction {
+  height: 60vh;
+}
+
+html.stage-on .stage-overlay {
+  position: fixed;
+  z-index: 5;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+  --stage-in: 0;
+  --stage-dir: 1;
+}
+
+html.stage-on .stage-overlay :is(a, button, [data-cursor], input, .stage-interactive) {
+  pointer-events: auto;
+}
+
+html.stage-on .stage-overlay:not(.is-active) :is(a, button, [data-cursor], input, .stage-interactive) {
+  pointer-events: none;
+}
+
+/* 文字随形变进出：沿形变方向滑动、模糊、字距收拢 */
+html.stage-on .stage-rise {
+  opacity: var(--stage-in);
+  transform: translate3d(0, calc((1 - var(--stage-in)) * 2.2rem * var(--stage-dir)), 0);
+  filter: blur(calc((1 - var(--stage-in)) * 8px));
+}
+
+html.stage-on .stage-rise:nth-child(2) {
+  transform: translate3d(0, calc((1 - var(--stage-in)) * 3.2rem * var(--stage-dir)), 0);
+}
+
+html.stage-on .stage-rise:nth-child(3) {
+  transform: translate3d(0, calc((1 - var(--stage-in)) * 4.2rem * var(--stage-dir)), 0);
+}
+
+html.stage-on .hero {
+  background: transparent;
+}
+
+html.stage-on .about {
+  position: relative;
+  z-index: 6;
+}
+
+/* 阅读时收起页眉，锁定页面滚动 */
+html.kb-reading {
+  overflow: hidden;
+}
+
+html.kb-reading .masthead {
+  transform: translateY(-110%);
+}
+
+/* ---------------- 一纸空文（旧站目录 + 预览卡，标题在左上） ---------------- */
+
+html.stage-on .fl {
+  color: var(--stage-ink);
+}
+
+html.stage-on .fl-head {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(6rem, 15vh, 10rem);
+  width: min(26rem, 28vw);
+}
+
+.fl-head h2 {
+  margin: 1.4rem 0 1.6rem;
+  font: 400 clamp(4rem, 8.4vw, 9.5rem) / 0.86 var(--serif);
+  letter-spacing: -0.06em;
+}
+
+.fl-head h2 em {
+  display: inline-block;
+  margin-left: 0.6em;
+  color: var(--stage-blue);
+  font-style: italic;
+}
+
+.fl-head h2 small {
+  margin-left: 0.08em;
+  color: var(--stage-ink);
+  font: 400 0.24em var(--serif);
+  letter-spacing: -0.02em;
+  vertical-align: 0.22em;
+  white-space: nowrap;
+}
+
+.fl-head h2 small:not(:empty)::before {
+  content: "·";
+  margin-right: 0.08em;
+  color: var(--stage-blue);
+  font-style: italic;
+}
+
+.fl-deck {
+  margin: 0 0 1.4rem;
+  font-family: var(--serif);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.fl-head .fiction-archive-count {
+  display: block;
+  padding: 0;
+}
+
+html.stage-on .fl-body {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: max(calc(28vw + clamp(1.2rem, 4.4vw, 5rem) + 2.5rem), 23rem);
+  right: clamp(1.2rem, 4.4vw, 5rem);
+  display: grid;
+  align-content: center;
+  margin: 0;
+  padding-top: 3rem;
+}
+
+html.stage-on .fl .fiction-layout {
+  grid-template-columns: minmax(0, 1.55fr) minmax(15rem, 0.62fr);
+  gap: clamp(1.6rem, 3.6vw, 4.5rem);
+  padding-top: 0;
+}
+
+html.stage-on .fl .fiction-layout.is-unfinished {
+  grid-template-columns: minmax(15rem, 0.62fr) minmax(0, 1.55fr);
+}
+
+/* 一屏之内放下全部篇目 */
+html.stage-on .fl .novel-index {
+  --novel-row-height: clamp(3.4rem, calc((100vh - 15rem) / 7), 5.6rem);
+  height: auto;
+  max-height: calc(var(--novel-row-height) * 7 + 1px);
+}
+
+html.stage-on .fl .novel-row {
+  padding: 0;
+}
+
+html.stage-on .fl .novel-row h3 {
+  font-size: clamp(1.7rem, min(3.1vw, 6.2vh), 3.7rem);
+}
+
+html.stage-on .fl .novel-preview {
+  position: relative;
+  top: auto;
+}
+
+html.stage-on .fl .preview-surface {
+  height: min(31rem, calc(100vh - 17rem));
+}
+
+html.stage-on .fl .preview-number {
+  font-size: clamp(4rem, min(8vw, 12vh), 8rem);
+}
+
+html.stage-on .fl .preview-surface > p {
+  margin-bottom: 2rem;
+  font-size: clamp(0.95rem, min(1.5vw, 2.3vh), 1.35rem);
+}
+
+/* ---------------- 其他模块（占位标题） ---------------- */
+
+html.stage-on .stage-simple-head {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(6rem, 15vh, 10rem);
+}
+
+.stage-simple-head h2 {
+  margin: 1.2rem 0 0;
+  font: 400 clamp(3rem, 7vw, 7.5rem) / 0.9 var(--serif);
+  letter-spacing: -0.05em;
+}
+
+/* ---------------- 窄屏 ---------------- */
+
+@media (max-width: 760px) {
+  html.stage-on .fl-head {
+    top: 4.6rem;
+    right: 1.2rem;
+    width: auto;
+  }
+
+  .fl-head h2 {
+    margin: 0.6rem 0 0.4rem;
+    font-size: 2.8rem;
+  }
+
+  .fl-head h2 br {
+    display: none;
+  }
+
+  .fl-head h2 em {
+    margin-left: 0.2em;
+  }
+
+  .fl-deck,
+  .fl-head .fiction-archive-count {
+    display: none;
+  }
+
+  html.stage-on .fl-body {
+    left: 1.2rem;
+    right: 1.2rem;
+    top: 9.5rem;
+    bottom: 1rem;
+    align-content: start;
+    padding-top: 0;
+  }
+
+  html.stage-on .fl .fiction-layout,
+  html.stage-on .fl .fiction-layout.is-unfinished {
+    grid-template-columns: 1fr;
+    grid-template-areas: "index" "preview";
+  }
+
+  html.stage-on .fl .novel-index {
+    --novel-row-height: 3.4rem;
+    max-height: calc(100vh - 19rem);
+  }
+
+  html.stage-on .fl .preview-surface {
+    display: none;
+  }
+
+  html.stage-on .fl .fiction-collection-nav {
+    margin-top: 0.8rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.stage-on .stage-rise {
+    filter: none;
+    transform: none;
+  }
+}
+
+/* 从子页面返回：画布与当前模块的文字从「被推近」的状态退回原处 */
+html.kb-arrive .world3d-canvas {
+  animation: kb-arrive-canvas 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html.kb-arrive .stage-overlay.is-active > * {
+  animation: kb-arrive-text 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+@keyframes kb-arrive-canvas {
+  from {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: blur(10px);
+  }
+}
+
+@keyframes kb-arrive-text {
+  from {
+    opacity: 0;
+    translate: 0 1.6rem;
+    filter: blur(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.kb-arrive .world3d-canvas,
+  html.kb-arrive .stage-overlay.is-active > * {
+    animation: none;
+  }
+}
+
+/* ---------------- 世界观（两张静态蓝图线稿） ---------------- */
+
+.wl-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.wl-colophon,
+.wl-veil {
+  display: none;
+}
+
+html.stage-on .wl-head {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(5.5rem, 12vh, 8rem);
+  z-index: 2;
+}
+
+.wl-head h2 {
+  margin: 1rem 0 0.6rem;
+  font: 400 clamp(2.4rem, 5.6vw, 6.2rem) / 0.9 var(--serif);
+  letter-spacing: -0.055em;
+}
+
+.wl-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.16em;
+}
+
+html.stage-on .wl-intro {
+  position: absolute;
+  right: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(8.5rem, 18vh, 12rem);
+  z-index: 2;
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.9;
+  color: var(--stage-soft);
+  text-align: right;
+}
+
+html.stage-on .wl-cards {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  right: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(12rem, 29vh, 17rem);
+  bottom: clamp(3.6rem, 8vh, 5rem);
+  gap: clamp(1.5rem, 5vw, 6rem);
+  margin: 0;
+}
+
+.wl-card {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  color: var(--stage-ink);
+  text-decoration: none;
+  outline: none;
+}
+
+.wl-art {
+  position: relative;
+  min-height: 12rem;
+  perspective: 1400px;
+}
+
+/* 底部的蓝图：一张平放在桌面上的图纸 */
+.wl-sheet {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: 2%;
+  height: 58%;
+  background:
+    linear-gradient(rgba(23, 70, 209, 0.16) 1px, transparent 1px) 0 0 / 100% 20%,
+    linear-gradient(90deg, rgba(23, 70, 209, 0.16) 1px, transparent 1px) 0 0 / 12.5% 100%,
+    linear-gradient(rgba(23, 70, 209, 0.06) 1px, transparent 1px) 0 0 / 100% 5%,
+    linear-gradient(90deg, rgba(23, 70, 209, 0.06) 1px, transparent 1px) 0 0 / 3.125% 100%,
+    #eef2fb;
+  border: 2px solid rgba(23, 70, 209, 0.62);
+  outline: 1px solid rgba(23, 70, 209, 0.4);
+  outline-offset: -8px;
+  box-shadow: 0 2.4rem 3rem -2rem rgba(30, 44, 90, 0.35);
+  transform: rotateX(56deg);
+  transform-origin: 50% 100%;
+  transition: transform 0.9s var(--ease), box-shadow 0.9s var(--ease);
+}
+
+.wl-sheet span {
+  position: absolute;
+  right: 14px;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid rgba(23, 70, 209, 0.55);
+  background: rgba(238, 242, 251, 0.94);
+  color: rgba(23, 70, 209, 0.9);
+  font: 0.72rem / 1.2 Consolas, "JetBrains Mono", monospace;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.wl-sheet-title {
+  bottom: calc(14px + 1.6rem);
+  font-family: var(--serif) !important;
+  font-size: 0.9rem !important;
+}
+
+.wl-sheet-scale {
+  bottom: 14px;
+  border-top: 0 !important;
+}
+
+.wl-draw {
+  position: absolute;
+  inset: 0 4% 8%;
+  width: 92%;
+  height: 92%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--stage-blue);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.wl-draw path,
+.wl-draw circle {
+  vector-effect: non-scaling-stroke;
+}
+
+/* 苍穹：晶体 + 两道晶环 */
+.wl-axis {
+  stroke-width: 0.8;
+  stroke-dasharray: 2 6;
+  opacity: 0.45;
+}
+
+.wl-gem-front {
+  stroke-width: 1.5;
+  fill: rgba(238, 242, 251, 0.5);
+}
+
+.wl-gem-back {
+  stroke-width: 0.9;
+  stroke-dasharray: 3 5;
+  opacity: 0.55;
+}
+
+.wl-gem-inner {
+  stroke-width: 0.9;
+  opacity: 0.4;
+  fill: rgba(23, 70, 209, 0.05);
+  transition: fill 0.8s ease, opacity 0.8s ease;
+}
+
+.wl-gem-dot {
+  fill: var(--stage-blue);
+  stroke: none;
+}
+
+.wl-gem {
+  transform-box: fill-box;
+  transform-origin: 50% 52%;
+  transition: transform 1s var(--ease), opacity 0.8s ease;
+}
+
+.wl-ring {
+  --ring-scale: 4;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 1.25s cubic-bezier(0.65, 0, 0.2, 1), opacity 0.9s ease;
+}
+
+.wl-ring--1 {
+  transition-delay: 0.06s;
+}
+
+.wl-ring-front {
+  stroke-width: 1.4;
+}
+
+.wl-ring-back {
+  stroke-width: 1;
+  stroke-dasharray: 4 7;
+  opacity: 0.6;
+}
+
+.wl-ring--1 .wl-ring-front {
+  stroke-dasharray: 16 6 2 6;
+}
+
+/* 战机：只有线 */
+.wl-jet {
+  stroke-width: 0.9;
+  opacity: 0.82;
+}
+
+.wl-jet--accent {
+  stroke-width: 1.3;
+  opacity: 1;
+}
+
+.wl-jet--core {
+  stroke: #d99a2b;
+  stroke-width: 1.3;
+  opacity: 1;
+}
+
+.wl-card--jet .wl-draw {
+  transition: transform 1s var(--ease);
+}
+
+/* 说明文字 */
+.wl-caption {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  padding-top: 0.6rem;
+  text-align: center;
+}
+
+.wl-no {
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+  color: var(--stage-blue);
+}
+
+.wl-caption strong {
+  font: 400 1.7rem var(--serif);
+  letter-spacing: 0.04em;
+  color: var(--stage-ink);
+}
+
+.wl-caption strong small {
+  margin-left: 0.6rem;
+  font: 400 0.68rem var(--sans);
+  letter-spacing: 0.16em;
+  color: var(--stage-soft);
+}
+
+.wl-caption em {
+  font-style: normal;
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--stage-soft);
+}
+
+.wl-caption b {
+  margin-top: 0.2rem;
+  font-weight: 400;
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  color: var(--stage-blue);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.4s ease, transform 0.5s var(--ease);
+}
+
+.wl-caption::after {
+  content: "";
+  width: 2rem;
+  height: 1px;
+  margin-top: 0.2rem;
+  background: var(--stage-blue);
+  transform: scaleX(0.2);
+  transition: transform 0.6s var(--ease);
+}
+
+.wl-card.is-hot .wl-caption b {
+  opacity: 1;
+  transform: none;
+}
+
+.wl-card.is-hot .wl-caption::after {
+  transform: scaleX(3);
+}
+
+/* 悬停：苍穹的晶环铺满整页，其余内容让位 */
+.wl-card--core.is-hot .wl-ring {
+  transform: scale(var(--ring-scale));
+}
+
+.wl-card--core.is-hot .wl-gem-inner {
+  fill: rgba(23, 70, 209, 0.14);
+  opacity: 0.8;
+}
+
+.wl-card--core.is-hot .wl-sheet {
+  transform: rotateX(58deg) translateY(4%);
+}
+
+.wl-card--jet.is-hot .wl-sheet {
+  transform: rotateX(50deg);
+  box-shadow: 0 3rem 3.4rem -2rem rgba(30, 44, 90, 0.4);
+}
+
+.wl-card--jet.is-hot .wl-draw {
+  transform: translateY(-3%);
+}
+
+.wl-card,
+.wl-head,
+.wl-intro,
+.wl-colophon {
+  transition: opacity 0.8s ease;
+}
+
+html.stage-on .wl.is-hot-0 .wl-card--jet {
+  opacity: 0.28;
+}
+
+html.stage-on .wl.is-hot-0 :is(.wl-intro, .wl-colophon) {
+  opacity: 0.4;
+}
+
+html.stage-on .wl-colophon {
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  right: clamp(1.2rem, 4.4vw, 5rem);
+  bottom: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--stage-faint);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  color: var(--stage-soft);
+}
+
+/* 离场：画面被推近，溶进下一页的底色 */
+html.stage-on .wl-veil {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 95% at 60% 40%, #f7f8fb 0%, #d9dfec 100%);
+  transition: opacity 0.7s ease;
+}
+
+.wl[data-leaving="1"] .wl-veil {
+  background: #eef2fb;
+}
+
+.wl.is-leaving .wl-veil {
+  opacity: 1;
+  transition: opacity 0.55s ease 0.5s;
+}
+
+.wl.is-leaving :is(.wl-head, .wl-intro, .wl-colophon, .wl-caption) {
+  opacity: 0 !important;
+  filter: blur(6px);
+  transition: opacity 0.45s ease, filter 0.45s ease;
+}
+
+.wl.is-leaving .wl-card:not(.is-hot) {
+  opacity: 0 !important;
+}
+
+.wl.is-leaving .wl-card--core .wl-ring {
+  transform: scale(calc(var(--ring-scale) * 2.2));
+  opacity: 0;
+  transition: transform 1.1s cubic-bezier(0.55, 0, 0.2, 1), opacity 0.9s ease 0.2s;
+}
+
+.wl.is-leaving .wl-card--core .wl-gem {
+  transform: scale(7);
+  opacity: 0;
+  transition: transform 1.1s cubic-bezier(0.7, 0, 0.3, 1), opacity 0.5s ease 0.55s;
+}
+
+.wl.is-leaving .wl-card--core :is(.wl-sheet, .wl-axis, .wl-gem-dot) {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.wl.is-leaving .wl-card--jet .wl-art {
+  transform: scale(2.6);
+  transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+@media (max-width: 760px) {
+  html.stage-on .wl-intro {
+    display: none;
+  }
+
+  html.stage-on .wl-head {
+    top: 4.8rem;
+  }
+
+  .wl-head h2 {
+    font-size: 2.3rem;
+  }
+
+  html.stage-on .wl-cards {
+    top: 11rem;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .wl-caption em,
+  .wl-caption strong small {
+    display: none;
+  }
+
+  .wl-caption strong {
+    font-size: 1.25rem;
+  }
+
+  .wl-colophon span:last-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-ring,
+  .wl-gem,
+  .wl-sheet {
+    transition: none;
+  }
+}
+
+/* ---------------- 随笔而录 ---------------- */
+
+.nt-hit,
+.nt-axis,
+.nt-lanes,
+.nt-filters,
+.nt-total,
+.nt-preview {
+  display: none;
+}
+
+.nt-fallback ol {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--stage-faint);
+}
+
+.nt-fallback a {
+  display: grid;
+  grid-template-columns: 7rem 1fr auto;
+  gap: 1rem;
+  padding: 0.8rem 0;
+  border-bottom: 1px solid var(--stage-faint);
+}
+
+.nt-fallback small,
+.nt-fallback time {
+  color: var(--stage-soft);
+  font-size: 0.72rem;
+}
+
+html.stage-on .nt-fallback {
+  display: none;
+}
+
+html.stage-on .nt-hit {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+html.stage-on .nt.is-active .nt-hit {
+  pointer-events: auto;
+}
+
+html.stage-on .nt-head {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(5.5rem, 12vh, 8rem);
+}
+
+.nt-head h2 {
+  margin: 1rem 0 0.9rem;
+  font: 400 clamp(3rem, 6.2vw, 6.8rem) / 0.9 var(--serif);
+  letter-spacing: -0.04em;
+}
+
+.nt-head h2 em {
+  margin-left: 0.3em;
+  color: var(--stage-blue);
+}
+
+.nt-deck {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.9;
+  color: var(--stage-soft);
+}
+
+html.stage-on .nt-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  bottom: clamp(1.4rem, 4vh, 2.4rem);
+  max-width: 60vw;
+}
+
+.nt-filters button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  border: 1px solid rgba(29, 27, 23, 0.14);
+  border-radius: 999px;
+  background: rgba(252, 251, 247, 0.72);
+  backdrop-filter: blur(6px);
+  font: inherit;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--stage-ink);
+  transition: background 0.35s, border-color 0.35s, color 0.35s;
+}
+
+.nt-filters button i {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--c);
+}
+
+.nt-filters button small {
+  font-size: 0.56rem;
+  color: var(--stage-soft);
+}
+
+.nt-filters button[aria-pressed="true"] {
+  border-color: var(--c);
+  background: var(--c);
+  color: #fbfaf6;
+}
+
+.nt-filters button[aria-pressed="true"] i {
+  background: #fbfaf6;
+}
+
+.nt-filters button[aria-pressed="true"] small {
+  color: rgba(251, 250, 246, 0.75);
+}
+
+html.stage-on .nt-total {
+  display: block;
+  position: absolute;
+  right: clamp(1.2rem, 3vw, 3rem);
+  bottom: clamp(1.8rem, 4.6vh, 2.8rem);
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  color: var(--stage-soft);
+}
+
+html.stage-on .nt-axis,
+html.stage-on .nt-lanes {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(var(--stage-in) * 1);
+  transition: opacity 0.6s ease;
+}
+
+html.stage-on .nt.is-filtered :is(.nt-axis, .nt-lanes) {
+  opacity: 0;
+}
+
+.nt-axis span,
+.nt-lanes span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.nt-axis span {
+  margin-left: -1.2rem;
+  font: italic 0.95rem var(--serif);
+  color: var(--stage-soft);
+}
+
+.nt-lanes span {
+  margin-top: -0.5rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--c);
+  transform-origin: right center;
+  translate: -100% 0;
+}
+
+html.stage-on .nt-preview {
+  --c: var(--stage-blue);
+  display: block;
+  position: absolute;
+  right: clamp(1.2rem, 3vw, 3rem);
+  top: clamp(6rem, 14vh, 8.5rem);
+  width: min(22rem, 27vw);
+  padding: 1.3rem 1.3rem 1.1rem;
+  background: rgba(252, 251, 247, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(29, 27, 23, 0.08);
+  border-top: 3px solid var(--c);
+}
+
+.nt-preview header {
+  display: flex;
+  gap: 0.8rem;
+  align-items: baseline;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--stage-soft);
+}
+
+.nt-preview header span {
+  color: var(--c);
+}
+
+.nt-preview header time {
+  margin-left: auto;
+}
+
+.nt-preview h3 {
+  margin: 0.8rem 0 0.6rem;
+  font: 400 1.25rem / 1.35 var(--serif);
+}
+
+.nt-preview p {
+  margin: 0 0 0.8rem;
+  font-size: 0.72rem;
+  line-height: 1.85;
+  color: var(--stage-soft);
+}
+
+.nt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.8rem;
+}
+
+.nt-tags span {
+  padding: 0.18rem 0.5rem;
+  border: 1px solid var(--stage-faint);
+  font-size: 0.56rem;
+  color: var(--stage-soft);
+}
+
+.nt-preview pre {
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.8rem;
+  max-height: 6.5rem;
+  overflow: hidden;
+  background: #f1efe8;
+  font: 0.62rem / 1.6 Consolas, "JetBrains Mono", monospace;
+  color: #3d3a33;
+  white-space: pre-wrap;
+}
+
+.nt-preview a {
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  color: var(--c);
+}
+
+.nt-preview.is-swap > * {
+  animation: fx-peek 0.5s var(--ease);
+}
+
+.nt.is-leaving :is(.nt-head, .nt-filters, .nt-preview, .nt-total, .nt-axis, .nt-lanes) {
+  opacity: 0 !important;
+  transition: opacity 0.4s ease;
+}
+
+@media (max-width: 760px) {
+  html.stage-on .nt-head {
+    top: 4.8rem;
+  }
+
+  .nt-head h2 {
+    font-size: 2.8rem;
+  }
+
+  .nt-deck,
+  .nt-total,
+  .nt-axis {
+    display: none !important;
+  }
+
+  html.stage-on .nt-filters {
+    max-width: none;
+    right: 1rem;
+    left: 1rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    bottom: 1rem;
+  }
+
+  html.stage-on .nt-preview {
+    top: auto;
+    bottom: 4.6rem;
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    padding: 0.9rem 1rem;
+  }
+
+  .nt-preview p,
+  .nt-preview pre,
+  .nt-tags {
+    display: none;
+  }
+
+  .nt-lanes span {
+    translate: 0 0;
+    margin-left: 0.2rem;
+  }
+}
+
+@keyframes fx-peek {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* 本次会话已播过开屏：不再闪出开屏幕布 */
+html.kb-seen .boot {
+  display: none;
+}
+
+/* 画中人拿起卡片时锁定页面滚动 */
+html.kb-hold {
+  overflow: hidden;
+}
+
+/* ---------------- 画中人 ---------------- */
+
+.pt-hit,
+.pt-frame,
+.pt-tools,
+.pt-held,
+.pt-canvas {
+  display: none;
+}
+
+.pt-fallback a {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--stage-blue);
+}
+
+.pt-page .pt-fallback {
+  display: none;
+}
+
+html.stage-on .pt-fallback {
+  display: none;
+}
+
+.pt-head h2,
+.pt-head h1 {
+  margin: 1rem 0 0.8rem;
+  font: 400 clamp(3rem, 6.2vw, 6.8rem) / 0.9 var(--serif);
+  letter-spacing: -0.05em;
+}
+
+.pt-sub {
+  margin: 0 0 0.9rem;
+  font-size: 0.8rem;
+  line-height: 1.9;
+  color: var(--stage-soft);
+}
+
+.pt-head small {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--stage-soft);
+}
+
+:is(html.stage-on, .pt-page) .pt-hit {
+  display: block;
+  position: absolute;
+  inset: 0;
+}
+
+:is(html.stage-on, .pt-page) .pt.is-active .pt-hit {
+  pointer-events: auto;
+}
+
+/* 光标四角框的代理：贴在悬停卡片 / 画作的屏幕外接矩形上 */
+:is(html.stage-on, .pt-page) .pt-frame {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  will-change: transform;
+}
+
+:is(html.stage-on, .pt-page) .pt-frame[hidden] {
+  display: none;
+}
+
+:is(html.stage-on, .pt-page) .pt.is-active .pt-frame {
+  pointer-events: auto;
+}
+
+:is(html.stage-on, .pt-page) .pt-head {
+  position: absolute;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  top: clamp(5.5rem, 12vh, 8rem);
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.6s ease, filter 0.6s ease, translate 0.8s var(--ease);
+}
+
+:is(html.stage-on, .pt-page) .pt-tools {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  position: absolute;
+  z-index: 2;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  bottom: clamp(2rem, 5vh, 3.4rem);
+  transition: opacity 0.6s ease;
+}
+
+.pt-holo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 1rem 0.6rem 0.7rem;
+  border: 1px solid rgba(29, 27, 23, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.66);
+  backdrop-filter: blur(8px);
+  color: var(--stage-ink);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  transition: border-color 0.35s, color 0.35s;
+}
+
+.pt-holo i {
+  position: relative;
+  width: 2rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background: rgba(29, 27, 23, 0.14);
+  transition: background 0.4s ease;
+}
+
+.pt-holo i::after {
+  content: "";
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: #fffdf8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.45s var(--ease);
+}
+
+.pt-holo[aria-pressed="true"] i {
+  background: linear-gradient(110deg, #7fb2ff, #c69bff 35%, #ffb3c7 60%, #ffe39a 85%);
+}
+
+.pt-holo[aria-pressed="true"] i::after {
+  transform: translateX(0.9rem);
+}
+
+.pt-holo b {
+  min-width: 1.8rem;
+  font-weight: 400;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  color: var(--stage-soft);
+}
+
+.pt-holo:hover {
+  border-color: var(--stage-blue);
+  color: var(--stage-blue);
+}
+
+.pt-hint {
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  color: var(--stage-soft);
+}
+
+:is(html.stage-on, .pt-page) .pt-held {
+  --pt-tint: var(--stage-blue);
+  display: grid;
+  gap: 0.4rem;
+  justify-items: start;
+  position: absolute;
+  z-index: 2;
+  left: clamp(1.2rem, 4.4vw, 5rem);
+  bottom: clamp(2rem, 5vh, 3.4rem);
+  padding: 0.9rem 1.2rem 1rem;
+  border-left: 2px solid var(--pt-tint);
+  background: rgba(247, 242, 233, 0.82);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 1rem 2.4rem -1.4rem rgba(60, 45, 25, 0.35);
+  opacity: 0;
+  visibility: hidden;
+  translate: -1rem 0;
+  transition: opacity 0.5s ease, translate 0.7s var(--ease), visibility 0s linear 0.5s;
+}
+
+.pt-held-kicker {
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  color: var(--pt-tint);
+}
+
+.pt-held h3 {
+  margin: 0;
+  font: 400 2.2rem / 1 var(--serif);
+  letter-spacing: 0.02em;
+}
+
+.pt-held small {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--stage-soft);
+}
+
+.pt-held button {
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid rgba(29, 27, 23, 0.2);
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.7);
+  font: inherit;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--stage-ink);
+}
+
+.pt.is-holding .pt-held {
+  opacity: 1;
+  visibility: visible;
+  translate: 0 0;
+  transition: opacity 0.6s ease 0.45s, translate 0.8s var(--ease) 0.45s, visibility 0s;
+}
+
+.pt.is-holding .pt-head {
+  opacity: 0;
+  filter: blur(6px);
+  translate: 0 -1rem;
+}
+
+.pt.is-holding .pt-tools {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pt.is-holding .pt-tools * {
+  pointer-events: none !important;
+}
+
+/* 独立页面：自带全屏画布 */
+.pt-page {
+  position: relative;
+  height: 100svh;
+  padding: 0;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 62% 38%, #f4efe6 0%, #e3d9c8 100%);
+}
+
+.pt-page .pt-canvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pt-page .pt {
+  position: absolute;
+  inset: 0;
+}
+
+.pt-page .pt :is(a, button) {
+  pointer-events: auto;
+}
+
+@media (max-width: 760px) {
+  :is(html.stage-on, .pt-page) .pt-head {
+    top: 4.8rem;
+  }
+
+  .pt-head h2,
+  .pt-head h1 {
+    font-size: 2.6rem;
+  }
+
+  .pt-sub,
+  .pt-hint {
+    display: none;
+  }
+}

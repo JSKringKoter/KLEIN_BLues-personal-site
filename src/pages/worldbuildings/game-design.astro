@@ -1,0 +1,59 @@
+---
+import WorldLayout from "../../layouts/WorldLayout.astro";
+import { PART_LABELS } from "../../scripts/stage/worlds/jet";
+
+const sheets = [
+  { no: "01", title: "概念", en: "CONCEPT", note: "一句话与一张主视觉" },
+  { no: "02", title: "核心循环", en: "CORE LOOP", note: "展开 · 交战 · 回收 · 熔铸" },
+  { no: "03", title: "机制拆解", en: "MECHANICS", note: "五种核心，五种战机流派" },
+  { no: "04", title: "关卡与地图", en: "LEVELS", note: "黑洞带、银心裂隙与第二次星际战争" },
+  { no: "05", title: "原型与复盘", en: "PROTOTYPE", note: "可以玩的片段，以及为什么这样设计" },
+];
+const parts = ["wing", "engine", "canopy", "fin", "canard"] as const;
+---
+<WorldLayout title="核心战机 · 游戏设计 | WORLDBUILDINGS · KLEIN BLues" description="《苍穹 · Universe》的游戏设计图纸：核心战机与结构展开。" canonicalPath="/worldbuildings/game-design/" variant="design">
+  <section class="gd" data-gd aria-labelledby="gdTitle">
+    <canvas class="gd-canvas" aria-hidden="true"></canvas>
+    <div class="gd-hit" aria-hidden="true"></div>
+    <svg class="gd-leaders" aria-hidden="true"><path></path><path class="is-hot"></path></svg>
+
+    <header class="gd-head">
+      <p class="stage-eyebrow"><span>02</span> Game design</p>
+      <h1 id="gdTitle">核心战机</h1>
+      <p class="gd-sub">《苍穹 · Universe》设计图纸 · TPS + MOBA</p>
+      <p class="gd-desc">一颗核心，经由结构展开，成为一架战机。金属块借核心的引力相连；每一次展开，都是对战机的一次刷新。</p>
+    </header>
+
+    <ol class="gd-parts" aria-label="部件">
+      {parts.map((p, i) => (
+        <li><button type="button" data-part={p} data-cursor="OPEN"><span>{String.fromCharCode(65 + i)}</span>{PART_LABELS[p]}</button></li>
+      ))}
+    </ol>
+
+    <aside class="gd-sheets" aria-label="图纸目录">
+      <header><span>SHEETS</span><b>图纸整理中</b></header>
+      <ol>
+        {sheets.map((s) => (
+          <li>
+            <span class="gd-sheet-no">{s.no}</span>
+            <div><strong>{s.title}</strong><small>{s.en}</small><em>{s.note}</em></div>
+            <i>整理中</i>
+          </li>
+        ))}
+      </ol>
+      <p>设计稿仍在修订，定稿后会在这里逐页展开。</p>
+    </aside>
+
+    <div class="gd-tools">
+      <button type="button" data-gd-toggle data-state="assembled" data-cursor="SWITCH"><i aria-hidden="true"></i><span>结构展开</span></button>
+      <small>拖动旋转 · 悬停部件查看结构</small>
+    </div>
+  </section>
+  <Fragment slot="scripts">
+    <script>
+      import { mountGameDesign } from "../../scripts/pages/game-design";
+      const root = document.querySelector<HTMLElement>("[data-gd]");
+      if (root) mountGameDesign(root);
+    </script>
+  </Fragment>
+</WorldLayout>
