@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f1eadf" />
+    <title>KLEIN BLues 个人作品收录 | Personal Site</title>
+    <meta name="description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta name="author" content="KLEIN BLues" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.kleinblues.site/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="KLEIN BLues" />
+    <meta property="og:url" content="https://www.kleinblues.site/" />
+    <meta property="og:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta property="og:description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta property="og:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:secure_url" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta name="twitter:description" content="原创小说、人物绘画、摄影作品与程序设计随笔的个人作品档案。" />
+    <meta name="twitter:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta name="twitter:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "KLEIN BLues 个人作品收录",
+        "alternateName": "KLEIN BLues Personal Site",
+        "url": "https://www.kleinblues.site/",
+        "description": "KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔。",
+        "inLanguage": "zh-CN",
+        "author": {
+          "@type": "Person",
+          "name": "KLEIN BLues",
+          "alternateName": "KringKoter",
+          "sameAs": [
+            "https://github.com/JSKringKoter",
+            "https://space.bilibili.com/456757086"
+          ]
+        }
+      }
+    </script>
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./vendor/katex/katex.min.css" />
+    <link rel="stylesheet" href="./styles.css?v=68" />
+  </head>
+  <body>
+    <div class="boot" id="boot" aria-hidden="true">
+      <div class="boot-mark">
+        <span class="boot-primary" id="bootPrimary"></span>
+        <span class="boot-gap" aria-hidden="true"></span>
+        <span class="boot-secondary" id="bootSecondary"></span>
+        <i class="boot-caret"></i>
+      </div>
+      <p>Composing the archive</p>
+    </div>
+
+    <div class="noise" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i></div>
+
+    <header class="masthead" id="masthead">
+      <a class="wordmark" href="#top" aria-label="返回首页" data-cursor="HOME">
+        <strong>KLEIN</strong><span>BLues</span>
+      </a>
+      <nav class="primary-nav" aria-label="主导航">
+        <a href="#fiction"><span>01</span>文字</a>
+        <a href="#portraits"><span>02</span>画中人</a>
+        <a href="#notes"><span>03</span>随笔</a>
+        <a href="#travel-map"><span>04</span>山河行迹</a>
+        <a href="#about"><span>05</span>关于</a>
+      </nav>
+      <div class="edition"><span>Independent archive</span><b>MMXXVI</b></div>
+    </header>
+
+    <main id="app">
+      <section class="hero" id="top" aria-labelledby="heroTitle">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="weather-atmosphere" id="weatherAtmosphere" aria-hidden="true">
+          <div class="weather-sun"></div>
+          <div class="weather-cloud cloud-a"></div>
+          <div class="weather-cloud cloud-b"></div>
+          <div class="weather-cloud cloud-c"></div>
+          <div class="weather-fog"><i></i><i></i><i></i></div>
+          <div class="weather-particles" id="weatherParticles"></div>
+          <div class="weather-flash"></div>
+        </div>
+        <div class="hero-orbit" id="heroCollage" aria-label="精选图像"></div>
+        <h1 class="hero-title" id="heroTitle">
+          <span class="hero-klein">KLEIN</span>
+          <span class="hero-blues">BL<span>u</span>es</span>
+          <span class="sr-only">个人作品收录 | Personal Site</span>
+        </h1>
+        <div class="hero-note">
+          <span class="cross" aria-hidden="true"></span>
+          <p><strong>山河皆有幸</strong><small lang="en">There is lucky in all mountains and rivers.</small></p>
+        </div>
+        <p class="hero-intro"><strong>人物与往事的收藏集。</strong><span>在尘封的信笺之间，寻找未完成的故事。</span></p>
+        <div class="weather-control" id="weatherControl">
+          <div class="weather-reading" id="weatherReading" aria-live="polite">
+            <strong id="weatherTemperature">LIVE</strong>
+            <span><b id="weatherCondition">正在读取当地天空</b><small id="weatherPlace">允许定位后自动匹配</small></span>
+          </div>
+          <button class="weather-cycle" id="weatherCycle" type="button" aria-label="手动切换天气" data-cursor="SWITCH">
+            <span id="weatherCycleLabel">切换天气</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8a7 7 0 1 0 1 5M19 3v5h-5" /></svg>
+          </button>
+        </div>
+        <a class="scroll-cue" href="#fiction" data-cursor="DOWN"><span>向下</span><i></i></a>
+      </section>
+
+      <div class="ticker" aria-hidden="true">
+        <div>
+          <span>FICTION AS TIME</span><i>✦</i><span>PORTRAIT AS LIGHT</span><i>✦</i>
+          <span>FICTION AS TIME</span><i>✦</i><span>PORTRAIT AS LIGHT</span><i>✦</i>
+        </div>
+      </div>
+
+      <section class="fiction section" id="fiction" aria-labelledby="fictionTitle">
+        <header class="section-head reveal">
+          <p><span>01</span> Index of fiction</p>
+          <h2 id="fictionTitle">一纸<br /><em>空文</em><small id="fictionTitleSuffix"></small></h2>
+          <div class="section-deck" id="fictionDeck">已经完成的文字，<br />以及仍在回响的故事。</div>
+        </header>
+
+        <div class="fiction-toolbar reveal">
+          <span class="fiction-archive-count" id="fictionArchiveCount"></span>
+        </div>
+
+        <div class="fiction-layout">
+          <div class="novel-index" id="novelIndex"></div>
+          <aside class="novel-preview reveal" id="novelPreview" aria-live="polite">
+            <div class="preview-surface">
+              <span class="preview-number" id="previewNumber">01</span>
+              <p id="previewExcerpt"></p>
+              <div class="preview-meta"><span id="previewCount"></span><i></i><span>Original fiction</span></div>
+            </div>
+            <button class="fiction-collection-nav" id="fictionCollectionNav" type="button" data-fiction-collection="unfinished" data-cursor="SWITCH" aria-label="进入一纸空文·未尽">
+              <span id="fictionCollectionNavLabel">一纸空文·未尽</span>
+              <i aria-hidden="true"></i>
+              <b id="fictionCollectionNavArrow" aria-hidden="true">→</b>
+            </button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="portraits section" id="portraits" aria-labelledby="portraitTitle">
+        <header class="portrait-heading reveal">
+          <p><span>02</span> Portrait atlas</p>
+          <h2 id="portraitTitle">画中人</h2>
+          <div class="portrait-statement" id="portraitAside" aria-hidden="true"></div>
+        </header>
+
+        <div class="character-tabs reveal" id="characterTabs" role="tablist" aria-label="选择人物"></div>
+        <div class="archive-scrollbar character-scrollbar reveal" id="characterScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物" aria-controls="characterTabs" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+          <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+        </div>
+
+        <div class="portrait-stage" id="portraitStage">
+          <div class="portrait-cover-wrap reveal">
+            <button class="portrait-cover" id="portraitCover" type="button">
+              <span class="portrait-media" id="portraitMedia" data-cursor="IMAGE">
+                <img id="portraitCoverImage" alt="" />
+                <span class="cover-index" id="coverIndex">01 / 01</span>
+              </span>
+            </button>
+            <div class="cover-caption">
+              <h3 id="characterName"></h3>
+              <p id="characterCount"></p>
+            </div>
+          </div>
+
+          <div class="portrait-rail-wrap reveal">
+            <div class="rail-instruction"><span>Drag the rail</span><i></i><span>Click to inspect</span></div>
+            <div class="portrait-rail" id="portraitRail" tabindex="0" aria-label="人物图像列表"></div>
+            <div class="archive-scrollbar portrait-scrollbar" id="portraitScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物作品" aria-controls="portraitRail" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+              <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tech-notes section" id="notes" aria-labelledby="notesTitle">
+        <header class="tech-heading reveal">
+          <p><span>03</span> Engineering notebook</p>
+          <h2 id="notesTitle">随笔<em>而录</em></h2>
+          <div class="tech-statement">记录问题如何发生，<br />以及系统为什么这样工作。</div>
+        </header>
+        <div class="tech-shell reveal">
+          <div class="tech-toolbar">
+            <div class="tech-filters" id="techFilters" aria-label="筛选技术笔记"></div>
+            <span id="techTotal"></span>
+          </div>
+          <div class="tech-layout">
+            <div class="tech-index" id="techIndex" aria-label="技术笔记目录"></div>
+            <article class="tech-preview" id="techPreview" aria-live="polite">
+              <header><span id="techPreviewCategory"></span><b id="techPreviewStatus"></b><time id="techPreviewDate"></time></header>
+              <h3 id="techPreviewTitle"></h3>
+              <p id="techPreviewSummary"></p>
+              <div class="tech-tags" id="techPreviewTags"></div>
+              <pre><code id="techPreviewCode"></code></pre>
+              <footer><span id="techPreviewRead"></span><i></i><button id="techPreviewOpen" type="button" data-cursor="ENTER">阅读全文 ↗</button></footer>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="travel-map section" id="travel-map" aria-labelledby="travelMapTitle">
+        <header class="atlas-heading reveal">
+          <p><span>04</span> Atlas of travelled light</p>
+          <h2 id="travelMapTitle">山河<em>行迹</em></h2>
+          <div class="atlas-statement">让光影回到它发生的地方。<br />沿着山河，重访快门停驻的片刻。</div>
+        </header>
+
+        <div class="atlas-map-shell reveal" id="atlasMapShell">
+          <div class="atlas-map-meta" aria-hidden="true">
+            <span>CHINA · PROVINCIAL ARCHIVE</span>
+            <i></i>
+            <span id="atlasCoverage">03 REGIONS / 05 WORKS</span>
+          </div>
+          <button class="atlas-reset" id="atlasReset" type="button" hidden data-cursor="BACK" aria-label="返回全国地图">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" /></svg>
+            <span>返回全国</span>
+          </button>
+          <svg class="atlas-map" id="atlasMap" viewBox="0 0 900 650" role="img" aria-labelledby="atlasMapLabel atlasMapDescription">
+            <title id="atlasMapLabel">中国摄影足迹地图</title>
+            <desc id="atlasMapDescription">选择省级行政区，地图会放大到该区域，并以连线展示当地摄影作品。</desc>
+            <g id="atlasProvinceLayer"></g>
+            <g id="atlasMarkerLayer"></g>
+          </svg>
+          <div class="atlas-callout-layer" id="atlasCalloutLayer" aria-live="polite" hidden>
+            <svg class="atlas-connections" id="atlasConnections" aria-hidden="true"></svg>
+            <div class="atlas-photo-callouts" id="atlasPhotoCallouts"></div>
+          </div>
+          <div class="atlas-focus-caption" id="atlasFocusCaption" aria-live="polite" hidden>
+            <span id="atlasProvinceEn">JIANGSU</span>
+            <h3 id="atlasProvinceName">江苏</h3>
+            <p id="atlasProvinceSummary"></p>
+            <small id="atlasWorkCount">3 works</small>
+          </div>
+          <div class="atlas-map-status" id="atlasMapStatus" role="status">
+            <span></span>
+            <p>正在展开山河经纬</p>
+          </div>
+          <p class="atlas-map-hint"><span aria-hidden="true"></span>选择一处省份，让镜头靠近</p>
+        </div>
+      </section>
+
+      <section class="about section" id="about" aria-labelledby="aboutTitle">
+        <div class="about-number reveal">05</div>
+        <div class="about-copy reveal">
+          <p class="eyebrow">About the archive</p>
+          <h2 id="aboutTitle"><span>诗歌、文字与画，</span><span>还有画中的人们。</span></h2>
+          <p class="about-intro">这里收留写完与未写完的故事，也保存从人物眼中、旅途光影与寻常日子里经过的片刻。文字替时间留下回声，画面让想象中的人拥有面容；偶尔，代码与笔记也记录一个问题被慢慢解开的过程。它们共同构成我所看见、所记得，也仍想继续抵达的世界。</p>
+        </div>
+        <address class="about-contact reveal" aria-label="联系方式">
+          <header><span>Correspondence</span><small>05 / 联系与来信</small></header>
+          <a href="https://github.com/JSKringKoter" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>GitHub</span><strong>JSKringKoter</strong><i>↗</i></a>
+          <div><span>QQ</span><strong>2265757077</strong><i>—</i></div>
+          <a href="https://steamcommunity.com/id/JS_KringKoter/" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Steam</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <a href="https://space.bilibili.com/456757086" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Bilibili</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <div class="about-email">
+            <span>Email</span>
+            <strong><a href="mailto:kringkoter@gmail.com">kringkoter@gmail.com</a><a href="mailto:2265757077@qq.com">2265757077@qq.com</a></strong>
+            <i>↗</i>
+          </div>
+        </address>
+        <footer class="site-footer">
+          <span>© 2026 KLEIN BLues</span>
+          <a href="#top" data-cursor="UP">Back to top ↑</a>
+          <span>All works reserved</span>
+        </footer>
+      </section>
+    </main>
+
+    <section class="reader" id="reader" aria-hidden="true" aria-label="小说阅读器">
+      <div class="reader-curtain" aria-hidden="true"></div>
+      <div class="reader-ornaments" id="readerOrnaments" aria-hidden="true"></div>
+      <header class="reader-head">
+        <button id="readerClose" type="button" aria-label="关闭阅读器" data-cursor="BACK">
+          <svg viewBox="0 0 32 32"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+          <span>返回目录</span>
+        </button>
+        <div class="reader-progress"><i id="readerProgress"></i></div>
+        <span id="readerPosition">00%</span>
+      </header>
+      <nav class="reader-toc" id="readerToc" aria-label="文章章节" hidden></nav>
+      <article class="reader-sheet">
+        <header class="reader-title-block">
+          <p id="readerMeta"></p>
+          <h2 id="readerTitle"></h2>
+          <p id="readerSubtitle"></p>
+          <div class="reader-publication" id="readerPublication" hidden></div>
+        </header>
+        <aside class="reader-music" id="readerMusic" aria-label="《深蓝》阅读配乐" hidden>
+          <div class="reader-music-art" aria-hidden="true">
+            <span class="reader-music-disc">
+              <img src="https://p1.music.126.net/AvbPQfWgipEno1XWbS3bXw==/109951164518215779.jpg" alt="" loading="lazy" referrerpolicy="no-referrer" />
+            </span>
+            <i></i>
+          </div>
+          <div class="reader-music-copy">
+            <span>READING SCORE · 01</span>
+            <h3>Falling into Presence</h3>
+            <p>Borrtex · selected for Deep Blue</p>
+          </div>
+          <div class="reader-music-controls">
+            <button class="reader-music-toggle" id="readerMusicToggle" type="button" aria-label="播放 Falling into Presence" data-cursor="ENTER" disabled>
+              <svg viewBox="0 0 32 32" aria-hidden="true"><path class="music-play-icon" d="m12 9 12 7-12 7Z" /><path class="music-pause-icon" d="M11 9v14M21 9v14" /></svg>
+            </button>
+            <div class="reader-music-timeline">
+              <input id="readerMusicProgress" type="range" min="0" max="1000" value="0" step="1" aria-label="音乐播放进度" data-cursor="DRAG" />
+              <div><span id="readerMusicStatus">CONNECTING</span><time id="readerMusicTime">0:00 / 4:16</time></div>
+            </div>
+            <a href="https://music.163.com/song?id=1330935435" target="_blank" rel="noopener noreferrer" data-cursor="OPEN" aria-label="在网易云音乐打开 Falling into Presence">SOURCE ↗</a>
+          </div>
+          <audio id="readerMusicAudio" preload="metadata"></audio>
+        </aside>
+        <div class="reader-body" id="readerBody"></div>
+      </article>
+    </section>
+
+    <section class="note-reader" id="noteReader" aria-hidden="true" aria-label="技术笔记阅读器">
+      <header class="note-reader-head">
+        <button id="noteReaderClose" type="button" aria-label="关闭技术笔记" data-cursor="BACK">
+          <svg viewBox="0 0 32 32"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+          <span>返回随笔</span>
+        </button>
+        <div class="note-reader-progress"><i id="noteReaderProgress"></i></div>
+        <span id="noteReaderPosition">00%</span>
+      </header>
+      <article class="note-reader-sheet">
+        <header class="note-reader-title">
+          <div><span id="noteReaderCategory"></span><b id="noteReaderStatus"></b><time id="noteReaderDate"></time></div>
+          <h2 id="noteReaderTitle"></h2>
+          <div class="note-reader-tags" id="noteReaderTags"></div>
+        </header>
+        <div class="note-reader-body" id="noteReaderBody"></div>
+      </article>
+    </section>
+
+    <section class="viewer" id="viewer" aria-hidden="true" aria-label="图像查看器">
+      <div class="viewer-color" id="viewerColor" aria-hidden="true"></div>
+      <div class="viewer-blur" aria-hidden="true"><img id="viewerBlur" alt="" /></div>
+      <header class="viewer-head">
+        <div><strong>KLEIN BLues</strong><span id="viewerArchive">Portrait archive</span></div>
+        <button id="viewerClose" type="button" aria-label="关闭图像" data-cursor="CLOSE">
+          <span>Close</span><svg viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+      </header>
+      <figure class="viewer-figure"><img id="viewerImage" alt="" /></figure>
+      <div class="viewer-caption">
+        <span id="viewerCounter"></span>
+        <h3 id="viewerTitle"></h3>
+        <p id="viewerGroup"></p>
+      </div>
+      <dl class="viewer-exif" id="viewerExif" hidden>
+        <div><dt>Coordinates</dt><dd id="viewerCoordinates"></dd></div>
+        <div><dt>Camera</dt><dd id="viewerCamera"></dd></div>
+        <div><dt>Lens</dt><dd id="viewerLens"></dd></div>
+        <div><dt>Exposure</dt><dd id="viewerExposure"></dd></div>
+        <div><dt>Captured</dt><dd id="viewerCaptured"></dd></div>
+      </dl>
+      <div class="viewer-controls">
+        <button id="viewerPrev" type="button" aria-label="上一张" data-cursor="PREV">←</button>
+        <i></i>
+        <button id="viewerNext" type="button" aria-label="下一张" data-cursor="NEXT">→</button>
+      </div>
+    </section>
+
+    <script src="./vendor/gsap.min.js"></script>
+    <script src="./vendor/marked.min.js"></script>
+    <script src="./vendor/katex/katex.min.js"></script>
+    <script src="./vendor/katex/contrib/auto-render.min.js"></script>
+    <script src="./data.js"></script>
+    <script src="./notion-notes.js?v=1"></script>
+    <script src="./notion-content.js?v=1"></script>
+    <script src="./legacy-notes.js?v=1"></script>
+    <script src="./app.js?v=62"></script>
+  </body>
+</html>
