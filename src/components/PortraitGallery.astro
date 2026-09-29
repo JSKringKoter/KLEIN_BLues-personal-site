@@ -1,0 +1,35 @@
+      <section class="portraits section" id="portraits" aria-labelledby="portraitTitle">
+        <header class="portrait-heading reveal">
+          <p><span>02</span> Portrait atlas</p>
+          <h1 id="portraitTitle">画中人</h1>
+          <div class="portrait-statement" id="portraitAside" aria-hidden="true"></div>
+        </header>
+
+        <div class="character-tabs reveal" id="characterTabs" role="tablist" aria-label="选择人物"></div>
+        <div class="archive-scrollbar character-scrollbar reveal" id="characterScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物" aria-controls="characterTabs" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+          <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+        </div>
+
+        <div class="portrait-stage" id="portraitStage">
+          <div class="portrait-cover-wrap reveal">
+            <button class="portrait-cover" id="portraitCover" type="button">
+              <span class="portrait-media" id="portraitMedia" data-cursor="IMAGE">
+                <img id="portraitCoverImage" alt="" />
+                <span class="cover-index" id="coverIndex">01 / 01</span>
+              </span>
+            </button>
+            <div class="cover-caption">
+              <h3 id="characterName"></h3>
+              <p id="characterCount"></p>
+            </div>
+          </div>
+
+          <div class="portrait-rail-wrap reveal">
+            <div class="rail-instruction"><span>Drag the rail</span><i></i><span>Click to inspect</span></div>
+            <div class="portrait-rail" id="portraitRail" tabindex="0" aria-label="人物图像列表"></div>
+            <div class="archive-scrollbar portrait-scrollbar" id="portraitScrollbar" role="scrollbar" tabindex="0" aria-label="拖动浏览人物作品" aria-controls="portraitRail" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-cursor="DRAG">
+              <span class="archive-scrollbar-thumb" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+      </section>

@@ -1,0 +1,37 @@
+---
+// 一纸空文：沿用旧站的目录 + 预览卡（由 public/app.js 的 renderNovels 渲染），标题保持在左上。
+// 画布在这一段不画东西，形变粒子会凝结在带 data-sample 的版面上（见 stage/paper.ts 的 DomModule）。
+---
+
+<section class="stage-track stage-track--fiction" id="fiction" data-stage="fiction" aria-labelledby="fictionTitle">
+  <div class="stage-overlay fl" data-overlay>
+    <header class="fl-head stage-rise">
+      <p class="stage-eyebrow"><span>01</span> Index of fiction</p>
+      <h2 id="fictionTitle" data-sample="#1d1b17">一纸<br /><em>空文</em><small id="fictionTitleSuffix"></small></h2>
+      <div class="fl-deck" id="fictionDeck">已经完成的文字，<br />以及仍在回响的故事。</div>
+      <span class="fiction-archive-count" id="fictionArchiveCount"></span>
+    </header>
+
+    <div class="fl-body stage-rise">
+      <div class="fiction-layout">
+        <div class="novel-index stage-interactive" id="novelIndex" data-sample="#1d1b17"></div>
+        <aside class="novel-preview" id="novelPreview" aria-live="polite">
+          <div class="preview-surface" data-sample="#1f3a8a">
+            <span class="preview-number" id="previewNumber">01</span>
+            <p id="previewExcerpt"></p>
+            <div class="preview-meta">
+              <span id="previewCount"></span>
+              <i></i>
+              <span>Original fiction</span>
+            </div>
+          </div>
+          <button class="fiction-collection-nav" id="fictionCollectionNav" type="button" data-fiction-collection="unfinished" data-cursor="SWITCH" aria-label="进入一纸空文·未尽">
+            <span id="fictionCollectionNavLabel">一纸空文·未尽</span>
+            <i aria-hidden="true"></i>
+            <b id="fictionCollectionNavArrow" aria-hidden="true">→</b>
+          </button>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>

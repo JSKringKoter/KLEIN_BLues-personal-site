@@ -1,0 +1,22 @@
+---
+const notes = [
+  ["♪", "4%", "14%", "4.8rem", "-8deg", ".3", "9s", "-1s", "18px", "-22px"],
+  ["♫", "8%", "42%", "6.6rem", "12deg", ".16", "11s", "-4s", "-14px", "26px"],
+  ["♩", "3%", "74%", "5.2rem", "-15deg", ".24", "10s", "-2s", "22px", "-16px"],
+  ["♬", "15%", "88%", "3.2rem", "9deg", ".2", "8s", "-5s", "-16px", "-18px"],
+  ["♪", "89%", "13%", "5.5rem", "14deg", ".24", "10s", "-3s", "-20px", "22px"],
+  ["♩", "94%", "36%", "3.6rem", "-11deg", ".28", "9s", "-1s", "16px", "-20px"],
+  ["♫", "86%", "61%", "6.8rem", "7deg", ".15", "12s", "-6s", "18px", "24px"],
+  ["♪", "93%", "84%", "4.4rem", "-8deg", ".22", "9s", "-3s", "-14px", "-22px"]
+];
+---
+
+<div class="deepblue-ornaments" aria-hidden="true">
+  <i class="music-staff staff-a"></i>
+  <i class="music-staff staff-b"></i>
+  {notes.map(([symbol, x, y, size, rotate, opacity, duration, delay, driftX, driftY]) => (
+    <span style={`--x:${x};--y:${y};--size:${size};--rotate:${rotate};--opacity:${opacity};--duration:${duration};--delay:${delay};--drift-x:${driftX};--drift-y:${driftY}`}>
+      {symbol}
+    </span>
+  ))}
+</div>

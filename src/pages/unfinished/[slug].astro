@@ -1,0 +1,141 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { parseNovelDocument } from "../../lib/novel";
+
+export async function getStaticPaths() {
+  const works = await getCollection("drafts");
+  return works.map((work) => ({
+    params: { slug: work.id },
+    props: { work, totalWorks: works.length }
+  }));
+}
+
+interface Props {
+  work: CollectionEntry<"drafts">;
+  totalWorks: number;
+}
+
+const { work, totalWorks } = Astro.props;
+const document = parseNovelDocument(work.body ?? "", work.data.title);
+const canonicalPath = `/unfinished/${work.id}/`;
+const pageTitle = `《${work.data.title}》· 未尽 | KLEIN BLues`;
+const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(totalWorks).padStart(2, "0")}`;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={work.data.excerpt}
+  canonicalPath={canonicalPath}
+  image={work.data.cover}
+  type="article"
+>
+  <main class:list={["fiction-reader", `theme-${work.data.theme}`]} data-reader>
+    <div class="reader-backdrop" aria-hidden="true"></div>
+    <header class="reader-toolbar">
+      <a href="/#fiction" aria-label="返回一纸空文" data-cursor="BACK">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+        <span>返回目录</span>
+      </a>
+      <div class="reading-progress"><i data-progress></i></div>
+      <span data-position>00%</span>
+    </header>
+
+    {document.headings.length > 0 && (
+      <nav class="reader-toc" aria-label="文章章节">
+        {document.headings.map((heading, index) => (
+          <a href={`#${heading.id}`} class:list={[index === 0 && "is-active"]} data-chapter-link={heading.id} data-cursor="GO">
+            <strong>{heading.title}</strong>
+          </a>
+        ))}
+      </nav>
+    )}
+
+    <article class="reader-sheet">
+      <header class="reader-title-block">
+        <p>{workPosition} · {work.data.charCount.toLocaleString("zh-CN")} 字</p>
+        <h1>{work.data.title}</h1>
+        <p class="reader-subtitle">{work.data.subtitle}</p>
+        {work.data.publication.length > 0 && (
+          <dl class="reader-publication">
+            {work.data.publication.map((item) => (
+              <div><dt>{item.label}</dt><dd>{item.value}</dd></div>
+            ))}
+          </dl>
+        )}
+      </header>
+
+      {work.data.music && (
+        <a class="reading-score" href={work.data.music.url} target="_blank" rel="noopener noreferrer" data-cursor="PLAY">
+          <span class="score-disc">
+            {work.data.music.artwork && <img src={work.data.music.artwork} alt="" referrerpolicy="no-referrer" />}
+          </span>
+          <span class="score-copy">
+            <small>READING SCORE · {String(work.data.order).padStart(2, "0")}</small>
+            <strong>{work.data.music.title}</strong>
+            <i>{work.data.music.artist} · Open in NetEase Music</i>
+          </span>
+          <b aria-hidden="true">↗</b>
+        </a>
+      )}
+
+      <div class="reader-body">
+        {document.blocks.map((block) => {
+          if (block.type === "spacer") return <div class="reader-spacer" aria-hidden="true"></div>;
+          if (block.type === "paragraph") return <p>{block.text}</p>;
+          if (block.type === "heading") {
+            const Heading = block.level === 1 ? "h2" : "h3";
+            return (
+              <header class:list={["reader-chapter", block.level === 1 ? "is-major" : "is-minor"]} id={block.id} data-chapter={block.id}>
+                <Heading>{block.title}</Heading>
+                {block.english && <em lang="en">{block.english}</em>}
+              </header>
+            );
+          }
+          return (
+            <figure class="reader-notation" aria-label="古典音律歌词">
+              <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>
+              {block.pairs.length > 0 ? (
+                <div class="notation-score" style={`--notation-count:${block.pairs.length}`}>
+                  {block.pairs.map((pair) => <span><b>{pair.lyric}</b><i>{pair.notation}</i></span>)}
+                </div>
+              ) : (
+                <div class="notation-raw"><p>{block.lyric}</p><small>{block.notation}</small></div>
+              )}
+            </figure>
+          );
+        })}
+      </div>
+    </article>
+  </main>
+
+  <script>
+    const progress = document.querySelector("[data-progress]");
+    const position = document.querySelector("[data-position]");
+    const chapterLinks = Array.from(document.querySelectorAll("[data-chapter-link]"));
+    const chapters = Array.from(document.querySelectorAll("[data-chapter]"));
+
+    const updateProgress = () => {
+      const maximum = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = maximum > 0 ? Math.min(1, window.scrollY / maximum) : 0;
+      if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${ratio})`;
+      if (position) position.textContent = `${String(Math.round(ratio * 100)).padStart(2, "0")}%`;
+    };
+
+    const activateChapter = (id: string) => {
+      chapterLinks.forEach((link) => link.classList.toggle("is-active", link.getAttribute("data-chapter-link") === id));
+    };
+
+    if (chapters.length) {
+      const observer = new IntersectionObserver((entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]?.target.id) activateChapter(visible[0].target.id);
+      }, { rootMargin: "-15% 0px -72% 0px", threshold: 0 });
+      chapters.forEach((chapter) => observer.observe(chapter));
+    }
+
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress, { passive: true });
+    updateProgress();
+  </script>
+</BaseLayout>

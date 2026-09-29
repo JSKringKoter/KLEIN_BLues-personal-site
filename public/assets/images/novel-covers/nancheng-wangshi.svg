@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
+  <defs>
+    <linearGradient id="rain" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#183b4e"/><stop offset=".48" stop-color="#41766f"/><stop offset="1" stop-color="#c38758"/></linearGradient>
+    <linearGradient id="water"><stop stop-color="#2d6d72"/><stop offset="1" stop-color="#162d43"/></linearGradient>
+    <filter id="lamp"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1200" height="800" fill="url(#rain)"/>
+  <path d="M0 520h1200v280H0z" fill="url(#water)"/>
+  <g fill="#162a37" opacity=".88"><path d="M0 450h250v180H0zM65 450l70-80 70 80z"/><path d="M300 410h300v220H300zM330 410l120-95 120 95z"/><path d="M760 450h440v180H760zM805 450l145-110 145 110z"/></g>
+  <g fill="#f4bd6d" filter="url(#lamp)" opacity=".85"><circle cx="190" cy="520" r="55"/><circle cx="535" cy="500" r="70"/><circle cx="890" cy="530" r="60"/><circle cx="1080" cy="500" r="45"/></g>
+  <g stroke="#d8e8e6" stroke-width="5" opacity=".28"><path d="M80 0L0 360m250-360L130 480M430 0L270 520M650 0L500 480M860 0L700 520M1080 0L910 560M1200 130l-130 420"/></g>
+  <path d="M0 650c200-60 390 90 600 5s390 70 600-20" fill="none" stroke="#ddaa6d" stroke-width="9" opacity=".45"/>
+</svg>

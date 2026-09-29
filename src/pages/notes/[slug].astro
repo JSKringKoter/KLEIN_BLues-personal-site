@@ -1,0 +1,61 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+  const notes = await getCollection("notes");
+  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+
+interface Props {
+  note: CollectionEntry<"notes">;
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+const canonicalPath = `/notes/${note.id}/`;
+---
+
+<BaseLayout
+  title={`${note.data.title} | 随笔而录 · KLEIN BLues`}
+  description={note.data.summary}
+  canonicalPath={canonicalPath}
+  type="article"
+  stylesheets={["/vendor/katex/katex.min.css"]}
+>
+  <main class="note-page">
+    <header class="note-toolbar">
+      <a href="/#notes" data-cursor="BACK" aria-label="返回随笔而录">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+        <span>返回随笔</span>
+      </a>
+      <span>{note.data.category}</span>
+      <time datetime={note.data.date}>{note.data.date}</time>
+    </header>
+    <article class="note-article">
+      <header class="note-title-block">
+        <div><span>{note.data.status}</span><i></i><span>ENGINEERING NOTE</span></div>
+        <h1>{note.data.title}</h1>
+        <p>{note.data.summary}</p>
+        <div class="note-tags">{note.data.tags.map((tag) => <span>{tag}</span>)}</div>
+      </header>
+      <div class="note-content"><Content /></div>
+    </article>
+  </main>
+  <script is:inline src="/vendor/katex/katex.min.js"></script>
+  <script is:inline src="/vendor/katex/contrib/auto-render.min.js"></script>
+  <script is:inline>
+    window.addEventListener("DOMContentLoaded", () => {
+      if (typeof window.renderMathInElement !== "function") return;
+      window.renderMathInElement(document.querySelector(".note-content"), {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+          { left: "\\(", right: "\\)", display: false },
+          { left: "\\[", right: "\\]", display: true }
+        ],
+        throwOnError: false
+      });
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,28 @@
+    <section class="viewer" id="viewer" aria-hidden="true" aria-label="图像查看器">
+      <div class="viewer-color" id="viewerColor" aria-hidden="true"></div>
+      <div class="viewer-blur" aria-hidden="true"><img id="viewerBlur" alt="" /></div>
+      <header class="viewer-head">
+        <div><strong>KLEIN BLues</strong><span id="viewerArchive">Portrait archive</span></div>
+        <button id="viewerClose" type="button" aria-label="关闭图像" data-cursor="CLOSE">
+          <span>Close</span><svg viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19" /></svg>
+        </button>
+      </header>
+      <figure class="viewer-figure"><img id="viewerImage" alt="" /></figure>
+      <div class="viewer-caption">
+        <span id="viewerCounter"></span>
+        <h3 id="viewerTitle"></h3>
+        <p id="viewerGroup"></p>
+      </div>
+      <dl class="viewer-exif" id="viewerExif" hidden>
+        <div><dt>Coordinates</dt><dd id="viewerCoordinates"></dd></div>
+        <div><dt>Camera</dt><dd id="viewerCamera"></dd></div>
+        <div><dt>Lens</dt><dd id="viewerLens"></dd></div>
+        <div><dt>Exposure</dt><dd id="viewerExposure"></dd></div>
+        <div><dt>Captured</dt><dd id="viewerCaptured"></dd></div>
+      </dl>
+      <div class="viewer-controls">
+        <button id="viewerPrev" type="button" aria-label="上一张" data-cursor="PREV">←</button>
+        <i></i>
+        <button id="viewerNext" type="button" aria-label="下一张" data-cursor="NEXT">→</button>
+      </div>
+    </section>

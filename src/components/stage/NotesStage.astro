@@ -1,0 +1,37 @@
+---
+// 随笔而录：坐标纸上的索引卡。三维部分见 src/scripts/stage/notes。
+import { getCollection } from "astro:content";
+const notes = (await getCollection("notes")).sort((a, b) => b.data.date.localeCompare(a.data.date));
+---
+
+<section class="stage-track stage-track--notes" id="notes" data-stage="notes" aria-labelledby="notesTitle">
+  <div class="stage-overlay nt" data-overlay>
+    <div class="nt-hit" data-nt-hit aria-hidden="true"></div>
+    <div class="nt-axis" data-nt-axis aria-hidden="true"></div>
+    <div class="nt-lanes" data-nt-lanes aria-hidden="true"></div>
+
+    <header class="nt-head stage-rise">
+      <p class="stage-eyebrow"><span>04</span> Engineering notebook</p>
+      <h2 id="notesTitle">随笔<em>而录</em></h2>
+      <p class="nt-deck">记录问题如何发生，<br />以及系统为什么这样工作。</p>
+    </header>
+
+    <div class="nt-filters stage-rise" data-nt-filters aria-label="筛选技术笔记"></div>
+    <span class="nt-total stage-rise" data-nt-total></span>
+
+    <article class="nt-preview stage-rise" data-nt-preview aria-live="polite">
+      <header><span data-nt-cat></span><b data-nt-status></b><time data-nt-date></time></header>
+      <h3 data-nt-title></h3>
+      <p data-nt-summary></p>
+      <div class="nt-tags" data-nt-tags></div>
+      <pre><code data-nt-code></code></pre>
+      <a data-nt-open href="/notes/" data-cursor="ENTER">阅读全文 ↗</a>
+    </article>
+
+    <nav class="nt-fallback" aria-label="技术笔记目录">
+      <ol>
+        {notes.map((n) => <li><a href={`/notes/${n.id}/`}><small>{n.data.category}</small><span>{n.data.title}</span><time>{n.data.date}</time></a></li>)}
+      </ol>
+    </nav>
+  </div>
+</section>

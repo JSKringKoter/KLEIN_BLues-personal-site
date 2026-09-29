@@ -1,0 +1,22 @@
+---
+import WorldLayout from "../../layouts/WorldLayout.astro";
+import ImageViewer from "../../components/ImageViewer.astro";
+import PortraitsStage from "../../components/stage/PortraitsStage.astro";
+import "../../styles/stage.css";
+---
+<WorldLayout title="画中人 · 原创角色 | WORLDBUILDINGS · KLEIN BLues" description="人物与往事的收藏集。翻阅 KLEIN BLues 的原创角色与人物绘画。" canonicalPath="/worldbuildings/portraits/" variant="portraits">
+  <div data-kb-lite>
+    <PortraitsStage standalone />
+  </div>
+  <ImageViewer slot="overlays" />
+  <Fragment slot="scripts">
+    <script is:inline src="/vendor/gsap.min.js"></script>
+    <script is:inline src="/data.js"></script>
+    <script is:inline src="/app.js?v=68"></script>
+    <script>
+      import { mountPortraits } from "../../scripts/pages/characters";
+      const root = document.querySelector<HTMLElement>(".pt-page");
+      if (root) mountPortraits(root);
+    </script>
+  </Fragment>
+</WorldLayout>

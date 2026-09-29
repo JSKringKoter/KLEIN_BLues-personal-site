@@ -1,0 +1,194 @@
+---
+import FictionStage from "../components/stage/FictionStage.astro";
+import WorldsStage from "../components/stage/WorldsStage.astro";
+import PortraitsStage from "../components/stage/PortraitsStage.astro";
+import NotesStage from "../components/stage/NotesStage.astro";
+import AtlasStage from "../components/stage/AtlasStage.astro";
+import ImageViewer from "../components/ImageViewer.astro";
+import "../styles/world3d.css";
+import "../styles/stage.css";
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f1eadf" />
+    <title>KLEIN BLues 个人作品收录 | Personal Site</title>
+    <meta name="description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta name="author" content="KLEIN BLues" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.kleinblues.site/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="KLEIN BLues" />
+    <meta property="og:url" content="https://www.kleinblues.site/" />
+    <meta property="og:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta property="og:description" content="KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔，在文字、图像与代码之间保存仍在生长的故事。" />
+    <meta property="og:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:secure_url" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="KLEIN BLues 个人作品收录 | Personal Site" />
+    <meta name="twitter:description" content="原创小说、人物绘画、摄影作品与程序设计随笔的个人作品档案。" />
+    <meta name="twitter:image" content="https://www.kleinblues.site/assets/images/social/kleinblues-og-v2.jpg" />
+    <meta name="twitter:image:alt" content="KLEIN BLues 深蓝色个人作品封面，题记：山河皆有幸" />
+
+    <script is:inline type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "KLEIN BLues 个人作品收录",
+        "alternateName": "KLEIN BLues Personal Site",
+        "url": "https://www.kleinblues.site/",
+        "description": "KLEIN BLues 的个人作品档案，收录原创小说、人物绘画、摄影作品与程序设计随笔。",
+        "inLanguage": "zh-CN",
+        "author": {
+          "@type": "Person",
+          "name": "KLEIN BLues",
+          "alternateName": "KringKoter",
+          "sameAs": [
+            "https://github.com/JSKringKoter",
+            "https://space.bilibili.com/456757086"
+          ]
+        }
+      }
+    </script>
+    <script is:inline>
+      // 开屏动画每个会话只播一次（public/app.js 的 animateEntrance 负责写入标记）
+      try {
+        if (sessionStorage.getItem("kb-booted") === "1") document.documentElement.classList.add("kb-seen");
+      } catch {}
+    </script>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
+    <link rel="stylesheet" href="/styles.css?v=71" />
+    <link rel="stylesheet" href="/worldbuildings.css?v=3" />
+  </head>
+  <body>
+    <div class="boot" id="boot" aria-hidden="true">
+      <div class="boot-mark">
+        <span class="boot-primary" id="bootPrimary"></span>
+        <span class="boot-gap" aria-hidden="true"></span>
+        <span class="boot-secondary" id="bootSecondary"></span>
+        <i class="boot-caret"></i>
+      </div>
+      <p>Composing the archive</p>
+    </div>
+
+    <div class="noise" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i></div>
+    <div class="stage-backdrop" id="stageBackdrop" aria-hidden="true"></div>
+    <canvas class="world3d-canvas" id="world3d" aria-hidden="true"></canvas>
+
+    <header class="masthead" id="masthead">
+      <a class="wordmark" href="#top" aria-label="返回首页" data-cursor="HOME">
+        <strong>KLEIN</strong><span>BLues</span>
+      </a>
+      <nav class="primary-nav" aria-label="主导航">
+        <a href="#fiction"><span>01</span>文字</a>
+        <a href="#worldbuildings"><span>02</span>世界观</a>
+        <a href="#portraits"><span>03</span>画中人</a>
+        <a href="#notes"><span>04</span>随笔</a>
+        <a href="#travel-map"><span>05</span>山河行迹</a>
+        <a href="#about"><span>06</span>关于</a>
+      </nav>
+      <div class="edition"><span>Independent archive</span><b>MMXXVI</b></div>
+    </header>
+
+    <main id="app">
+      <section class="hero" id="top" aria-labelledby="heroTitle">
+        <div class="hero-grid" aria-hidden="true"></div>
+        <div class="weather-atmosphere" id="weatherAtmosphere" aria-hidden="true">
+          <div class="weather-sun"></div>
+          <div class="weather-cloud cloud-a"></div>
+          <div class="weather-cloud cloud-b"></div>
+          <div class="weather-cloud cloud-c"></div>
+          <div class="weather-fog"><i></i><i></i><i></i></div>
+          <div class="weather-particles" id="weatherParticles"></div>
+          <div class="weather-flash"></div>
+        </div>
+        <div class="hero-orbit" id="heroCollage" aria-label="精选图像"></div>
+        <h1 class="hero-title" id="heroTitle">
+          <span class="hero-klein">KLEIN</span>
+          <span class="hero-blues">BL<span>u</span>es</span>
+          <span class="sr-only">个人作品收录 | Personal Site</span>
+        </h1>
+        <div class="hero-note">
+          <span class="cross" aria-hidden="true"></span>
+          <p><strong>山河皆有幸</strong><small lang="en">There is lucky in all mountains and rivers.</small></p>
+        </div>
+        <p class="hero-intro"><strong>人物与往事的收藏集。</strong><span>在尘封的信笺之间，寻找未完成的故事。</span></p>
+        <div class="weather-control" id="weatherControl">
+          <div class="weather-reading" id="weatherReading" aria-live="polite">
+            <strong id="weatherTemperature">LIVE</strong>
+            <span><b id="weatherCondition">正在读取当地天空</b><small id="weatherPlace">允许定位后自动匹配</small></span>
+          </div>
+          <button class="weather-cycle" id="weatherCycle" type="button" aria-label="手动切换天气" data-cursor="SWITCH">
+            <span id="weatherCycleLabel">切换天气</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8a7 7 0 1 0 1 5M19 3v5h-5" /></svg>
+          </button>
+        </div>
+        <a class="scroll-cue" href="#fiction" data-cursor="DOWN"><span>向下</span><i></i></a>
+      </section>
+
+      <div class="stage-band stage-band--short" aria-hidden="true"></div>
+      <FictionStage />
+      <div class="stage-band" aria-hidden="true"></div>
+      <WorldsStage />
+      <div class="stage-band" aria-hidden="true"></div>
+      <PortraitsStage />
+      <div class="stage-band" aria-hidden="true"></div>
+      <NotesStage />
+      <div class="stage-band" aria-hidden="true"></div>
+      <AtlasStage />
+      <div class="stage-band stage-band--end" aria-hidden="true"></div>
+
+      <section class="about section" id="about" data-stage="about" aria-labelledby="aboutTitle">
+        <div class="about-number reveal">06</div>
+        <div class="about-copy reveal">
+          <p class="eyebrow">About the archive</p>
+          <h2 id="aboutTitle"><span>诗歌、文字与画，</span><span>还有画中的人们。</span></h2>
+          <p class="about-intro">这里收留写完与未写完的故事，也保存从人物眼中、旅途光影与寻常日子里经过的片刻。文字替时间留下回声，画面让想象中的人拥有面容；偶尔，代码与笔记也记录一个问题被慢慢解开的过程。它们共同构成我所看见、所记得，也仍想继续抵达的世界。</p>
+        </div>
+        <address class="about-contact reveal" aria-label="联系方式">
+          <header><span>Correspondence</span><small>06 / 联系与来信</small></header>
+          <a href="https://github.com/JSKringKoter" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>GitHub</span><strong>JSKringKoter</strong><i>↗</i></a>
+          <div><span>QQ</span><strong>2265757077</strong><i>—</i></div>
+          <a href="https://steamcommunity.com/id/JS_KringKoter/" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Steam</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <a href="https://space.bilibili.com/456757086" target="_blank" rel="noopener noreferrer" data-cursor="OPEN"><span>Bilibili</span><strong>JS_KringKoter</strong><i>↗</i></a>
+          <div class="about-email">
+            <span>Email</span>
+            <strong><a href="mailto:kringkoter@gmail.com">kringkoter@gmail.com</a><a href="mailto:2265757077@qq.com">2265757077@qq.com</a></strong>
+            <i>↗</i>
+          </div>
+        </address>
+        <footer class="site-footer">
+          <span>© 2026 KLEIN BLues</span>
+          <a href="#top" data-cursor="UP">Back to top ↑</a>
+          <span>All works reserved</span>
+        </footer>
+      </section>
+    </main>
+
+    <ImageViewer />
+
+    <script is:inline src="/vendor/gsap.min.js"></script>
+    <script is:inline src="/vendor/marked.min.js"></script>
+    <script is:inline src="/vendor/katex/katex.min.js"></script>
+    <script is:inline src="/vendor/katex/contrib/auto-render.min.js"></script>
+    <script is:inline src="/data.js"></script>
+    <script is:inline src="/notion-notes.js?v=1"></script>
+    <script is:inline src="/notion-content.js?v=1"></script>
+    <script is:inline src="/legacy-notes.js?v=1"></script>
+    <script is:inline src="/app.js?v=68"></script>
+    <script>
+      import "../scripts/stage";
+    </script>
+  </body>
+</html>
