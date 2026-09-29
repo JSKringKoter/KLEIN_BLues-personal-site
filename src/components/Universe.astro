@@ -1,0 +1,980 @@
+---
+// 《苍穹 The Universe》设定展示 —— 自包含组件，可直接嵌入其他 Astro 页面。
+// 组件默认铺满父容器宽度、视口高度；滚轮/拖拽/键盘只在组件内部生效。
+import { CHAPTERS, CORE_ABILITIES } from '../scripts/universe/data';
+
+interface Props {
+  height?: string;
+  /** 嵌入宿主站点：隐藏自带标识，读数移到右下角，由宿主提供页眉与光标 */
+  embedded?: boolean;
+}
+const { height = '100svh', embedded = false } = Astro.props;
+---
+
+<div class:list={['uv', { 'uv--embedded': embedded }]} data-universe style={`--uv-height:${height}`}>
+  <canvas class="uv-canvas" aria-hidden="true"></canvas>
+  <div class="uv-veil" aria-hidden="true"></div>
+  <div class="uv-labels" aria-hidden="true"></div>
+
+  {
+    !embedded && (
+      <header class="uv-brand">
+        <i class="uv-mark" aria-hidden="true" />
+        <b>苍穹</b>
+        <span>THE UNIVERSE</span>
+      </header>
+    )
+  }
+
+  <div class="uv-readout" aria-hidden="true">
+    <div><span class="k">CHAPTER</span><span data-read-stage>00</span><span class="dim">/05</span></div>
+    <div><span class="k">TRACK</span><span data-read-coord>00.000</span></div>
+    <div><span class="k">CYCLE</span><span data-read-cycle>01</span></div>
+  </div>
+
+  <nav class="uv-rail" aria-label="章节">
+    <i class="uv-rail-cursor" data-rail-cursor></i>
+    {
+      CHAPTERS.map((c, i) => (
+        <button type="button" data-go={i} aria-label={c.title} data-cursor="ENTER">
+          <span>{c.index}</span>
+          <b>{c.title}</b>
+        </button>
+      ))
+    }
+  </nav>
+
+  <section class="uv-chapters">
+    {
+      CHAPTERS.map((c) => (
+        <article data-chapter={c.key}>
+          <div class="uv-idx">
+            <span>{c.index}</span>
+            <i />
+            <span>{c.en}</span>
+          </div>
+          <h2>{c.title}</h2>
+          <p class="uv-lead">{c.lead}</p>
+          <p class="uv-body">{c.body}</p>
+          {c.key === 'core' && (
+            <ul class="uv-abilities">
+              {CORE_ABILITIES.map((a, i) => (
+                <li>
+                  <span>{`0${i + 1}`}</span>
+                  <b>{a.k}</b>
+                  <em>{a.v}</em>
+                </li>
+              ))}
+            </ul>
+          )}
+        </article>
+      ))
+    }
+  </section>
+
+  <section class="uv-era" data-era aria-live="polite">
+    <div class="uv-era-top">
+      <span class="uv-era-kicker">02 — CHRONICLE</span>
+      <span class="uv-era-legend"><i class="w"></i>广域宇宙<i class="t"></i>泪城<i class="m"></i>合并宇宙</span>
+    </div>
+    <div class="uv-era-year" data-era-year>2230</div>
+    <div class="uv-era-bar"><i data-era-bar></i></div>
+    <div class="uv-era-card">
+      <span class="uv-era-route" data-era-route></span>
+      <h3 data-era-title></h3>
+      <p data-era-text></p>
+    </div>
+  </section>
+
+  <aside class="uv-panel" data-panel>
+    <button type="button" class="uv-panel-close" data-panel-close aria-label="关闭" data-cursor="CLOSE">×</button>
+    <div data-panel-body></div>
+  </aside>
+
+  <div class="uv-hint" data-hint></div>
+  <p class="uv-nogl">当前浏览器不支持 WebGL，无法展示三维场景。</p>
+</div>
+
+<script>
+  import { mountUniverse } from '../scripts/universe/main';
+  document.querySelectorAll<HTMLElement>('[data-universe]').forEach((el) => mountUniverse(el));
+</script>
+
+<style is:global>
+  .uv {
+    --uv-ink: #141a2a;
+    --uv-muted: #5d6679;
+    --uv-faint: rgba(20, 26, 42, 0.1);
+    --uv-klein: #1f3fae;
+    --uv-bg-a: #f7f8fb;
+    --uv-bg-b: #d9dfec;
+    --uv-serif: 'Noto Serif SC', 'Source Han Serif SC', 'Source Han Serif CN', 'Songti SC', 'STSong', 'SimSun', serif;
+    --uv-sans: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+    --uv-mono: 'JetBrains Mono', 'SFMono-Regular', 'Cascadia Code', Consolas, ui-monospace, monospace;
+    --uv-rail-step: 46px;
+    position: relative;
+    width: 100%;
+    height: var(--uv-height, 100svh);
+    overflow: hidden;
+    background: radial-gradient(120% 95% at 60% 40%, var(--uv-bg-a) 0%, var(--uv-bg-b) 100%);
+    color: var(--uv-ink);
+    font-family: var(--uv-sans);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+    isolation: isolate;
+  }
+  .uv *,
+  .uv *::before,
+  .uv *::after {
+    box-sizing: border-box;
+  }
+  .uv.is-dragging {
+    cursor: grabbing;
+  }
+  .uv.is-pointing {
+    cursor: pointer;
+  }
+  .uv-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .uv-veil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(130% 100% at 55% 45%, transparent 55%, rgba(24, 32, 56, 0.1) 100%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.1  0 0 0 0 0.12  0 0 0 0 0.2  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    opacity: 0.55;
+    mix-blend-mode: multiply;
+  }
+
+  /* 入场 */
+  .uv-brand,
+  .uv-readout,
+  .uv-rail,
+  .uv-hint {
+    opacity: 0;
+    transition: opacity 1.6s ease 1.4s;
+  }
+  .uv.is-ready .uv-brand,
+  .uv.is-ready .uv-readout,
+  .uv.is-ready .uv-rail,
+  .uv.is-ready .uv-hint {
+    opacity: 1;
+  }
+
+  /* 品牌 */
+  .uv-brand {
+    position: absolute;
+    top: 30px;
+    left: 44px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .uv-brand b {
+    font-family: var(--uv-serif);
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.3em;
+  }
+  .uv-brand span {
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    letter-spacing: 0.38em;
+    color: var(--uv-muted);
+  }
+  .uv-mark {
+    width: 12px;
+    height: 12px;
+    transform: rotate(45deg);
+    border: 1.5px solid var(--uv-klein);
+    position: relative;
+  }
+  .uv-mark::after {
+    content: '';
+    position: absolute;
+    inset: 2.5px;
+    background: var(--uv-klein);
+  }
+
+  /* 读数 */
+  .uv-readout {
+    position: absolute;
+    top: 28px;
+    right: 44px;
+    display: flex;
+    gap: 22px;
+    font-family: var(--uv-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--uv-ink);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .uv-readout .k {
+    color: var(--uv-muted);
+    margin-right: 8px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+  }
+  .uv-readout .dim {
+    color: var(--uv-muted);
+  }
+
+  /* 章节导轨 */
+  .uv-rail {
+    position: absolute;
+    right: 40px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .uv-rail::before {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: calc(var(--uv-rail-step) / 2);
+    bottom: calc(var(--uv-rail-step) / 2);
+    width: 1px;
+    background: var(--uv-faint);
+  }
+  .uv-rail button {
+    height: var(--uv-rail-step);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 0 12px;
+    border: 0;
+    background: none;
+    color: var(--uv-muted);
+    cursor: pointer;
+    font: inherit;
+    position: relative;
+  }
+  .uv-rail button::after {
+    content: '';
+    position: absolute;
+    right: 1px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    margin-top: -2.5px;
+    border-radius: 50%;
+    background: var(--uv-bg-a);
+    box-shadow: 0 0 0 1px rgba(20, 26, 42, 0.35);
+  }
+  .uv-rail button span {
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    opacity: 0.7;
+  }
+  .uv-rail button b {
+    font-family: var(--uv-serif);
+    font-weight: 500;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    opacity: 0;
+    transition:
+      max-width 0.5s cubic-bezier(0.2, 0.7, 0.2, 1),
+      opacity 0.4s ease;
+  }
+  .uv-rail:hover button b,
+  .uv-rail button.is-active b {
+    max-width: 5em;
+    opacity: 1;
+  }
+  .uv-rail button.is-active {
+    color: var(--uv-ink);
+  }
+  .uv-rail-cursor {
+    position: absolute;
+    right: -2px;
+    top: calc(var(--uv-rail-step) / 2 - 5.5px);
+    width: 11px;
+    height: 11px;
+    border: 1.5px solid var(--uv-klein);
+    transform-origin: center;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .uv-rail-cursor::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: var(--uv-klein);
+  }
+  .uv-rail-cursor {
+    rotate: 45deg;
+  }
+
+  /* 章节文字 */
+  .uv-chapters,
+  .uv-era {
+    position: absolute;
+    left: 56px;
+    bottom: 72px;
+    width: min(460px, calc(100% - 112px));
+    pointer-events: none;
+  }
+  .uv-chapters::before,
+  .uv-era::before {
+    content: '';
+    position: absolute;
+    left: -160px;
+    right: -180px;
+    bottom: -120px;
+    height: calc(100% + 360px);
+    min-height: 520px;
+    background: radial-gradient(closest-side at 35% 62%, color-mix(in srgb, var(--uv-bg-a) 78%, transparent) 0%, transparent 100%);
+    z-index: -1;
+    pointer-events: none;
+  }
+  .uv-chapters {
+    height: 360px;
+  }
+  .uv-chapters article {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    will-change: opacity, transform, filter;
+  }
+  .uv-idx {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--uv-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.34em;
+    color: var(--uv-muted);
+  }
+  .uv-idx span:first-child {
+    color: var(--uv-klein);
+    letter-spacing: 0.12em;
+  }
+  .uv-idx i {
+    width: 36px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .uv-chapters h2 {
+    margin: 14px 0 18px;
+    font-family: var(--uv-serif);
+    font-weight: 600;
+    font-size: clamp(48px, 6.4vw, 92px);
+    line-height: 1;
+    letter-spacing: 0.16em;
+    color: var(--uv-ink);
+  }
+  .uv-lead {
+    margin: 0 0 12px;
+    font-family: var(--uv-serif);
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--uv-ink);
+  }
+  .uv-body {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.95;
+    color: var(--uv-muted);
+    max-width: 30em;
+  }
+  .uv-abilities {
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--uv-faint);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .uv-abilities li {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .uv-abilities span {
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    color: var(--uv-klein);
+  }
+  .uv-abilities b {
+    font-family: var(--uv-serif);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .uv-abilities em {
+    font-style: normal;
+    font-size: 11.5px;
+    color: var(--uv-muted);
+  }
+
+  /* 纪年 */
+  .uv-era {
+    opacity: 0;
+    visibility: hidden;
+  }
+  .uv-era-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--uv-muted);
+  }
+  .uv-era-kicker {
+    color: var(--uv-klein);
+  }
+  .uv-era-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.1em;
+    font-family: var(--uv-sans);
+    font-size: 11px;
+  }
+  .uv-era-legend i {
+    width: 14px;
+    height: 2px;
+    margin-left: 8px;
+  }
+  .uv-era-legend .w {
+    background: #1f3fae;
+  }
+  .uv-era-legend .t {
+    background: #7b4fc9;
+  }
+  .uv-era-legend .m {
+    background: #2c3a6e;
+  }
+  .uv-era-year {
+    margin: 10px 0 12px;
+    font-family: var(--uv-mono);
+    font-size: clamp(48px, 5.6vw, 84px);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--uv-ink);
+  }
+  .uv-era-bar {
+    height: 1px;
+    background: var(--uv-faint);
+    margin-bottom: 20px;
+  }
+  .uv-era-bar i {
+    display: block;
+    height: 100%;
+    background: var(--uv-klein);
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .uv-era-route {
+    font-family: var(--uv-mono);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--uv-klein);
+  }
+  .uv-era-route[data-route='tear'] {
+    color: #7b4fc9;
+  }
+  .uv-era-route[data-route='merge'] {
+    color: #2c3a6e;
+  }
+  .uv-era-card h3 {
+    margin: 8px 0 8px;
+    font-family: var(--uv-serif);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .uv-era-card p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.9;
+    color: var(--uv-muted);
+    min-height: 3.8em;
+  }
+  .uv-era.is-swap .uv-era-card {
+    animation: uv-swap 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  @keyframes uv-swap {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+      filter: blur(6px);
+    }
+  }
+
+  /* 标签 */
+  .uv-labels {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .uv-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    visibility: hidden;
+    will-change: transform, opacity;
+    --c: #1f3fae;
+  }
+  .uv-label-dot {
+    position: absolute;
+    left: -3.5px;
+    top: -3.5px;
+    width: 7px;
+    height: 7px;
+    rotate: 45deg;
+    border: 1.2px solid var(--c);
+    background: var(--uv-bg-a);
+    transition:
+      scale 0.3s,
+      background 0.3s;
+  }
+  .uv-label-line {
+    position: absolute;
+    left: 6px;
+    top: -0.5px;
+    width: 26px;
+    height: 1px;
+    background: var(--c);
+    opacity: 0.55;
+    transform-origin: left;
+    transition: width 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .uv-label-t,
+  .uv-label-s {
+    position: absolute;
+    left: 38px;
+    white-space: nowrap;
+  }
+  .uv-label-t {
+    top: -10px;
+    font-family: var(--uv-serif);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: var(--uv-ink);
+  }
+  .uv-label-s {
+    top: 9px;
+    font-family: var(--uv-mono);
+    font-size: 9px;
+    letter-spacing: 0.24em;
+    color: var(--uv-muted);
+  }
+  .uv-label.is-hover .uv-label-dot,
+  .uv-label.is-selected .uv-label-dot {
+    scale: 1.5;
+    background: var(--c);
+  }
+  .uv-label.is-hover .uv-label-line,
+  .uv-label.is-selected .uv-label-line {
+    width: 44px;
+  }
+  .uv-label.is-hover .uv-label-t,
+  .uv-label.is-hover .uv-label-s,
+  .uv-label.is-selected .uv-label-t,
+  .uv-label.is-selected .uv-label-s {
+    transform: translateX(18px);
+  }
+  .uv-label-t,
+  .uv-label-s {
+    transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  /* 纪年节点：锚点在晶体尖端，年份与标题沿航线外侧展开；泪城一侧朝下 */
+  .uv-label--s2 .uv-label-dot {
+    width: 5px;
+    height: 5px;
+    left: -2.5px;
+    top: -2.5px;
+  }
+  .uv-label--s2 .uv-label-line {
+    left: -0.5px;
+    top: -22px;
+    width: 1px;
+    height: 16px;
+    transform-origin: bottom;
+  }
+  .uv-label--s2 .uv-label-s,
+  .uv-label--s2 .uv-label-t {
+    left: 0;
+    translate: -50% 0;
+  }
+  .uv-label--s2 .uv-label-s {
+    top: -54px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--c);
+  }
+  .uv-label--s2 .uv-label-t {
+    top: -42px;
+    font-size: 13px;
+  }
+  .uv-label--s2.uv-label--below .uv-label-line {
+    top: 6px;
+  }
+  .uv-label--s2.uv-label--below .uv-label-s {
+    top: 26px;
+  }
+  .uv-label--s2.uv-label--below .uv-label-t {
+    top: 38px;
+  }
+  .uv-label--tick .uv-label-dot,
+  .uv-label--tick .uv-label-line,
+  .uv-label--tick .uv-label-s {
+    display: none;
+  }
+  .uv-label--tick .uv-label-t {
+    top: 10px;
+    left: 0;
+    translate: -50% 0;
+    font-family: var(--uv-mono);
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--uv-muted);
+  }
+  .uv-label--s2.is-hover .uv-label-line {
+    width: 1px;
+  }
+  .uv-label--s2.is-hover .uv-label-t,
+  .uv-label--s2.is-hover .uv-label-s {
+    transform: translateY(-4px);
+  }
+  .uv-label--flip .uv-label-line,
+  .uv-label--disc .uv-label-line {
+    left: auto;
+    right: 6px;
+    transform-origin: right;
+  }
+  .uv-label--flip .uv-label-t,
+  .uv-label--flip .uv-label-s,
+  .uv-label--disc .uv-label-t,
+  .uv-label--disc .uv-label-s {
+    left: auto;
+    right: 38px;
+    text-align: right;
+  }
+  .uv-label--flip.is-hover .uv-label-t,
+  .uv-label--flip.is-hover .uv-label-s,
+  .uv-label--flip.is-selected .uv-label-t,
+  .uv-label--flip.is-selected .uv-label-s,
+  .uv-label--disc.is-hover .uv-label-t,
+  .uv-label--disc.is-hover .uv-label-s,
+  .uv-label--disc.is-selected .uv-label-t,
+  .uv-label--disc.is-selected .uv-label-s {
+    transform: translateX(-18px);
+  }
+
+  /* 详情面板 */
+  .uv-panel {
+    position: absolute;
+    right: 150px;
+    top: 50%;
+    width: 340px;
+    max-height: calc(100% - 180px);
+    overflow: auto;
+    translate: 24px -50%;
+    padding: 30px 30px 26px;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    border: 1px solid rgba(20, 26, 42, 0.08);
+    clip-path: inset(0 0 100% 0);
+    pointer-events: none;
+    transition:
+      clip-path 0.8s cubic-bezier(0.7, 0, 0.2, 1),
+      translate 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+    cursor: auto;
+    user-select: text;
+    -webkit-user-select: text;
+    --c: #1f3fae;
+  }
+  .uv-panel::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--c);
+  }
+  .uv-panel.is-open {
+    clip-path: inset(0 0 0 0);
+    translate: 0 -50%;
+    pointer-events: auto;
+  }
+  .uv-panel-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    border: 0;
+    background: none;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--uv-muted);
+    cursor: pointer;
+  }
+  .uv-panel-kicker {
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--c);
+  }
+  .uv-panel h3 {
+    margin: 10px 0 4px;
+    font-family: var(--uv-serif);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .uv-panel h3.is-long {
+    font-size: 21px;
+    letter-spacing: 0.08em;
+  }
+  .uv-panel-en {
+    font-family: var(--uv-mono);
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--uv-muted);
+  }
+  .uv-panel-table {
+    margin: 20px 0 0;
+    border-top: 1px solid var(--uv-faint);
+  }
+  .uv-panel-table div {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--uv-faint);
+    font-size: 12.5px;
+  }
+  .uv-panel-table dt {
+    color: var(--uv-muted);
+  }
+  .uv-panel-table dd {
+    margin: 0;
+    font-family: var(--uv-serif);
+  }
+  .uv-panel-stats {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 18px;
+  }
+  .uv-panel-stats div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11.5px;
+    color: var(--uv-muted);
+  }
+  .uv-bars {
+    display: flex;
+    gap: 3px;
+  }
+  .uv-bars i {
+    width: 14px;
+    height: 5px;
+    border: 1px solid var(--c);
+    opacity: 0.35;
+  }
+  .uv-bars i.on {
+    background: var(--c);
+    opacity: 1;
+  }
+  .uv-panel-list {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .uv-panel-list li {
+    font-size: 11.5px;
+    padding: 4px 10px;
+    border: 1px solid var(--uv-faint);
+    background: rgba(255, 255, 255, 0.5);
+  }
+  .uv-panel-desc {
+    margin: 18px 0 0;
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--uv-muted);
+  }
+
+  /* 操作提示 */
+  .uv-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 30px;
+    translate: -50% 0;
+    font-family: var(--uv-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.26em;
+    color: var(--uv-muted);
+    pointer-events: none;
+    padding-top: 18px;
+  }
+  .uv-hint::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 1px;
+    height: 12px;
+    background: var(--uv-muted);
+    animation: uv-drip 2.4s ease-in-out infinite;
+    transform-origin: top;
+  }
+  .uv-hint.is-swap {
+    animation: uv-fade 0.9s ease;
+  }
+  @keyframes uv-drip {
+    0% {
+      transform: scaleY(0);
+      opacity: 1;
+    }
+    60% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+    100% {
+      transform: scaleY(1) translateY(6px);
+      opacity: 0;
+    }
+  }
+  @keyframes uv-fade {
+    from {
+      opacity: 0;
+      letter-spacing: 0.5em;
+    }
+  }
+
+  .uv-nogl {
+    display: none;
+  }
+  .uv--nogl .uv-nogl {
+    display: block;
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    height: 2em;
+    text-align: center;
+    color: var(--uv-muted);
+  }
+
+  /* 嵌入模式：页眉交给宿主，读数移至右下角 */
+  .uv--embedded .uv-readout {
+    top: auto;
+    bottom: 30px;
+  }
+
+  @media (max-width: 760px) {
+    .uv--embedded .uv-readout {
+      display: none;
+    }
+    .uv {
+      --uv-rail-step: 30px;
+    }
+    .uv-brand {
+      top: 20px;
+      left: 20px;
+    }
+    .uv-readout {
+      top: 22px;
+      right: 20px;
+      gap: 12px;
+    }
+    .uv-readout > div:nth-child(2) {
+      display: none;
+    }
+    .uv-rail {
+      right: 12px;
+      top: 76px;
+      transform: none;
+    }
+    .uv-brand span {
+      display: none;
+    }
+    .uv-rail button {
+      padding: 0 16px 0 6px;
+    }
+    .uv-rail button b {
+      display: none;
+    }
+    .uv-chapters,
+    .uv-era {
+      left: 22px;
+      right: 22px;
+      width: auto;
+      bottom: 64px;
+    }
+    .uv-chapters h2 {
+      font-size: 46px;
+      margin: 10px 0 12px;
+    }
+    .uv-lead {
+      font-size: 15px;
+    }
+    .uv-body {
+      font-size: 12.5px;
+    }
+    .uv-abilities {
+      display: none;
+    }
+    .uv-era-legend {
+      display: none;
+    }
+    .uv-era-card p {
+      font-size: 12.5px;
+    }
+    .uv-panel {
+      left: 12px;
+      right: 12px;
+      top: auto;
+      bottom: 12px;
+      width: auto;
+      max-height: 58%;
+      translate: 0 24px;
+    }
+    .uv-panel.is-open {
+      translate: 0 0;
+    }
+    .uv-label-s {
+      display: none;
+    }
+    .uv-label--s2 .uv-label-s {
+      display: block;
+    }
+    .uv-hint {
+      bottom: 22px;
+      font-size: 9.5px;
+    }
+  }
+</style>

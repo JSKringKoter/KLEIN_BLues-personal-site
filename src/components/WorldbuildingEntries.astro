@@ -1,0 +1,72 @@
+---
+// 苍穹入口卡片的晶体：六方双锥的三个正面，每个面沿中线再分为两片；悬停时晶片沿各自方向散开。
+const T = "200 40", B = "200 300";
+const V = ["278 175", "239 190.6", "161 190.6", "122 175"];
+const M = ["258.5 182.8", "200 190.6", "141.5 182.8"];
+const dirs = [[9, -3], [0, 4], [-9, -3]];
+const facets = V.slice(0, 3).flatMap((v, k) => {
+  const [dx, dy] = dirs[k];
+  return [
+    { pts: `${T} ${v} ${M[k]}`, c: `u${k}a`, dx, dy: dy - 6 },
+    { pts: `${T} ${M[k]} ${V[k + 1]}`, c: `u${k}b`, dx, dy: dy - 6 },
+    { pts: `${B} ${v} ${M[k]}`, c: `l${k}a`, dx, dy: dy + 6 },
+    { pts: `${B} ${M[k]} ${V[k + 1]}`, c: `l${k}b`, dx, dy: dy + 6 },
+  ];
+});
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const dust = Array.from({ length: 34 }, () => ({
+  x: +(20 + rnd() * 360).toFixed(1),
+  y: +(20 + rnd() * 300).toFixed(1),
+  r: +(0.6 + rnd() * 1.6).toFixed(2),
+  c: rnd() < 0.3 ? "k" : "i",
+  t: +(rnd() * -8).toFixed(2),
+}));
+const chapters = [["00", "苍穹"], ["01", "核心"], ["02", "纪年"], ["03", "星图"], ["04", "三界"], ["05", "合界"]];
+---
+<section class="worldbuildings section" id="worldbuildings" aria-labelledby="worldbuildingsTitle">
+  <span id="portraits" class="world-old-anchor" aria-hidden="true"></span>
+  <header class="world-heading reveal">
+    <p class="world-eyebrow"><span>02</span> Worlds & their inhabitants</p>
+    <h2 id="worldbuildingsTitle">WORLDBUILDINGS<span>世界，与生活其中的人。</span></h2>
+    <p class="world-intro">在想象的边界，<br />为每一个故事留下一处容身之所。</p>
+  </header>
+  <div class="world-entries">
+    <a class="world-entry world-entry-sky reveal" href="/worldbuildings/cangqiong/" data-cursor="ENTER">
+      <div class="world-entry-top"><span>01 / THE WORLD</span><span>世界观档案</span></div>
+      <div class="cq-art" aria-hidden="true">
+        <svg class="cq-svg" viewBox="0 0 400 340" focusable="false">
+          <defs>
+            <clipPath id="cqFront" clipPathUnits="userSpaceOnUse"><rect x="-40" y="175" width="480" height="200" /></clipPath>
+          </defs>
+          <g class="cq-dust">{dust.map((d) => <circle cx={d.x} cy={d.y} r={d.r} class={d.c} style={`--d:${d.t}s`} />)}</g>
+          <g transform="rotate(-11 200 175)"><ellipse class="cq-ring cq-ring-a" cx="200" cy="175" rx="162" ry="40" /></g>
+          <g transform="rotate(15 200 175)"><ellipse class="cq-ring cq-ring-b" cx="200" cy="175" rx="186" ry="62" /></g>
+          <g class="cq-gem">
+            <path class="cq-back" d="M200 40 L161 159.4 M200 40 L239 159.4 M200 300 L161 159.4 M200 300 L239 159.4 M122 175 L161 159.4 L239 159.4 L278 175" />
+            {facets.map((p) => <polygon class={`cq-facet ${p.c}`} points={p.pts} style={`--dx:${p.dx}px;--dy:${p.dy}px`} />)}
+            <path class="cq-edge" d="M200 40 L122 175 L200 300 L278 175 Z M200 40 L161 190.6 L200 300 L239 190.6 Z M122 175 L161 190.6 L239 190.6 L278 175" />
+          </g>
+          <g transform="rotate(-11 200 175)"><ellipse class="cq-ring cq-ring-a" cx="200" cy="175" rx="162" ry="40" clip-path="url(#cqFront)" /></g>
+          <g transform="rotate(15 200 175)"><ellipse class="cq-ring cq-ring-b" cx="200" cy="175" rx="186" ry="62" clip-path="url(#cqFront)" /></g>
+        </svg>
+        <ol class="cq-chapters">{chapters.map(([i, t]) => <li><span>{i}</span>{t}</li>)}</ol>
+        <span class="cq-caption">A SHARD OF ANOTHER WORLD</span>
+      </div>
+      <div class="world-entry-bottom"><div><p>CANGQIONG · THE UNIVERSE</p><h3>苍穹<span>世界观</span></h3><span class="world-entry-description">一颗晶体，是另一个世界在此处的投影。</span></div><span class="world-entry-arrow" aria-hidden="true">↗</span></div>
+      <div class="world-entry-foot"><span>进入世界</span><span>ENTER THE WORLD →</span></div>
+    </a>
+    <a class="world-entry world-entry-portraits reveal" href="/worldbuildings/portraits/" data-cursor="ENTER">
+      <div class="world-entry-top"><span>02 / THE PEOPLE</span><span>人物绘画档案</span></div>
+      <div class="portrait-entry-art" aria-hidden="true">
+        <span class="portrait-entry-rule"></span>
+        <img class="entry-portrait-back" src="/assets/images/character-cards/p014.webp" alt="" loading="lazy" />
+        <img class="entry-portrait-front" src="/assets/images/character-cards/p001.webp" alt="" loading="lazy" />
+        <span class="portrait-entry-caption">FRAGMENTS OF THEIR LIVES</span>
+      </div>
+      <div class="world-entry-bottom"><div><p>PORTRAIT ATLAS</p><h3>画中人</h3><span class="world-entry-description">一幅画，一次相逢，一段仍在继续的往事。</span></div><span class="world-entry-arrow" aria-hidden="true">↗</span></div>
+      <div class="world-entry-foot"><span>翻阅人物</span><span>ENTER THE GALLERY →</span></div>
+    </a>
+  </div>
+  <div class="world-colophon"><span>KLEIN BLues / IMAGINARY ARCHIVES</span><span>从一个世界，到每一个人。</span></div>
+</section>

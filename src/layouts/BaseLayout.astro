@@ -1,0 +1,94 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath?: string;
+  image?: string;
+  type?: "website" | "article";
+  stylesheets?: string[];
+}
+
+const {
+  title,
+  description,
+  canonicalPath = "/",
+  image = "/assets/images/social/kleinblues-og-v2.jpg",
+  type = "website",
+  stylesheets = []
+} = Astro.props;
+const canonical = new URL(canonicalPath, Astro.site);
+const socialImage = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#e8e6df" />
+    <meta name="author" content="KLEIN BLues" />
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    {stylesheets.map((href) => <link rel="stylesheet" href={href} />)}
+    <title>{title}</title>
+
+    <meta property="og:type" content={type} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:site_name" content="KLEIN BLues" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={socialImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={socialImage} />
+  </head>
+  <body>
+    <div class="site-noise" aria-hidden="true"></div>
+    <div class="site-cursor" aria-hidden="true"><span></span></div>
+    <slot />
+    <script>
+      const cursor = document.querySelector<HTMLElement>(".site-cursor");
+      const cursorLabel = cursor?.querySelector("span");
+      const finePointer = window.matchMedia("(pointer: fine)").matches;
+
+      if (cursor && cursorLabel && finePointer) {
+        let x = -40;
+        let y = -40;
+        let targetX = -40;
+        let targetY = -40;
+
+        const draw = () => {
+          x += (targetX - x) * 0.22;
+          y += (targetY - y) * 0.22;
+          cursor.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+          requestAnimationFrame(draw);
+        };
+
+        window.addEventListener("pointermove", (event) => {
+          targetX = event.clientX;
+          targetY = event.clientY;
+          cursor.classList.add("is-visible");
+        }, { passive: true });
+
+        document.querySelectorAll("[data-cursor]").forEach((element) => {
+          element.addEventListener("pointerenter", () => {
+            cursorLabel.textContent = element.getAttribute("data-cursor") ?? "";
+            cursor.classList.add("is-active");
+          });
+          element.addEventListener("pointerleave", () => {
+            cursorLabel.textContent = "";
+            cursor.classList.remove("is-active");
+          });
+        });
+
+        draw();
+      }
+    </script>
+  </body>
+</html>

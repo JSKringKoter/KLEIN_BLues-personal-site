@@ -1,0 +1,53 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonicalPath: string;
+  variant?: "portraits" | "sky";
+}
+const { title, description, canonicalPath, variant = "sky" } = Astro.props;
+const canonical = new URL(canonicalPath, Astro.site);
+const socialImage = new URL("/assets/images/social/kleinblues-og-v2.jpg", Astro.site);
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content={variant === "sky" ? "#eef1f6" : "#172544"} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="KLEIN BLues" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={socialImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="/styles.css?v=71" />
+    <link rel="stylesheet" href="/worldbuildings.css?v=2" />
+  </head>
+  <body class:list={["world-page", `world-page-${variant}`]}>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span></span><i></i><i></i><i></i><i></i></div>
+    <header class="masthead world-masthead" id="masthead">
+      <a class="wordmark" href="/" aria-label="返回首页" data-cursor="HOME"><strong>KLEIN</strong><span>BLues</span></a>
+      <a class="world-back" href="/#worldbuildings" data-cursor="BACK"><span aria-hidden="true">←</span> WORLDBUILDINGS</a>
+      {variant === "portraits"
+        ? <span class="world-page-index">02 / THE PEOPLE</span>
+        : <a class="world-page-index world-page-next" href="/worldbuildings/portraits/" data-cursor="ENTER"><span>01 / THE WORLD</span><b>画中人 ↗</b></a>}
+    </header>
+    <main id="app"><slot /></main>
+    <slot name="overlays" />
+    <slot name="scripts" />
+    {variant === "sky" && (
+      <script>
+        import { setupSiteCursor } from "../scripts/site-cursor";
+        setupSiteCursor();
+      </script>
+    )}
+  </body>
+</html>
