@@ -37,6 +37,9 @@ interface Pane {
   /** 0..1：身后太花、对比度不够时把玻璃加厚 */
   thick: number;
   thickTarget: number;
+  /** 元素自身连同祖先的不透明度（例如拿起画中人卡片时淡出的工具条），玻璃随之淡出；fade 为平滑后的值 */
+  fadeTarget: number;
+  fade: number;
   rect: Rect | null;
   /** 画出来的矩形：追着 rect 平滑过渡（换文集等内容变化时玻璃不跳） */
   shown: Rect | null;
@@ -376,7 +379,7 @@ export class Plate {
     document.querySelectorAll<HTMLElement>("[data-glass]").forEach((el) => {
       const m = this.moduleOf(el);
       if (!m) return;
-      const pane: Pane = prevPanes.find((p) => p.el === el) ?? { el, order: Number(el.dataset.glass) || 0, radius: 22, tone: 0, thick: 0, thickTarget: 0, rect: null, shown: null };
+      const pane: Pane = prevPanes.find((p) => p.el === el) ?? { el, order: Number(el.dataset.glass) || 0, radius: 22, tone: 0, thick: 0, thickTarget: 0, fadeTarget: 1, fade: 1, rect: null, shown: null };
       pane.radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
       if (!panes.has(m)) panes.set(m, []);
       panes.get(m)!.push(pane);
@@ -415,7 +418,13 @@ export class Plate {
   }
 
   private measure(module: string) {
-    for (const p of this.panes.get(module) ?? []) p.rect = this.rectOf(p.el, module);
+    for (const p of this.panes.get(module) ?? []) {
+      p.rect = this.rectOf(p.el, module);
+      // 叠层本身的显隐由 mixPanes 的凝结程度负责，这里只看叠层以内
+      let o = 1;
+      for (let n: HTMLElement | null = p.el; n && !n.matches("[data-overlay], #top, #about"); n = n.parentElement) o *= parseFloat(getComputedStyle(n).opacity) || 0;
+      p.fadeTarget = o;
+    }
   }
 
   /**
@@ -431,7 +440,7 @@ export class Plate {
         if (!r || out.length >= MAX_PANES) continue;
         const cy = clamp01((r[1] + r[3]) / 2 / H);
         const lag = (leaving ? 1 - cy : cy) * 0.3;
-        const a = this.a === this.b ? 1 : smooth(clamp01((w - 0.12 - lag) / 0.55));
+        const a = (this.a === this.b ? 1 : smooth(clamp01((w - 0.12 - lag) / 0.55))) * pane.fade;
         if (a < 0.002) continue;
         out.push({ r, rad: pane.radius, tone: pane.tone, thick: pane.thick, a });
       }
@@ -583,6 +592,15 @@ export class Plate {
         t.pane.tone += ((t.on === "dark" ? 1 : 0) - t.pane.tone) * kt;
         t.pane.thick += (t.pane.thickTarget - t.pane.thick) * kt;
       }
+    this.panes.forEach((list) =>
+      list.forEach((pane) => {
+        const d = pane.fadeTarget - pane.fade;
+        if (Math.abs(d) > 0.002) {
+          pane.fade += d * (1 - Math.exp(-dt * 6));
+          this.dirty = true;
+        } else pane.fade = pane.fadeTarget;
+      }),
+    );
 
     const heroDark = luma(mixc(this.cur.top, this.cur.bottom, 0.5)) < 0.42;
     if (heroDark !== this.dark) {

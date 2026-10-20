@@ -1999,3 +1999,50 @@ html.kb-plate.stage-on .site-footer {
 html.kb-plate.stage-on .site-footer :is(span, a) {
   color: var(--t-soft, rgba(20, 26, 42, 0.68));
 }
+
+/* 画中人：只有卡片时，悬停的角色名显示在右下角（portraits.ts 的 syncName）；拿起之后不显示 */
+.pt-hover {
+  display: none;
+}
+
+:is(html.stage-on, .pt-page) .pt-hover {
+  --pt-tint: var(--stage-blue);
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+  position: absolute;
+  z-index: 2;
+  right: clamp(1.2rem, 4.4vw, 5rem);
+  bottom: clamp(2rem, 5vh, 3.4rem);
+  margin: 0;
+  text-align: right;
+  pointer-events: none;
+  opacity: 0;
+  translate: 0 0.6rem;
+  filter: blur(4px);
+  transition: opacity 0.35s ease, translate 0.5s var(--ease), filter 0.4s ease;
+}
+
+.pt-hover strong {
+  font: 400 clamp(2.2rem, 3.6vw, 3.4rem) / 1 var(--serif);
+  letter-spacing: 0.04em;
+  color: var(--t-ink, var(--stage-ink));
+}
+
+.pt-hover span {
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--pt-tint);
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: var(--t-soft, var(--stage-soft));
+}
+
+:is(html.stage-on, .pt-page) .pt-hover.is-on {
+  opacity: 1;
+  translate: 0 0;
+  filter: none;
+}
+
+:is(html.stage-on, .pt-page) .pt.is-holding .pt-hover {
+  opacity: 0;
+}
