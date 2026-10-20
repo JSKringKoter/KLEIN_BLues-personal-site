@@ -1,7 +1,9 @@
 // 画中人：桌上摊开的全息角色卡（首页的独立模块，/worldbuildings/portraits/ 也用同一个类）。
 // 悬停：卡片朝镜头浮起、随指针倾斜（只有指针在卡上时才倾斜），右下角显示角色名，光标变成贴合卡片的四角框。
-// 点击：卡片被拿到面前，这个角色的其他画作做成同样的镭射卡，从四周飞入，在同一平面上由内向外铺开、互不重叠；
-//       铺不下就伸到屏幕外，指针移向边缘时整片画作朝反方向平移（拿起的卡跟得少，形成视差），露出外圈。
+// 点击：卡片被拿到面前，这个角色的其他画作做成同样的镭射卡，从四周飞入，在同一平面上由内向外散落开、互不重叠
+//       （竖图一个尺寸、横图一个尺寸，画面按卡框裁切）；
+//       拿起的卡落在画作同一平面、与竖图画作同样大小，平移时和画作一起移动，不会压到旁边的画。
+//       铺不下就伸到屏幕外，指针移向边缘时整片画作朝反方向平移，露出外圈。
 //       每张画作卡左下角印着画名（单行，放不下就收字号）。
 import * as THREE from "three";
 import { Rng, Tween, clamp, damp, easeInOut, easeOut, lerp, type SampleBuffers, type StageFrame, type StageModule, type StagePresence } from "../core";
@@ -57,8 +59,11 @@ interface Tile {
 type Target = { kind: "card"; i: number } | { kind: "tile"; i: number } | null;
 
 const TINTS = ["#1746d1", "#b0643a", "#5b7fb8", "#8a5c28", "#3f7a66", "#9a6a3a", "#6c5a8e"];
-const HOLD_DEPTH = 7.2;
-const HOLD_SCALE = 1.12;
+/** 画作卡的卡框比例（插画窗口的宽高比）：竖图一种、横图一种，画面按卡框裁切 */
+const FRAME_TALL = 0.68;
+const FRAME_WIDE = 1.45;
+/** 横图卡相对竖图卡的宽度 */
+const WIDE_W = 1.55;
 /** 画作卡所在的深度 */
 const TILE_DEPTH = 10.5;
 /** 画作卡底边标题条的高度（卡宽为 1） */
@@ -99,7 +104,6 @@ export class PortraitsModule implements StageModule {
   private readonly hit: HTMLElement;
   private readonly frameEl: HTMLElement | null;
   private readonly holoBtn: HTMLButtonElement | null;
-  private readonly heldEl: HTMLElement | null;
   private readonly nameEl: HTMLElement | null;
   private nameIdx = -1;
   /** 拿起时画作平面可以平移的范围，以及当前（平滑后的）平移量；均为基准镜头坐标 */
@@ -146,7 +150,6 @@ export class PortraitsModule implements StageModule {
     this.hit = overlay.querySelector<HTMLElement>("[data-pt-hit]") ?? overlay;
     this.frameEl = overlay.querySelector<HTMLElement>("[data-pt-frame]");
     this.holoBtn = overlay.querySelector<HTMLButtonElement>("[data-pt-holo]");
-    this.heldEl = overlay.querySelector<HTMLElement>("[data-pt-held]");
     this.nameEl = overlay.querySelector<HTMLElement>("[data-pt-hover]");
     this.kb = (window as unknown as { KB?: KBRuntime }).KB;
     const all = this.kb?.allPaintings ?? [];
@@ -303,7 +306,6 @@ export class PortraitsModule implements StageModule {
       } catch {}
       this.syncHoloButton();
     });
-    this.overlay.querySelector("[data-pt-close]")?.addEventListener("click", () => this.release());
     window.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && this.held >= 0 && !document.body.classList.contains("is-locked")) this.release();
     });
@@ -339,12 +341,6 @@ export class PortraitsModule implements StageModule {
     this.buildTiles(i, !reduce);
     document.documentElement.classList.add("kb-hold");
     this.overlay.classList.add("is-holding");
-    const g = this.groups[i];
-    if (this.heldEl) {
-      this.heldEl.style.setProperty("--pt-tint", g.tint);
-      const meta = this.heldEl.querySelector("[data-pt-meta]");
-      if (meta) meta.textContent = g.images.length > 1 ? `${String(g.images.length).padStart(2, "0")} PORTRAITS · 点击画作查看` : "01 PORTRAIT · 点击卡片查看";
-    }
   }
 
   release() {
@@ -364,6 +360,19 @@ export class PortraitsModule implements StageModule {
     this.overlay.classList.remove("is-holding");
   }
 
+  /** 画作卡（竖图）的缩放倍数：竖图卡在屏幕上大约占三分之一屏高 */
+  private tileScale() {
+    const halfH = TILE_DEPTH * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const tallH = (1 - BORDER * 2) / FRAME_TALL + BORDER * 2 + STRIP;
+    return (2 * halfH) / (this.narrow ? 4.6 : 3.5) / tallH;
+  }
+
+  /** 拿起的卡：落在画作的平面上，高度与竖图画作卡相同 */
+  private heldScale() {
+    const tallH = (1 - BORDER * 2) / FRAME_TALL + BORDER * 2 + STRIP;
+    return (this.tileScale() * tallH) / CARD_H;
+  }
+
   private disposeTile(tile: Tile) {
     this.scene.remove(tile.card.mesh);
     tile.card.mesh.geometry.dispose();
@@ -372,8 +381,9 @@ export class PortraitsModule implements StageModule {
   }
 
   /**
-   * 在「拿起时」的镜头坐标系里铺开画作：一张网格，按到中心的距离由内向外填，避开拿起的卡；
-   * 横幅的画占两格。铺到屏幕外的部分靠平移（this.pan）看到。
+   * 在「拿起时」的镜头坐标系里散落画作：由内向外逐张「投放」，每张在一批随机候选位置里挑离中心最近、
+   * 又不与已放下的卡（含拿起的那张）重叠的一处；一批都放不下就把投放范围放大一圈再试。
+   * 每张略带一点随机的歪斜。铺到屏幕外的部分靠平移（this.pan）看到。
    */
   private buildTiles(i: number, animate: boolean) {
     for (const t of this.tiles) this.disposeTile(t);
@@ -388,47 +398,46 @@ export class PortraitsModule implements StageModule {
     const D = TILE_DEPTH;
     const halfH = D * tan;
     const halfW = halfH * aspect;
-    // 一屏大约放几行
-    const cellH = (2 * halfH) / (this.narrow ? 4.4 : 3.3);
-    const gap = cellH * 0.1;
-    const boxH = cellH - gap;
-    const boxW = boxH * 0.66;
-    const cellW = boxW + gap;
-    // 拿起的卡在这一深度上占的范围
-    const holdDepth = this.narrow ? HOLD_DEPTH + 1 : HOLD_DEPTH;
-    const k = D / holdDepth;
-    const hs = (this.narrow ? 1.05 : 1.2) * HOLD_SCALE * k;
-    const exY = (this.narrow ? 0.35 : 0.05) * k;
-    const exW = (CARD_W * hs) / 2 + gap * 0.8;
-    const exH = (CARD_H * hs) / 2 + gap * 0.8;
-    const blocked = (ix: number, iy: number) =>
-      Math.abs(ix * cellW) - cellW / 2 < exW && Math.abs(iy * cellH - exY) - cellH / 2 < exH;
-    const cells: { ix: number; iy: number; score: number }[] = [];
-    const N = 18;
-    for (let iy = -N; iy <= N; iy++)
-      for (let ix = -N; ix <= N; ix++) if (!blocked(ix, iy)) cells.push({ ix, iy, score: Math.hypot((ix * cellW) / halfW, (iy * cellH) / halfH) });
-    cells.sort((a, b) => a.score - b.score);
-    const used = new Set<string>();
-    const free = (ix: number, iy: number) => !used.has(`${ix},${iy}`) && !blocked(ix, iy);
+    const scale = this.tileScale();
+    const gap = 0.07 * scale;
+    // 拿起的卡占的范围（在画面正中）
+    const hs = this.heldScale();
+    const placed: { x: number; y: number; hw: number; hh: number }[] = [{ x: 0, y: 0, hw: (CARD_W * hs) / 2, hh: (CARD_H * hs) / 2 }];
+    const hits = (x: number, y: number, hw: number, hh: number) =>
+      placed.some((r) => Math.abs(x - r.x) < hw + r.hw + gap && Math.abs(y - r.y) < hh + r.hh + gap);
     const rng = new Rng(7 + i * 13);
     let ex = 0;
     let ey = 0;
+    // 投放范围（椭圆，按屏幕比例）：从拿起的卡外缘开始，放不下就一圈圈放大
+    let R = 0.55;
     images.forEach((painting, order) => {
-      const ar = painting.width / painting.height;
-      const wide = ar > 1.15;
-      const cell = cells.find((c) => free(c.ix, c.iy) && (!wide || free(c.ix + 1, c.iy)));
-      if (!cell) return;
-      used.add(`${cell.ix},${cell.iy}`);
-      if (wide) used.add(`${cell.ix + 1},${cell.iy}`);
-      const bw = wide ? 2 * cellW - gap : boxW;
-      const x = cell.ix * cellW + (wide ? cellW / 2 : 0);
-      const y = cell.iy * cellH;
-      // 卡面单位：竖幅宽 1，横幅按占的格子加宽，这样所有卡缩放一致、标题字号一致；插画按原比例，底下一条标题条
-      const w = wide ? bw / boxW : 1;
-      const h = (w - BORDER * 2) / ar + BORDER * 2 + STRIP;
-      const scale = Math.min(bw / w, boxH / h);
-      ex = Math.max(ex, Math.abs(x) + (w * scale) / 2);
-      ey = Math.max(ey, Math.abs(y) + (h * scale) / 2);
+      const wide = painting.width / painting.height > 1.15;
+      const w = wide ? WIDE_W : 1;
+      const h = (w - BORDER * 2) / (wide ? FRAME_WIDE : FRAME_TALL) + BORDER * 2 + STRIP;
+      const rotZ = (rng.next() - 0.5) * 0.16;
+      // 歪斜后的外接框
+      const c = Math.cos(rotZ), sn = Math.abs(Math.sin(rotZ));
+      const hw = ((w * c + h * sn) * scale) / 2;
+      const hh = ((h * c + w * sn) * scale) / 2;
+      let best: { x: number; y: number; score: number } | null = null;
+      for (let tries = 0; tries < 40 && !best; tries++) {
+        for (let n = 0; n < 48; n++) {
+          const a = rng.next() * Math.PI * 2;
+          const r = Math.sqrt(rng.next()) * R;
+          const x = Math.cos(a) * r * halfW;
+          const y = Math.sin(a) * r * halfH;
+          if (hits(x, y, hw, hh)) continue;
+          // 离中心越近越好，带一点随机，免得排成整齐的同心圈
+          const score = Math.hypot(x / halfW, y / halfH) + rng.next() * 0.12;
+          if (!best || score < best.score) best = { x, y, score };
+        }
+        if (!best) R *= 1.12;
+      }
+      if (!best) return;
+      const { x, y } = best;
+      placed.push({ x, y, hw, hh });
+      ex = Math.max(ex, Math.abs(x) + hw);
+      ey = Math.max(ey, Math.abs(y) + hh);
       const label = labelTexture(painting.title, w);
       const card = createHoloCard(`/assets/images/portrait-thumbs/${painting.id}.jpg`, g.tint, this.anisotropy, { width: w, height: h, strip: STRIP, label });
       const mat = card.mesh.material;
@@ -444,7 +453,7 @@ export class PortraitsModule implements StageModule {
       const dir = new THREE.Vector2(x / halfW, y / halfH);
       if (dir.lengthSq() < 1e-6) dir.set(0, 1);
       dir.normalize();
-      const depth = D + (rng.next() - 0.5) * 0.7;
+      const depth = D + (rng.next() - 0.5) * 0.6;
       const tile: Tile = {
         card,
         label,
@@ -452,8 +461,8 @@ export class PortraitsModule implements StageModule {
         index: g.images.indexOf(painting),
         home: new THREE.Vector3(x, y, depth),
         from: new THREE.Vector3(x + dir.x * halfW * 0.9, y + dir.y * halfH * 0.9, depth + 4),
-        rotZ: (rng.next() - 0.5) * 0.05,
-        fromRot: (rng.next() - 0.5) * 0.9,
+        rotZ,
+        fromRot: rotZ + (rng.next() - 0.5) * 0.9,
         w,
         h,
         scale,
@@ -563,7 +572,10 @@ export class PortraitsModule implements StageModule {
     );
 
     // 卡片
-    const front = this.inBase(this.drift.x * 0.3, (this.narrow ? 0.35 : 0.05) + this.drift.y * 0.3, this.narrow ? HOLD_DEPTH + 1 : HOLD_DEPTH, this.v2);
+    // 拿起的卡与画作同一平面、跟着同样平移
+    const front = this.inBase(this.drift.x, this.drift.y, TILE_DEPTH, this.v2);
+    const baseScale = this.narrow ? 1.05 : 1.2;
+    const heldScale = this.heldScale();
     this.cards.forEach((c, i) => {
       const m = c.card.mesh;
       const hovered = target?.kind === "card" && target.i === i;
@@ -606,7 +618,7 @@ export class PortraitsModule implements StageModule {
       }
       m.position.copy(this.v);
       m.quaternion.copy(this.q);
-      m.scale.setScalar((this.narrow ? 1.05 : 1.2) * lerp(1, HOLD_SCALE, hold));
+      m.scale.setScalar(lerp(baseScale, heldScale, hold));
       m.renderOrder = hold > 0.01 ? 50 : i;
       m.material.depthTest = hold < 0.01;
 
