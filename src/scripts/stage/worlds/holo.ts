@@ -1,10 +1,11 @@
 // 全息角色卡：插画 + 随视角变色的镭射箔 + 闪粉 + 跟随指针的高光。
-// 首页的「Original Characters」入口与 /worldbuildings/portraits/ 的卡桌共用。
+// 首页的「画中人」与 /worldbuildings/portraits/ 的卡桌共用；角色卡与拿起后铺开的画作卡是同一种卡。
+// 画作卡：尺寸随画作比例（uSize），底边多出一条标题条（uStrip），标题由 labelMap 的 alpha 印在左下角。
 import * as THREE from "three";
 
 export const CARD_W = 1;
 export const CARD_H = 1.45;
-const BORDER = 0.045;
+export const BORDER = 0.045;
 
 const vertex = /* glsl */ `
 varying vec2 vUv;
@@ -30,6 +31,12 @@ uniform float uGlareAmt;
 uniform vec3 uTint;
 uniform float uDim;
 uniform float uHasMap;
+uniform vec2 uSize;
+uniform float uStrip;
+uniform sampler2D labelMap;
+uniform float uHasLabel;
+uniform vec3 uLabelInk;
+uniform float uAlpha;
 varying vec2 vUv;
 varying vec3 vNormalW;
 varying vec3 vViewW;
@@ -46,21 +53,23 @@ float roundBox(vec2 p, vec2 b, float r) {
 }
 
 void main() {
-  vec2 p = (vUv - 0.5) * vec2(${CARD_W.toFixed(3)}, ${CARD_H.toFixed(3)});
-  float d = roundBox(p, vec2(${(CARD_W / 2).toFixed(3)}, ${(CARD_H / 2).toFixed(3)}), 0.05);
+  vec2 p = (vUv - 0.5) * uSize;
+  float d = roundBox(p, uSize * 0.5, 0.05);
   if (d > 0.0) discard;
   bool front = gl_FrontFacing;
   vec3 paper = vec3(0.985, 0.975, 0.955);
   vec3 col = paper;
 
   // 插画窗口（带白边）
-  vec2 inner = vec2(${(CARD_W / 2 - BORDER).toFixed(3)}, ${(CARD_H / 2 - BORDER).toFixed(3)});
-  float di = roundBox(p, inner, 0.025);
+  // 有标题条时，插画窗口整体上移，让出底边
+  vec2 ic = vec2(0.0, uStrip * 0.5);
+  vec2 inner = uSize * 0.5 - vec2(${BORDER.toFixed(3)}) - vec2(0.0, uStrip * 0.5);
+  float di = roundBox(p - ic, inner, 0.025);
   float inImg = 1.0 - smoothstep(-0.002, 0.002, di);
   // 按封面比例裁切
   vec2 box = inner * 2.0;
   float boxAspect = box.x / box.y;
-  vec2 q = (p / box) + 0.5;
+  vec2 q = ((p - ic) / box) + 0.5;
   if (!front) q.x = 1.0 - q.x;
   if (uImageAspect > boxAspect) q.x = (q.x - 0.5) * boxAspect / uImageAspect + 0.5;
   else q.y = (q.y - 0.5) * uImageAspect / boxAspect + 0.5;
@@ -96,10 +105,15 @@ void main() {
   // 边缘描线
   float edge = smoothstep(0.004, 0.0, abs(d + 0.006));
   col = mix(col, uTint, edge * 0.5);
+  // 标题：印在镭射之后，始终清楚
+  if (front && uHasLabel > 0.5 && uStrip > 0.0) {
+    vec2 lp = vec2((p.x + uSize.x * 0.5 - ${BORDER.toFixed(3)}) / (uSize.x - ${(BORDER * 2).toFixed(3)}), (p.y + uSize.y * 0.5 - ${(BORDER * 0.3).toFixed(4)}) / uStrip);
+    if (lp.x > 0.0 && lp.x < 1.0 && lp.y > 0.0 && lp.y < 1.0) col = mix(col, uLabelInk, texture2D(labelMap, lp).a);
+  }
   // 卡背：若没有背面图，印一个 KB 的纹章
   if (!front && uHasMap < 0.5) col = mix(col, uTint, 0.6);
   col = mix(col, vec3(0.94, 0.94, 0.95), uDim);
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(col, uAlpha);
   #include <colorspace_fragment>
 }
 `;
@@ -117,13 +131,50 @@ export interface HoloCard {
     uTint: { value: THREE.Color };
     uDim: { value: number };
     uHasMap: { value: number };
+    uSize: { value: THREE.Vector2 };
+    uStrip: { value: number };
+    labelMap: { value: THREE.Texture | null };
+    uHasLabel: { value: number };
+    uLabelInk: { value: THREE.Color };
+    uAlpha: { value: number };
   };
   image: HTMLImageElement | null;
 }
 
 const loader = new THREE.TextureLoader();
+// 同一张图只加载一次（画作卡每次拿起都会重建）
+const cache = new Map<string, Promise<THREE.Texture>>();
+function loadCached(src: string, anisotropy: number) {
+  let p = cache.get(src);
+  if (!p) {
+    p = new Promise((resolve, reject) =>
+      loader.load(
+        src,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = anisotropy;
+          resolve(tex);
+        },
+        undefined,
+        reject,
+      ),
+    );
+    cache.set(src, p);
+  }
+  return p;
+}
 
-export function createHoloCard(src: string | null, tint = "#1746d1", anisotropy = 4): HoloCard {
+export interface HoloOptions {
+  width?: number;
+  height?: number;
+  /** 底边标题条的高度（与卡宽同单位），0 表示没有 */
+  strip?: number;
+  label?: THREE.Texture | null;
+}
+
+export function createHoloCard(src: string | null, tint = "#1746d1", anisotropy = 4, opts: HoloOptions = {}): HoloCard {
+  const w = opts.width ?? CARD_W;
+  const h = opts.height ?? CARD_H;
   const uniforms = {
     map: { value: null as THREE.Texture | null },
     backMap: { value: null as THREE.Texture | null },
@@ -135,9 +186,15 @@ export function createHoloCard(src: string | null, tint = "#1746d1", anisotropy 
     uTint: { value: new THREE.Color(tint) },
     uDim: { value: 0 },
     uHasMap: { value: 0 },
+    uSize: { value: new THREE.Vector2(w, h) },
+    uStrip: { value: opts.strip ?? 0 },
+    labelMap: { value: opts.label ?? null },
+    uHasLabel: { value: opts.label ? 1 : 0 },
+    uLabelInk: { value: new THREE.Color("#2c2924") },
+    uAlpha: { value: 1 },
   };
   const mat = new THREE.ShaderMaterial({ vertexShader: vertex, fragmentShader: fragment, uniforms, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(CARD_W, CARD_H, 1, 1), mat);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 1, 1), mat);
   mesh.castShadow = true;
   const card: HoloCard = { mesh, uniforms, image: null };
   if (src) setCardImage(card, src, anisotropy);
@@ -145,16 +202,14 @@ export function createHoloCard(src: string | null, tint = "#1746d1", anisotropy 
 }
 
 export function setCardImage(card: HoloCard, src: string, anisotropy = 4) {
-  loader.load(src, (tex) => {
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.anisotropy = anisotropy;
+  loadCached(src, anisotropy).then((tex) => {
     const img = tex.image as HTMLImageElement;
     card.image = img;
     card.uniforms.map.value = tex;
     card.uniforms.backMap.value = card.uniforms.backMap.value ?? tex;
     card.uniforms.uImageAspect.value = img.width / img.height;
     card.uniforms.uHasMap.value = 1;
-  });
+  }, () => {});
 }
 
 /** 读取卡面像素（用于形变粒子） */

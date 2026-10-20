@@ -1,9 +1,11 @@
 // 画中人：桌上摊开的全息角色卡（首页的独立模块，/worldbuildings/portraits/ 也用同一个类）。
-// 悬停：卡片平滑抬起、随指针倾斜，光标变成贴合卡片的四角框。
-// 点击：卡片被拿到面前，这个角色的其他画作从四周飞入铺满画面；指针移动时镜头随之平移，前后几层产生视差。
+// 悬停：卡片朝镜头浮起、随指针倾斜（只有指针在卡上时才倾斜），右下角显示角色名，光标变成贴合卡片的四角框。
+// 点击：卡片被拿到面前，这个角色的其他画作做成同样的镭射卡，从四周飞入，在同一平面上由内向外铺开、互不重叠；
+//       铺不下就伸到屏幕外，指针移向边缘时整片画作朝反方向平移（拿起的卡跟得少，形成视差），露出外圈。
+//       每张画作卡左下角印着画名（单行，放不下就收字号）。
 import * as THREE from "three";
 import { Rng, Tween, clamp, damp, easeInOut, easeOut, lerp, type SampleBuffers, type StageFrame, type StageModule, type StagePresence } from "../core";
-import { CARD_H, CARD_W, cardPixels, createHoloCard, type HoloCard } from "../worlds/holo";
+import { BORDER, CARD_H, CARD_W, cardPixels, createHoloCard, type HoloCard } from "../worlds/holo";
 
 interface Painting {
   id: string;
@@ -34,20 +36,22 @@ interface Card {
 }
 
 interface Tile {
-  group: THREE.Group;
-  image: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  back: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
+  card: HoloCard;
+  label: THREE.Texture;
   painting: Painting;
   index: number;
+  /** 基准镜头坐标系里的位置：x、y 与深度 */
   home: THREE.Vector3;
   from: THREE.Vector3;
   rotZ: number;
   fromRot: number;
+  /** 卡的尺寸（卡面单位）与缩放到世界的倍数 */
   w: number;
   h: number;
+  scale: number;
   t: Tween;
   hot: number;
-  layer: number;
+  tilt: THREE.Vector2;
 }
 
 type Target = { kind: "card"; i: number } | { kind: "tile"; i: number } | null;
@@ -55,21 +59,32 @@ type Target = { kind: "card"; i: number } | { kind: "tile"; i: number } | null;
 const TINTS = ["#1746d1", "#b0643a", "#5b7fb8", "#8a5c28", "#3f7a66", "#9a6a3a", "#6c5a8e"];
 const HOLD_DEPTH = 7.2;
 const HOLD_SCALE = 1.12;
-const LAYERS = [
-  { depth: 9.6, cols: 6, rows: 4, jitter: 0.1 },
-  { depth: 13.5, cols: 7, rows: 5, jitter: 0.12 },
-];
+/** 画作卡所在的深度 */
+const TILE_DEPTH = 10.5;
+/** 画作卡底边标题条的高度（卡宽为 1） */
+const STRIP = 0.15;
+const SERIF = `"Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif`;
 
-const textureLoader = new THREE.TextureLoader();
-const textureCache = new Map<string, THREE.Texture>();
-function loadTexture(src: string) {
-  let t = textureCache.get(src);
-  if (!t) {
-    t = textureLoader.load(src);
-    t.colorSpace = THREE.SRGBColorSpace;
-    t.anisotropy = 4;
-    textureCache.set(src, t);
+/** 画名：单行，放不下就收字号；只用 alpha，墨色由着色器给 */
+function labelTexture(title: string, cardW = 1) {
+  const H = 128;
+  const W = Math.round((H * (cardW - BORDER * 2)) / STRIP);
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d")!;
+  const pad = 6;
+  let size = 64;
+  ctx.font = `500 ${size}px ${SERIF}`;
+  while (size > 18 && ctx.measureText(title).width > W - pad * 2) {
+    size -= 2;
+    ctx.font = `500 ${size}px ${SERIF}`;
   }
+  ctx.fillStyle = "#000";
+  ctx.textBaseline = "middle";
+  ctx.fillText(title, pad, H * 0.54);
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 4;
   return t;
 }
 
@@ -85,6 +100,11 @@ export class PortraitsModule implements StageModule {
   private readonly frameEl: HTMLElement | null;
   private readonly holoBtn: HTMLButtonElement | null;
   private readonly heldEl: HTMLElement | null;
+  private readonly nameEl: HTMLElement | null;
+  private nameIdx = -1;
+  /** 拿起时画作平面可以平移的范围，以及当前（平滑后的）平移量；均为基准镜头坐标 */
+  private readonly pan = new THREE.Vector2();
+  private readonly drift = new THREE.Vector2();
   private readonly kb: KBRuntime | undefined;
   private readonly groups: Group[];
   private cards: Card[] = [];
@@ -127,6 +147,7 @@ export class PortraitsModule implements StageModule {
     this.frameEl = overlay.querySelector<HTMLElement>("[data-pt-frame]");
     this.holoBtn = overlay.querySelector<HTMLButtonElement>("[data-pt-holo]");
     this.heldEl = overlay.querySelector<HTMLElement>("[data-pt-held]");
+    this.nameEl = overlay.querySelector<HTMLElement>("[data-pt-hover]");
     this.kb = (window as unknown as { KB?: KBRuntime }).KB;
     const all = this.kb?.allPaintings ?? [];
     this.groups = [...new Set(all.map((p) => p.group))].map((group, i) => ({
@@ -321,9 +342,7 @@ export class PortraitsModule implements StageModule {
     const g = this.groups[i];
     if (this.heldEl) {
       this.heldEl.style.setProperty("--pt-tint", g.tint);
-      const name = this.heldEl.querySelector("[data-pt-name]");
       const meta = this.heldEl.querySelector("[data-pt-meta]");
-      if (name) name.textContent = g.group;
       if (meta) meta.textContent = g.images.length > 1 ? `${String(g.images.length).padStart(2, "0")} PORTRAITS · 点击画作查看` : "01 PORTRAIT · 点击卡片查看";
     }
   }
@@ -340,99 +359,115 @@ export class PortraitsModule implements StageModule {
       this.leaving.push(tile);
     });
     this.tiles = [];
+    this.pan.set(0, 0);
     document.documentElement.classList.remove("kb-hold");
     this.overlay.classList.remove("is-holding");
   }
 
-  /** 在「拿起时」的镜头坐标系里排出一圈画作：先近层、由内向外，再远层 */
+  private disposeTile(tile: Tile) {
+    this.scene.remove(tile.card.mesh);
+    tile.card.mesh.geometry.dispose();
+    tile.card.mesh.material.dispose();
+    tile.label.dispose();
+  }
+
+  /**
+   * 在「拿起时」的镜头坐标系里铺开画作：一张网格，按到中心的距离由内向外填，避开拿起的卡；
+   * 横幅的画占两格。铺到屏幕外的部分靠平移（this.pan）看到。
+   */
   private buildTiles(i: number, animate: boolean) {
-    for (const t of this.tiles) this.scene.remove(t.group);
+    for (const t of this.tiles) this.disposeTile(t);
     this.tiles = [];
+    this.pan.set(0, 0);
     const g = this.groups[i];
     const images = g.images.slice(1);
     if (!images.length) return;
     this.updateBaseCamera(0);
     const tan = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
     const aspect = this.width / this.height;
-    const rng = new Rng(7 + i * 13);
-    const slots: { u: number; v: number; layer: number; cw: number; ch: number; d: number }[] = [];
-    // 拿起的卡片在屏幕上占的范围（归一化坐标），画作绕开它
+    const D = TILE_DEPTH;
+    const halfH = D * tan;
+    const halfW = halfH * aspect;
+    // 一屏大约放几行
+    const cellH = (2 * halfH) / (this.narrow ? 4.4 : 3.3);
+    const gap = cellH * 0.1;
+    const boxH = cellH - gap;
+    const boxW = boxH * 0.66;
+    const cellW = boxW + gap;
+    // 拿起的卡在这一深度上占的范围
     const holdDepth = this.narrow ? HOLD_DEPTH + 1 : HOLD_DEPTH;
-    const cardHalfH = (CARD_H * HOLD_SCALE * (this.narrow ? 1.05 : 1.2)) / 2 / (holdDepth * tan) + 0.05;
-    const cardHalfW = (CARD_W * HOLD_SCALE * (this.narrow ? 1.05 : 1.2)) / 2 / (holdDepth * tan * aspect) + 0.03;
-    LAYERS.forEach((L, layer) => {
-      const cols = this.narrow ? Math.max(3, L.cols - 3) : L.cols;
-      const rows = this.narrow ? L.rows + 2 : L.rows;
-      const list: typeof slots = [];
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const off = layer === 1 ? 0.5 : 0;
-          const u = ((c + 0.5 + (r % 2 ? off * 0.5 : -off * 0.5)) / cols) * 2 - 1;
-          const v = 1 - ((r + 0.5) / rows) * 2;
-          if (Math.abs(u) - 0.4 / cols < cardHalfW && Math.abs(v) - 0.4 / rows < cardHalfH) continue;
-          list.push({ u: u + (rng.next() - 0.5) * L.jitter / cols, v: v + (rng.next() - 0.5) * L.jitter / rows, layer, cw: 2 / cols, ch: 2 / rows, d: L.depth });
-        }
-      }
-      // 先填卡片两侧，再往上下铺
-      const score = (p: { u: number; v: number }) => Math.hypot(p.u * aspect * 0.75, p.v * 1.4);
-      list.sort((a, b) => score(a) - score(b));
-      slots.push(...list);
-    });
-    images.slice(0, slots.length).forEach((painting, k) => {
-      const s = slots[k];
-      const halfH = s.d * tan;
-      const halfW = halfH * aspect;
-      const boxW = s.cw * halfW * 0.8;
-      const boxH = s.ch * halfH * 0.8;
+    const k = D / holdDepth;
+    const hs = (this.narrow ? 1.05 : 1.2) * HOLD_SCALE * k;
+    const exY = (this.narrow ? 0.35 : 0.05) * k;
+    const exW = (CARD_W * hs) / 2 + gap * 0.8;
+    const exH = (CARD_H * hs) / 2 + gap * 0.8;
+    const blocked = (ix: number, iy: number) =>
+      Math.abs(ix * cellW) - cellW / 2 < exW && Math.abs(iy * cellH - exY) - cellH / 2 < exH;
+    const cells: { ix: number; iy: number; score: number }[] = [];
+    const N = 18;
+    for (let iy = -N; iy <= N; iy++)
+      for (let ix = -N; ix <= N; ix++) if (!blocked(ix, iy)) cells.push({ ix, iy, score: Math.hypot((ix * cellW) / halfW, (iy * cellH) / halfH) });
+    cells.sort((a, b) => a.score - b.score);
+    const used = new Set<string>();
+    const free = (ix: number, iy: number) => !used.has(`${ix},${iy}`) && !blocked(ix, iy);
+    const rng = new Rng(7 + i * 13);
+    let ex = 0;
+    let ey = 0;
+    images.forEach((painting, order) => {
       const ar = painting.width / painting.height;
-      let w = boxW;
-      let h = w / ar;
-      if (h > boxH) {
-        h = boxH;
-        w = h * ar;
-      }
-      const home = this.inBase(s.u * halfW, s.v * halfH, s.d, new THREE.Vector3());
-      // 从画面之外、更深处飞来
-      const dir = new THREE.Vector2(s.u * aspect, s.v).normalize();
-      const from = this.inBase((s.u + dir.x * 1.3) * halfW * 1.1, (s.v + dir.y * 1.3) * halfH * 1.1, s.d + 4, new THREE.Vector3());
-      const back = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 1),
-        new THREE.MeshBasicMaterial({ color: "#fbf8f2", transparent: true, opacity: 0, depthTest: false, depthWrite: false }),
-      );
-      const image = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 1),
-        new THREE.MeshBasicMaterial({ map: loadTexture(`/assets/images/portrait-thumbs/${painting.id}.jpg`), transparent: true, opacity: 0, depthTest: false, depthWrite: false }),
-      );
-      const border = Math.min(w, h) * 0.045;
-      back.scale.set(w + border * 2, h + border * 2, 1);
-      image.scale.set(w, h, 1);
-      image.position.z = 0.001;
-      const group = new THREE.Group();
-      group.add(back, image);
-      back.renderOrder = image.renderOrder = 30 + (1 - s.layer) * 4 + (k % 2);
-      this.scene.add(group);
-      const t = new Tween(0);
+      const wide = ar > 1.15;
+      const cell = cells.find((c) => free(c.ix, c.iy) && (!wide || free(c.ix + 1, c.iy)));
+      if (!cell) return;
+      used.add(`${cell.ix},${cell.iy}`);
+      if (wide) used.add(`${cell.ix + 1},${cell.iy}`);
+      const bw = wide ? 2 * cellW - gap : boxW;
+      const x = cell.ix * cellW + (wide ? cellW / 2 : 0);
+      const y = cell.iy * cellH;
+      // 卡面单位：竖幅宽 1，横幅按占的格子加宽，这样所有卡缩放一致、标题字号一致；插画按原比例，底下一条标题条
+      const w = wide ? bw / boxW : 1;
+      const h = (w - BORDER * 2) / ar + BORDER * 2 + STRIP;
+      const scale = Math.min(bw / w, boxH / h);
+      ex = Math.max(ex, Math.abs(x) + (w * scale) / 2);
+      ey = Math.max(ey, Math.abs(y) + (h * scale) / 2);
+      const label = labelTexture(painting.title, w);
+      const card = createHoloCard(`/assets/images/portrait-thumbs/${painting.id}.jpg`, g.tint, this.anisotropy, { width: w, height: h, strip: STRIP, label });
+      const mat = card.mesh.material;
+      mat.transparent = true;
+      mat.depthTest = false;
+      mat.depthWrite = false;
+      card.uniforms.uAlpha.value = 0;
+      card.mesh.renderOrder = 30;
+      card.mesh.visible = false;
+      card.mesh.castShadow = false;
+      this.scene.add(card.mesh);
+      // 从外侧、更深处飞来
+      const dir = new THREE.Vector2(x / halfW, y / halfH);
+      if (dir.lengthSq() < 1e-6) dir.set(0, 1);
+      dir.normalize();
+      const depth = D + (rng.next() - 0.5) * 0.7;
       const tile: Tile = {
-        group,
-        image,
-        back,
+        card,
+        label,
         painting,
         index: g.images.indexOf(painting),
-        home,
-        from,
-        rotZ: (rng.next() - 0.5) * 0.12,
-        fromRot: (rng.next() - 0.5) * 1.1,
+        home: new THREE.Vector3(x, y, depth),
+        from: new THREE.Vector3(x + dir.x * halfW * 0.9, y + dir.y * halfH * 0.9, depth + 4),
+        rotZ: (rng.next() - 0.5) * 0.05,
+        fromRot: (rng.next() - 0.5) * 0.9,
         w,
         h,
-        t,
+        scale,
+        t: new Tween(0),
         hot: 0,
-        layer: s.layer,
+        tilt: new THREE.Vector2(),
       };
       // 先等卡片抬起一半，再由内向外依次飞入
-      if (animate) window.setTimeout(() => this.tiles.includes(tile) && t.go(1, 1.15, easeOut), 280 + k * 38);
-      else t.set(1);
+      if (animate) window.setTimeout(() => this.tiles.includes(tile) && tile.t.go(1, 1.1, easeOut), 280 + order * 34);
+      else tile.t.set(1);
       this.tiles.push(tile);
     });
+    // 能平移多远：让最外圈的卡能完整露出来
+    this.pan.set(Math.max(0, ex - halfW * 0.94), Math.max(0, ey - halfH * 0.9));
   }
 
   /** 基准镜头（不含视差偏移）坐标系里的一点 → 世界坐标 */
@@ -466,8 +501,8 @@ export class PortraitsModule implements StageModule {
       let order = -1;
       this.tiles.forEach((tile, k) => {
         if (tile.t.value < 0.6) return;
-        if (this.ray.intersectObject(tile.back).length && tile.back.renderOrder > order) {
-          order = tile.back.renderOrder;
+        if (tile.card.mesh.renderOrder > order && this.ray.intersectObject(tile.card.mesh).length) {
+          order = tile.card.mesh.renderOrder;
           best = k;
         }
       });
@@ -515,11 +550,20 @@ export class PortraitsModule implements StageModule {
       this.inBase(0, 0, d, this.veil.position);
       this.veil.quaternion.copy(this.baseCam.quaternion);
       this.veil.scale.set(hh * cam.aspect, hh, 1);
-      this.veil.material.opacity = this.veilAmt * 0.84;
+      // 正对镜头时只轻轻压一下背景：天空仍然看得见
+      this.veil.material.opacity = this.veilAmt * (this.flat ? 0.22 : 0.84);
     }
 
+    // 平移：指针越靠近边缘，画作平面朝反方向移得越多（中间一圈不动，免得一动鼠标整片都晃）
+    const shape = (v: number) => Math.sign(v) * THREE.MathUtils.smoothstep(Math.abs(v), 0.12, 0.92);
+    const live = this.held >= 0 && this.active;
+    this.drift.set(
+      damp(this.drift.x, live ? -shape(px) * this.pan.x : 0, 2.6, dt),
+      damp(this.drift.y, live ? -shape(py) * this.pan.y : 0, 2.6, dt),
+    );
+
     // 卡片
-    const front = this.inBase(0, this.narrow ? 0.35 : 0.05, this.narrow ? HOLD_DEPTH + 1 : HOLD_DEPTH, this.v2);
+    const front = this.inBase(this.drift.x * 0.3, (this.narrow ? 0.35 : 0.05) + this.drift.y * 0.3, this.narrow ? HOLD_DEPTH + 1 : HOLD_DEPTH, this.v2);
     this.cards.forEach((c, i) => {
       const m = c.card.mesh;
       const hovered = target?.kind === "card" && target.i === i;
@@ -529,10 +573,10 @@ export class PortraitsModule implements StageModule {
       // 倾斜目标：指针相对卡片中心的位置
       let tx = 0;
       let ty = 0;
-      if ((hovered || hold > 0.5) && this.pointer.x >= 0) {
+      if (hovered && this.pointer.x >= 0) {
         this.v.copy(m.position).project(cam);
         const n = this.ndc(this.pointer.x, this.pointer.y);
-        const reach = hold > 0.5 ? 0.9 : 0.35;
+        const reach = hold > 0.5 ? 0.45 : 0.35;
         tx = clamp((n.x - this.v.x) / reach, -1, 1);
         ty = clamp((n.y - this.v.y) / reach, -1, 1);
       }
@@ -568,24 +612,26 @@ export class PortraitsModule implements StageModule {
 
       const u = c.card.uniforms;
       u.uTime.value = this.time;
-      u.uHolo.value = damp(u.uHolo.value, this.holo ? lerp(this.flat ? 0 : 0.3, 0.95, Math.max(c.lift, hold)) : 0, 6, dt);
+      u.uHolo.value = damp(u.uHolo.value, this.holo ? lerp(0.3, 0.95, Math.max(c.lift, hovered ? 1 : 0)) : 0, 6, dt);
       u.uGlare.value.set(0.5 + c.tilt.x * 0.4, 0.5 + c.tilt.y * 0.4);
-      u.uGlareAmt.value = damp(u.uGlareAmt.value, Math.max(c.lift, hold * 0.7) * (this.holo ? 1 : 0.55), 6, dt);
+      u.uGlareAmt.value = damp(u.uGlareAmt.value, (hovered ? 1 : hold * 0.35) * (this.holo ? 1 : 0.55), 6, dt);
       u.uDim.value = damp(u.uDim.value, this.held >= 0 && this.held !== i ? 0.35 : 0, 5, dt);
+      // 正对镜头时其余角色卡与画作在同一视野里：拿起一张后其余的淡出，免得在画作缝隙里留下残影
+      if (this.flat) {
+        u.uAlpha.value = damp(u.uAlpha.value, this.held >= 0 && this.held !== i ? 0 : 1, 6, dt);
+        m.visible = u.uAlpha.value > 0.01;
+      }
     });
 
     // 画作
     const hotTile = target?.kind === "tile" ? target.i : -1;
     this.tiles.forEach((tile, k) => this.placeTile(tile, dt, k === hotTile));
+    this.syncName(target);
     for (let k = this.leaving.length - 1; k >= 0; k--) {
       const tile = this.leaving[k];
       this.placeTile(tile, dt, false);
       if (!tile.t.running && tile.t.value <= 0.001) {
-        this.scene.remove(tile.group);
-        tile.back.geometry.dispose();
-        tile.back.material.dispose();
-        tile.image.geometry.dispose();
-        tile.image.material.dispose();
+        this.disposeTile(tile);
         this.leaving.splice(k, 1);
       }
     }
@@ -597,19 +643,57 @@ export class PortraitsModule implements StageModule {
     tile.t.step(dt);
     const t = tile.t.value;
     tile.hot = damp(tile.hot, hot ? 1 : 0, 10, dt);
-    const g = tile.group;
-    g.position.lerpVectors(tile.from, tile.home, t);
-    // 悬停：朝镜头浮起一点
-    g.position.addScaledVector(this.fwd, -tile.hot * 0.5);
-    g.quaternion.copy(this.baseCam.quaternion);
-    g.rotateZ(lerp(tile.fromRot, tile.rotZ, t) * (1 - tile.hot));
-    g.scale.setScalar(1 + tile.hot * 0.05);
+    const m = tile.card.mesh;
+    // 位置：基准镜头坐标里插值，加上平移；悬停时朝镜头浮起
+    const x = lerp(tile.from.x, tile.home.x, t) + this.drift.x;
+    const y = lerp(tile.from.y, tile.home.y, t) + this.drift.y;
+    const d = lerp(tile.from.z, tile.home.z, t) - tile.hot * 0.7;
+    this.inBase(x, y, d, m.position);
+    // 倾斜：只在指针落在这张卡上时
+    let tx = 0;
+    let ty = 0;
+    if (hot && this.pointer.x >= 0) {
+      this.v.copy(m.position).project(this.camera);
+      const n = this.ndc(this.pointer.x, this.pointer.y);
+      const tanH = d * Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+      const hw = (tile.w * tile.scale) / (2 * tanH * this.camera.aspect);
+      const hh = (tile.h * tile.scale) / (2 * tanH);
+      tx = clamp((n.x - this.v.x) / Math.max(0.02, hw), -1, 1);
+      ty = clamp((n.y - this.v.y) / Math.max(0.02, hh), -1, 1);
+    }
+    tile.tilt.set(damp(tile.tilt.x, tx, 8, dt), damp(tile.tilt.y, ty, 8, dt));
+    m.quaternion.copy(this.baseCam.quaternion);
+    m.rotateZ(lerp(tile.fromRot, tile.rotZ, t) * (1 - tile.hot));
+    m.rotateX(-tile.tilt.y * 0.2 * tile.hot);
+    m.rotateY(tile.tilt.x * 0.26 * tile.hot);
+    m.scale.setScalar(tile.scale * (1 + tile.hot * 0.06));
     const alpha = clamp(t * 1.6);
-    tile.back.material.opacity = alpha;
-    tile.image.material.opacity = alpha;
-    const order = tile.hot > 0.5 ? 45 : 30 + (1 - tile.layer) * 4;
-    tile.back.renderOrder = order;
-    tile.image.renderOrder = order + 1;
+    m.visible = alpha > 0.002;
+    m.renderOrder = tile.hot > 0.5 ? 45 : 30;
+    const u = tile.card.uniforms;
+    u.uAlpha.value = alpha;
+    u.uTime.value = this.time;
+    u.uHolo.value = damp(u.uHolo.value, this.holo ? lerp(0.3, 0.95, tile.hot) : 0, 6, dt);
+    u.uGlare.value.set(0.5 + tile.tilt.x * 0.4, 0.5 + tile.tilt.y * 0.4);
+    u.uGlareAmt.value = tile.hot * (this.holo ? 1 : 0.55);
+  }
+
+  /** 只有卡片时：悬停的角色名显示在右下角；拿起之后不显示 */
+  private syncName(target: Target) {
+    const el = this.nameEl;
+    if (!el) return;
+    const i = this.held < 0 && this.active && target?.kind === "card" ? target.i : -1;
+    if (i === this.nameIdx) return;
+    this.nameIdx = i;
+    if (i >= 0) {
+      const g = this.groups[i];
+      el.style.setProperty("--pt-tint", g.tint);
+      const name = el.querySelector("strong");
+      const meta = el.querySelector("span");
+      if (name) name.textContent = g.group;
+      if (meta) meta.textContent = `${String(g.images.length).padStart(2, "0")} PORTRAITS`;
+    }
+    el.classList.toggle("is-on", i >= 0);
   }
 
   /** 把光标的四角框贴到当前悬停对象在屏幕上的外接矩形 */
@@ -618,9 +702,10 @@ export class PortraitsModule implements StageModule {
     if (!el) return;
     let key = "";
     if (target) {
-      const obj = target.kind === "card" ? this.cards[target.i].card.mesh : this.tiles[target.i].back;
-      const hw = target.kind === "card" ? CARD_W / 2 : 0.5;
-      const hh = target.kind === "card" ? CARD_H / 2 : 0.5;
+      const tile = target.kind === "tile" ? this.tiles[target.i] : null;
+      const obj = tile ? tile.card.mesh : this.cards[target.i].card.mesh;
+      const hw = tile ? tile.w / 2 : CARD_W / 2;
+      const hh = tile ? tile.h / 2 : CARD_H / 2;
       obj.updateMatrixWorld();
       let x0 = Infinity;
       let y0 = Infinity;

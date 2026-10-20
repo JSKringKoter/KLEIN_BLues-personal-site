@@ -57,7 +57,7 @@ async function boot() {
     [".about-copy", 0], [".about-contact", 1],
   ];
   for (const [sel, n] of glass) document.querySelectorAll<HTMLElement>(sel).forEach((el) => (el.dataset.glass = String(n)));
-  const tone = [".hero-note", ".hero-intro", ".scroll-cue", ".fl-head", ".wl-head", ".wl-intro", ".wl-colophon", ".pt-head", ".pt-hint", ".pt-held", ".nt-head", ".nt-total", ".about-number", ".site-footer"];
+  const tone = [".hero-note", ".hero-intro", ".scroll-cue", ".fl-head", ".wl-head", ".wl-intro", ".wl-colophon", ".pt-head", ".pt-hint", ".pt-held", ".pt-hover", ".nt-head", ".nt-total", ".about-number", ".site-footer"];
   for (const sel of tone) document.querySelectorAll<HTMLElement>(sel).forEach((el) => (el.dataset.tone = ""));
 
   // 首屏：画布上什么也不画，背景交给背景板；形变粒子落在标题与简介上（DomModule 的 data-sample 取样）
