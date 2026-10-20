@@ -20,6 +20,8 @@ interface Props {
 const { work, totalWorks } = Astro.props;
 const document = parseNovelDocument(work.body ?? "", work.data.title);
 const canonicalPath = `/fiction/${work.id}/`;
+// 社交平台不显示 SVG：SVG 封面改用 npm run images 生成的同名 .og.jpg
+const socialImage = work.data.cover.replace(/\.svg$/, ".og.jpg");
 const pageTitle = `《${work.data.title}》 | KLEIN BLues`;
 const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(totalWorks).padStart(2, "0")}`;
 ---
@@ -28,24 +30,23 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
   title={pageTitle}
   description={work.data.excerpt}
   canonicalPath={canonicalPath}
-  image={work.data.cover}
+  image={socialImage}
   type="article"
+  handoff={{ from: "fiction", kind: "fiction", theme: work.data.theme, title: work.data.title }}
 >
   <main class:list={["fiction-reader", `theme-${work.data.theme}`]} data-reader>
     <div class="reader-backdrop" aria-hidden="true"></div>
     {work.data.theme === "deepblue" && <DeepBlueOrnaments />}
 
-    <header class="reader-toolbar">
-      <a href="/#fiction" aria-label="返回一纸空文" data-cursor="BACK">
+    <header class="reader-toolbar" data-handoff-part>
+      <a href="/#fiction" aria-label="返回一纸空文" data-cursor="BACK" data-handoff-back>
         <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
         <span>返回目录</span>
       </a>
-      <div class="reading-progress"><i data-progress></i></div>
-      <span data-position>00%</span>
     </header>
 
     {document.headings.length > 0 && (
-      <nav class="reader-toc" aria-label="文章章节">
+      <nav class="reader-toc" aria-label="文章章节" data-handoff-part style="--part:4">
         {document.headings.map((heading, index) => (
           <a href={`#${heading.id}`} class:list={[index === 0 && "is-active"]} data-chapter-link={heading.id} data-cursor="GO">
             <strong>{heading.title}</strong>
@@ -56,11 +57,11 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
 
     <article class="reader-sheet">
       <header class="reader-title-block">
-        <p>{workPosition} · {work.data.charCount.toLocaleString("zh-CN")} 字</p>
-        <h1>{work.data.title}</h1>
-        <p class="reader-subtitle">{work.data.subtitle}</p>
+        <p data-handoff-part style="--part:1">{workPosition} · {work.data.charCount.toLocaleString("zh-CN")} 字</p>
+        <h1 data-handoff-target>{work.data.title}</h1>
+        <p class="reader-subtitle" data-handoff-part style="--part:2">{work.data.subtitle}</p>
         {work.data.publication.length > 0 && (
-          <dl class="reader-publication">
+          <dl class="reader-publication" data-handoff-part style="--part:3">
             {work.data.publication.map((item) => (
               <div><dt>{item.label}</dt><dd>{item.value}</dd></div>
             ))}
@@ -68,21 +69,7 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
         )}
       </header>
 
-      {work.data.music && (
-        <a class="reading-score" href={work.data.music.url} target="_blank" rel="noopener noreferrer" data-cursor="PLAY">
-          <span class="score-disc">
-            {work.data.music.artwork && <img src={work.data.music.artwork} alt="" referrerpolicy="no-referrer" />}
-          </span>
-          <span class="score-copy">
-            <small>READING SCORE · {String(work.data.order).padStart(2, "0")}</small>
-            <strong>{work.data.music.title}</strong>
-            <i>{work.data.music.artist} · Open in NetEase Music</i>
-          </span>
-          <b aria-hidden="true">↗</b>
-        </a>
-      )}
-
-      <div class="reader-body">
+      <div class="reader-body" data-handoff-part style="--part:5">
         {document.blocks.map((block) => {
           if (block.type === "spacer") return <div class="reader-spacer" aria-hidden="true"></div>;
           if (block.type === "paragraph") return <p>{block.text}</p>;
@@ -113,17 +100,11 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
   </main>
 
   <script>
-    const progress = document.querySelector("[data-progress]");
-    const position = document.querySelector("[data-position]");
+    import { setupTitleFit } from "../../scripts/title-fit";
+    setupTitleFit();
+
     const chapterLinks = Array.from(document.querySelectorAll("[data-chapter-link]"));
     const chapters = Array.from(document.querySelectorAll("[data-chapter]"));
-
-    const updateProgress = () => {
-      const maximum = document.documentElement.scrollHeight - window.innerHeight;
-      const ratio = maximum > 0 ? Math.min(1, window.scrollY / maximum) : 0;
-      if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${ratio})`;
-      if (position) position.textContent = `${String(Math.round(ratio * 100)).padStart(2, "0")}%`;
-    };
 
     const activateChapter = (id: string) => {
       chapterLinks.forEach((link) => link.classList.toggle("is-active", link.getAttribute("data-chapter-link") === id));
@@ -137,8 +118,5 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
       chapters.forEach((chapter) => observer.observe(chapter));
     }
 
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("resize", updateProgress, { passive: true });
-    updateProgress();
   </script>
 </BaseLayout>

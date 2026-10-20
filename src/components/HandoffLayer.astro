@@ -1,0 +1,42 @@
+---
+// 交接层（见 src/styles/handoff.css、src/scripts/handoff.ts）。
+// 落地页已知自己的标题与底色时直接传入；首页则由下面的内联脚本按上一页留下的信息填写。
+import type { HandoffFrom, HandoffKind } from "../scripts/handoff";
+
+interface Props {
+  /** 本页作为出发页时的场景名（返回首页时由对应场景接住） */
+  from?: HandoffFrom;
+  kind?: HandoffKind;
+  theme?: string;
+  title?: string;
+}
+const { from, kind = "home", theme, title = "" } = Astro.props;
+---
+<div class:list={["kb-handoff", theme && `theme-${theme}`]} data-kind={kind} data-from={from} data-theme={theme} aria-hidden="true">
+  <div class="kb-handoff-from"></div>
+  <div class="kb-handoff-bg"></div>
+  <p class="kb-handoff-title">{title}</p>
+</div>
+<script is:inline>
+  (function () {
+    var h = window.KB_HANDOFF;
+    var layer = document.currentScript && document.currentScript.previousElementSibling;
+    if (!h || !layer) return;
+    // 首页：按出发的页面换上同样的底色与标题
+    if (layer.dataset.kind === "home") {
+      var kinds = { fiction: "fiction", notes: "notes", portraits: "portraits", home: "home" };
+      layer.dataset.kind = h.kind || kinds[h.from] || "home";
+      if (h.theme) layer.classList.add("theme-" + h.theme);
+      layer.querySelector(".kb-handoff-title").textContent = h.title || "";
+    }
+    // 兜底：如果没有任何场景接手（例如没有 WebGL），过一会儿自己淡出
+    setTimeout(function () {
+      var html = document.documentElement;
+      if (!html.classList.contains("kb-handoff-in") || html.dataset.handoffClaimed) return;
+      html.classList.add("kb-handoff-fade");
+      setTimeout(function () {
+        html.classList.remove("kb-handoff-in", "kb-handoff-fade");
+      }, 850);
+    }, 2600);
+  })();
+</script>

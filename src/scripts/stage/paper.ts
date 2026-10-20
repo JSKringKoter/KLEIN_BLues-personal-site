@@ -33,18 +33,25 @@ export class PaperModule implements StageModule {
   dispose() {}
 }
 
+/** 版面上的一个取样点（视口像素） */
+export interface ScreenPoint {
+  x: number;
+  y: number;
+  c: THREE.Color;
+}
+
 /**
  * 纯 DOM 模块：画布上什么也不画，内容全在叠层里。
  * 形变时，粒子落在叠层中带 data-sample 的元素上（颜色取 data-sample 的值），
- * 看起来就像粒子凝结成了这一页的版面。
+ * 看起来就像粒子凝结成了这一页的版面。子类可以覆盖 points() 换一种取样方式。
  */
 export class DomModule extends PaperModule {
-  private width = 1;
-  private height = 1;
+  protected width = 1;
+  protected height = 1;
   constructor(
     id: string,
     backdrop: [string, string],
-    private readonly overlay: HTMLElement | null,
+    protected readonly overlay: HTMLElement | null,
   ) {
     super(id, backdrop);
   }
@@ -55,27 +62,21 @@ export class DomModule extends PaperModule {
     this.height = h;
   }
 
-  sample(count: number, out: SampleBuffers) {
+  /** 在带 data-sample 的元素上取点，偏向边框：版面的轮廓比内部更容易被认出来 */
+  protected points(count: number, rng: Rng): ScreenPoint[] {
     const els = Array.from(this.overlay?.querySelectorAll<HTMLElement>("[data-sample]") ?? []);
     const rects = els
       .map((el) => ({ r: el.getBoundingClientRect(), c: new THREE.Color(el.dataset.sample || "#1d1b17") }))
       .filter(({ r }) => r.width > 2 && r.height > 2 && r.bottom > 0 && r.top < this.height);
-    if (!rects.length) return super.sample(count, out);
+    if (!rects.length) return [];
     const areas = rects.map(({ r }) => Math.sqrt(r.width * r.height));
     const total = areas.reduce((a, b) => a + b, 0);
-    const rng = new Rng(17);
-    const cam = this.camera;
-    cam.position.set(0, 0, 10);
-    cam.lookAt(0, 0, 0);
-    cam.updateMatrixWorld();
-    const v = new THREE.Vector3();
-    const paper = new THREE.Color("#f4efe5");
+    const pts: ScreenPoint[] = [];
     for (let i = 0; i < count; i++) {
       let pick = rng.next() * total;
       let k = 0;
       while (k < rects.length - 1 && pick > areas[k]) pick -= areas[k++];
       const { r, c } = rects[k];
-      // 偏向边框：版面的轮廓比内部更容易被认出来
       const edge = rng.next() < 0.45;
       let x = r.left + rng.next() * r.width;
       let y = r.top + rng.next() * r.height;
@@ -83,6 +84,23 @@ export class DomModule extends PaperModule {
         if (rng.next() < 0.5) y = rng.next() < 0.5 ? r.top : r.bottom;
         else x = rng.next() < 0.5 ? r.left : r.right;
       }
+      pts.push({ x, y, c });
+    }
+    return pts;
+  }
+
+  sample(count: number, out: SampleBuffers) {
+    const rng = new Rng(17);
+    const pts = this.points(count, rng);
+    if (!pts.length) return super.sample(count, out);
+    const cam = this.camera;
+    cam.position.set(0, 0, 10);
+    cam.lookAt(0, 0, 0);
+    cam.updateMatrixWorld();
+    const v = new THREE.Vector3();
+    const paper = new THREE.Color("#f4efe5");
+    for (let i = 0; i < count; i++) {
+      const { x, y, c } = pts[i % pts.length];
       v.set((x / this.width) * 2 - 1, -(y / this.height) * 2 + 1, 0.5).unproject(cam).sub(cam.position);
       v.multiplyScalar(-cam.position.z / v.z).add(cam.position);
       const col = rng.next() < 0.75 ? c : paper;

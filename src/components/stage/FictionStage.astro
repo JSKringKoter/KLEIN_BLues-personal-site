@@ -1,7 +1,16 @@
 ---
 // 一纸空文：沿用旧站的目录 + 预览卡（由 public/app.js 的 renderNovels 渲染），标题保持在左上。
-// 画布在这一段不画东西，形变粒子会凝结在带 data-sample 的版面上（见 stage/paper.ts 的 DomModule）。
+// 画布在这一段不画东西，形变粒子会凝结在带 data-sample 的版面上（见 stage/fiction.ts）。
+import { getCollection } from "astro:content";
+
+// 篇名 → 独立阅读页与主题色。app.js 的目录据此生成链接，stage/fiction.ts 据此铺出交接层的底色。
+const routes = Object.fromEntries([
+  ...(await getCollection("fiction")).map((w) => [w.data.title, { href: `/fiction/${w.id}/`, theme: w.data.theme }]),
+  ...(await getCollection("drafts")).map((w) => [w.data.title, { href: `/unfinished/${w.id}/`, theme: w.data.theme }]),
+]);
 ---
+
+<script is:inline type="application/json" id="fictionRoutes" set:html={JSON.stringify(routes)} />
 
 <section class="stage-track stage-track--fiction" id="fiction" data-stage="fiction" aria-labelledby="fictionTitle">
   <div class="stage-overlay fl" data-overlay>
@@ -12,9 +21,9 @@
       <span class="fiction-archive-count" id="fictionArchiveCount"></span>
     </header>
 
-    <div class="fl-body stage-rise">
+    <div class="fl-body">
       <div class="fiction-layout">
-        <div class="novel-index stage-interactive" id="novelIndex" data-sample="#1d1b17"></div>
+        <div class="novel-index stage-interactive" id="novelIndex"></div>
         <aside class="novel-preview" id="novelPreview" aria-live="polite">
           <div class="preview-surface" data-sample="#1f3a8a">
             <span class="preview-number" id="previewNumber">01</span>

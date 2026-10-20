@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { Composer } from "./bridge";
 import { clamp, smooth, type StageFrame, type StageModule, type StagePresence } from "./core";
 import type { QualityProfile } from "../world3d/quality";
+import { HandoffLayer, settle, type Handoff } from "../handoff";
 
 export interface TrackEntry {
   module: StageModule;
@@ -48,6 +49,8 @@ export class Director {
   private presence: StagePresence[] = [];
   private overlayCache: string[] = [];
   private backdropCache = "";
+  /** 背景板（plate.ts）：接管 CSS 背景，按模块插值 */
+  plate: { blend(a: string, b: string, t: number): void } | null = null;
   private segment: Segment = { a: 0, b: 0, p: 0, hold: 0 };
   private layoutDirty = true;
   private firstFrame = true;
@@ -86,9 +89,11 @@ export class Director {
         this.pixelRatio = Math.min(window.devicePixelRatio || 1, quality.maxPixelRatio);
         renderer.setPixelRatio(this.pixelRatio);
         const count = quality.tier === "high" ? 16000 : quality.tier === "mid" ? 11000 : 6000;
-        composer = new Composer(count, quality.tier === "low" ? 0 : 4);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFShadowMap;
+        // 粒子只是点缀（已减淡），数量减半；离屏目标不做多重采样（溶解的边本来就是软的）
+        composer = new Composer(Math.round(count * 0.5), 0);
+        // 不用实时阴影：画中人与随笔的阴影贴图是掉帧的主因
+        renderer.shadowMap.enabled = false;
+        composer.soften();
         for (const e of entries) e.module.attach?.(renderer);
       } catch {
         renderer = null;
@@ -140,15 +145,49 @@ export class Director {
     });
   }
 
-  /** 从子页面回到首页：各模块撤销离场状态，画面与文字从「被推近」的位置退回原处 */
+  /** 从子页面回到首页：各模块撤销离场状态；离场的那个模块倒放自己的离场，其余情况播放通用的入场 */
   arrive() {
-    for (const e of this.entries) e.module.arrive?.();
+    const handled = this.entries.map((e) => e.module.arrive?.() === true).some(Boolean);
+    if (handled) return;
     for (const e of this.entries) e.overlay?.classList.remove("is-leaving");
+    this.playArrive();
+  }
+
+  private playArrive() {
     const html = document.documentElement;
     html.classList.remove("kb-arrive");
     void html.offsetWidth;
     html.classList.add("kb-arrive");
     window.setTimeout(() => html.classList.remove("kb-arrive"), 1400);
+  }
+
+  /**
+   * 经「返回」链接从子页面回来：交接层已在首帧铺满（src/scripts/handoff.ts）。
+   * 先把滚动落到出发的模块，等它成为主场景，再由它把交接层演变回自己的画面。
+   */
+  async receive(handoff: Handoff) {
+    const html = document.documentElement;
+    html.dataset.handoffClaimed = "1";
+    html.classList.add("kb-busy");
+    const ids: Partial<Record<Handoff["from"], string>> = { fiction: "fiction", worlds: "worlds", notes: "notes", portraits: "portraits" };
+    const id = ids[handoff.from];
+    const i = id ? this.entries.findIndex((e) => e.module.id === id) : -1;
+    if (i >= 0) this.scrollToModule(this.entries[i].module.id, "auto");
+    else window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    let ok = false;
+    if (i >= 0) {
+      for (let n = 0; n < 90 && !this.presence[i].active; n++) await new Promise((r) => requestAnimationFrame(r));
+      const m = this.entries[i].module;
+      if (this.presence[i].active && m.receive) ok = await m.receive(handoff).catch(() => false);
+    }
+    if (!ok) {
+      const layer = HandoffLayer.find();
+      this.playArrive();
+      await layer?.fade(700);
+      layer?.hide();
+      settle();
+    }
+    html.classList.remove("kb-busy");
   }
 
   moduleRange(id: string) {
@@ -269,7 +308,10 @@ export class Director {
         const range = this.ranges[i];
         if (s > range.start - f.height * 2.5 && s < range.end + f.height) {
           this.prepared.add(entry.module);
-          entry.module.prepare().catch(() => {});
+          entry.module
+            .prepare()
+            .then(() => this.prewarm(entry.module))
+            .catch(() => {});
         }
       }
     });
@@ -335,6 +377,31 @@ export class Director {
     this.adaptPixelRatio(dt);
   };
 
+  /**
+   * 预热：在空闲时（尽量异步地）编译模块的着色器、上传贴图，
+   * 免得形变的第一帧才做这些（那一帧会卡上百毫秒）。
+   */
+  private prewarm(m: StageModule) {
+    const r = this.renderer;
+    if (!r) return;
+    const idle = (fn: () => void) => (typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 60));
+    idle(() => {
+      try {
+        const ra = r as THREE.WebGLRenderer & { compileAsync?: (s: THREE.Object3D, c: THREE.Camera) => Promise<unknown> };
+        if (ra.compileAsync) ra.compileAsync(m.scene, m.camera).catch(() => {});
+        else r.compile(m.scene, m.camera);
+        m.scene.traverse((o) => {
+          const mat = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+          for (const x of Array.isArray(mat) ? mat : mat ? [mat] : []) {
+            for (const v of Object.values(x as unknown as Record<string, unknown>)) if (v instanceof THREE.Texture && v.image) r.initTexture(v);
+            const u = (x as THREE.ShaderMaterial).uniforms;
+            if (u) for (const k in u) if (u[k].value instanceof THREE.Texture && u[k].value.image) r.initTexture(u[k].value);
+          }
+        });
+      } catch {}
+    });
+  }
+
   private ensureBridge(a: number, b: number) {
     const key = `${a}>${b}`;
     if (key === this.bridgeKey || !this.composer) return;
@@ -348,29 +415,67 @@ export class Director {
 
   private updateOverlay(entry: TrackEntry, i: number, pr: StagePresence, p: number) {
     const el = entry.overlay;
-    if (!el) return;
-    // 文字比三维场景更早离场、更晚入场，避免与粒子叠在一起
+    // 文字与粒子溶解同步（bridge.ts 的 kbDepart / kbArrive）：溶解场自上而下推进，
+    // 来源的版面从顶部开始被剥落、化作粒子；目标的版面在粒子落下处、同样从顶部开始凝结。
+    // --sweep 是这条分界线在视口里的位置（0 顶部 → 1 底部），--stage-in 负责细微的位移、模糊与各模块自己的编排。
     let vis = 0;
-    if (pr.role === -1) vis = 1 - smooth(0.0, 0.3, p);
-    else if (pr.role === 1) vis = smooth(0.72, 1.0, p);
-    else vis = pr.presence;
+    let sweep = -1;
+    // 未夹取的前线：夹取后的 0 表示「停在顶部」，但首屏要靠负值判断遮罩是否该完全撤掉
+    let raw = -1;
+    // 溶解场 n ≈ 0.24 + 0.525·y（y 为屏幕高度比例，0 顶部）：来源保留 n > kbDepart(p) 的部分，
+    // 目标显示 n < kbArrive(p) 的部分。反解得粒子前线的高度
+    //   离场 y = 2.571p − 0.557，入场 y = 2.762p − 1.290，
+    // 遮罩用同一条线，文字被剥落/凝结的位置才会与粒子团边缘重合。
+    // 整层不透明度只做收尾（避免和遮罩重复压暗）：落到粒子里的部分由遮罩负责。
+    if (pr.role === -1) {
+      vis = 1 - smooth(0.62, 0.95, p);
+      raw = 2.571 * p - 0.557;
+      sweep = clamp(raw);
+    } else if (pr.role === 1) {
+      vis = smooth(0.08, 0.32, p);
+      raw = 2.762 * p - 1.29;
+      sweep = clamp(raw);
+    } else vis = pr.presence;
+
+    // 首屏没有固定叠层（它的文字就在文档流里，随页面滚走），用同一条前线在它自己的坐标里切一刀：
+    // 前线换算成相对该元素的像素高度，元素内部按这条线做遮罩。
+    if (!el) {
+      // raw 小于 0 表示前线还没进入这一块（或已经彻底离开后回滚到顶）：遮罩整体撤掉
+      const y = raw < 0 ? -1 : Math.round(Math.min(raw, 2.2) * this.frame.height - entry.el.getBoundingClientRect().top);
+      const key = `${pr.role}|${y}`;
+      if (key !== this.overlayCache[i]) {
+        this.overlayCache[i] = key;
+        entry.el.classList.toggle("is-sweep-out", y >= 0);
+        if (y >= 0) entry.el.style.setProperty("--sweep-y", `${y}px`);
+        else entry.el.style.removeProperty("--sweep-y");
+      }
+      return;
+    }
     const q = Math.round(vis * 100) / 100;
+    const sw = Math.round(sweep * 100) / 100;
     const dir = pr.role === -1 ? -1 : 1;
-    const key = `${q}|${pr.active ? 1 : 0}`;
+    const key = `${q}|${sw}|${pr.role}|${pr.active ? 1 : 0}`;
     if (key === this.overlayCache[i]) return;
     this.overlayCache[i] = key;
     el.style.setProperty("--stage-in", String(q));
     el.style.setProperty("--stage-dir", String(dir));
-    el.style.visibility = q < 0.01 ? "hidden" : "visible";
+    el.style.setProperty("--sweep", String(Math.max(0, sw)));
+    el.classList.toggle("is-sweep-out", pr.role === -1 && sw > 0);
+    el.classList.toggle("is-sweep-in", pr.role === 1 && sw < 1);
+    el.style.visibility = q < 0.01 || (pr.role === 1 && sw <= 0) ? "hidden" : "visible";
     el.classList.toggle("is-active", pr.active);
     el.inert = !pr.active;
   }
 
   private updateBackdrop(seg: Segment, inMorph: boolean, primary: number) {
     if (!this.backdrop) return;
+    const t = inMorph ? smooth(0.2, 0.8, seg.p) : 0;
+    if (this.plate) {
+      this.plate.blend(this.entries[inMorph ? seg.a : primary].module.id, this.entries[inMorph ? seg.b : primary].module.id, t);
+      return;
+    }
     const A = this.entries[inMorph ? seg.a : primary].module.backdrop;
     const B = this.entries[inMorph ? seg.b : primary].module.backdrop;
-    const t = inMorph ? smooth(0.2, 0.8, seg.p) : 0;
     const key = `${A.join()}|${B.join()}|${t.toFixed(3)}`;
     if (key === this.backdropCache) return;
     this.backdropCache = key;

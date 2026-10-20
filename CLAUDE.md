@@ -39,7 +39,8 @@ npx astro check    # 仅做类型/模板检查
 ### 首页舞台 `src/scripts/stage/`（取代了旧的 world3d/index.ts）
 - 整页一张 WebGL 画布 + 一条滚动时间线：`director.ts` 把每个模块（`data-stage` 轨道）映射为一段「停留」，模块之间的 `.stage-band` 是「形变」段（`bridge.ts` 溶解合成 + 粒子搭桥），滚动位置驱动一切，所以往回滚时形变会倒放。
 - `snap.ts`：整页吸附。滚轮/触控/方向键一次走一格，缓动滑到 `director.snapPoints()`（首屏顶部、各模块停留区间中点、「关于」顶部）；「关于」之后恢复原生滚动；`html.kb-hold`/`kb-reading`/`body.is-locked` 时不接管。页内 `#锚点` 也走同一套动画。
-- 模块：首屏 `hero.ts`（包装 world3d 的 SkyStage）、一纸空文（`DomModule`，内容是旧站的目录 + 预览卡，由 `app.js` 的 `renderNovels` 渲染）、世界观 `worlds/worlds.ts`（`DomModule`，两张静态 SVG 蓝图线稿，线稿在构建时由 `worlds/linework.ts` 投影生成）、画中人 `portraits/portraits.ts`（全息卡桌，`/worldbuildings/portraits/` 通过 `scripts/pages/characters.ts` 复用同一个类）、随笔 `notes/notes.ts`、其余为 `PaperModule` 占位。
+- 模块：首屏 `hero.ts`（包装 world3d 的 SkyStage）、一纸空文（`DomModule`，内容是旧站的目录 + 预览卡，由 `app.js` 的 `renderNovels` 渲染）、世界观 `worlds/worlds.ts`（`DomModule`，两张静态 SVG 蓝图线稿，线稿在构建时由 `worlds/linework.ts` 投影生成）、画中人 `portraits/portraits.ts`（全息卡桌，`/worldbuildings/portraits/` 通过 `scripts/pages/characters.ts` 复用同一个类）、随笔 `notes/notes.ts`、「关于」为 `PaperModule`。山河行迹（atlas）已从首页移除（地图代码仍在 `app.js` 的 `renderTravelMap`，找不到 `#atlasMap` 时跳过）。
+- **背景板原型（`/?bg=new` 开启、`/?bg=old` 关闭，本会话内记住；头部内联脚本给 `<html>` 加 `kb-plate`）**：`stage/plate.ts` 接管背景——一个按本地时间与天气变色的蓝色色场，整页清晰显示，各模块只做轻微平移/缩放/色相变化（`LOOKS`）；带 `data-glass` 的元素由同一个着色器画成薄的液态玻璃，每个模块只有自己的玻璃，入场就地凝结、离场就地化开，不跨模块移动；`data-tone` / `data-glass` 元素按身后亮度（CPU 上按同一公式算的 48×30 亮度图）写 `data-on="light|dark"`，CSS 据此切换深浅色字与乳白/烟灰玻璃。`data-glass` / `data-tone` 的挂载列表在 `stage/index.ts`。原型模式下：首屏不画 SkyStage、去掉照片拼贴；关闭实时阴影；溶解桥接减淡、粒子减半；画中人卡片正对镜头排成一排；随笔改用 `notes/wall.ts`（正对镜头的卡片墙）；世界观换成玻璃卡 + 新图标（`WorldsStage.astro` 的 `.wl-icon`，晶体内部由 `data-lens` 透镜折射）。页面右上方有调试面板，可切换时间与天气。
 - `DomModule`（`paper.ts`）：画布上不画东西；形变粒子落在叠层中带 `data-sample="颜色"` 的元素上。
 - 光标：三维对象要显示图片的四角框时，用一个带 `data-cursor="IMAGE"` 的代理 DOM（如 `.pt-frame`）贴在其屏幕外接矩形上，移动时派发 `kb:cursor-frame`，目标切换时派发 `kb:cursor-refresh`。
 - 离场/返回：世界观点击后写 `sessionStorage["kb-veil"]`（值为 WorldLayout 的 variant），落地页用同色幕布接住过渡；从子页面经 `/#xxx` 链接或浏览器后退回来时，`director.arrive()` 撤销各模块的离场状态并播放 `kb-arrive` 入场。
@@ -52,6 +53,7 @@ npx astro check    # 仅做类型/模板检查
   - `notes` → `src/pages/notes/[slug].astro` → `/notes/[slug]/`
   - slug 即 markdown 文件名。`fiction`/`drafts` 的 `theme` 是 zod enum，新主题需先在 schema 中添加，并在 CSS 中提供对应的 `theme-<name>` 样式。
 - **小说正文不经 Markdown 渲染**：`[slug].astro` 取 `work.body`，交给 `src/lib/novel.ts` 的 `parseNovelDocument()` 自定义解析为 blocks（段落/空行/章节标题/宫商谱歌词）。解析时会跳过与标题重复的首行、去除署名/日期类落款（`footerPatterns`），`# 标题·English` 会拆成中英文，并对「猫屿咖啡屋」做特例处理。修改小说排版时应改这里，而不是写 Markdown 语法。
+- **阅读页**（`fiction/[slug].astro`、`unfinished/[slug].astro`）的工具栏不吸附，随文章滚走；标题永远单行，超出列宽时由 `src/scripts/title-fit.ts` 写回 `--title-size` 收字号，交接层 `.kb-handoff-title` 同样不折行。页面不启用浏览器跨文档 ViewTransition（`public/worldbuildings.css` 里已注明原因），跨页形变只由 `src/scripts/handoff.ts` 的交接层完成。
 - 笔记则走标准 `render()` Markdown 渲染，客户端用 KaTeX auto-render 渲染公式。
 - `src/layouts/BaseLayout.astro`：通用 SEO/OG 元数据、自定义光标（任何带 `data-cursor="LABEL"` 的元素悬停时显示标签）、`src/styles/global.css`。可通过 `stylesheets` prop 额外引入 public 下的 CSS。
 - 世界观页面（`/worldbuildings/cangqiong/`、`/worldbuildings/portraits/`）使用 `WorldLayout.astro`，样式在 `public/worldbuildings.css`；人像画廊页复用 `public/app.js` 中的画廊运行时，组件在 `PortraitGallery.astro`、`ImageViewer.astro`。首页的世界观入口卡片在 `WorldbuildingEntries.astro`。

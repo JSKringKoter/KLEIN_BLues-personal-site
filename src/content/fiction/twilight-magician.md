@@ -4,7 +4,7 @@ englishTitle: "The Magician of Twilight"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "失意的旅人在斯通古城外遇见继承父亲旧梦的少女。一次筹备于麦田与落日之间的魔术表演，让两个人重新理解离别、承诺，以及平凡生活中仍然存在的奇迹。"
 cover: "/assets/images/novel-covers/twilight-magician.svg"
-order: 6
+order: 7
 charCount: 8693
 theme: "magician"
 publication:

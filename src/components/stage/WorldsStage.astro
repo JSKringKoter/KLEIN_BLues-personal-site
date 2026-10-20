@@ -1,10 +1,6 @@
 ---
-// 世界观：两张静态的蓝图线稿——左：苍穹的核心（晶体 + 两道晶环）；右：核心战机。
-// 线稿在构建时由 src/scripts/stage/worlds/linework.ts 投影生成；交互见 src/scripts/stage/worlds/worlds.ts。
-import { coreLinework, jetLinework } from "../../scripts/stage/worlds/linework";
-
-const core = coreLinework();
-const jet = jetLinework();
+// 世界观：两张液态玻璃卡——左：苍穹（一颗会折射天空的晶体与星轨）；右：核心战机（工程三视图）。
+// 交互见 src/scripts/stage/worlds/worlds.ts。
 const items = [
   { no: "01", en: "THE UNIVERSE", title: "苍穹", sub: "世界观", desc: "一颗晶体，是另一个世界在此处的投影。", href: "/worldbuildings/cangqiong/", cta: "进入世界", sheet: "KB-00  苍穹 · 核心", scale: "SHARD OF ANOTHER WORLD" },
   { no: "02", en: "GAME DESIGN", title: "核心战机", sub: "游戏设计", desc: "从设定到机制，一份仍在绘制的设计图。", href: "/worldbuildings/game-design/", cta: "展开图纸", sheet: "KB-01  核心战机", scale: "SCALE 1:48" },
@@ -24,34 +20,47 @@ const items = [
       {
         items.map((it, i) => (
           <a class:list={["wl-card", i === 0 ? "wl-card--core" : "wl-card--jet"]} href={it.href} data-wl={i} data-cursor="ENTER">
-            <div class="wl-art">
-              <div class="wl-sheet" data-sample="#1746d1" aria-hidden="true">
-                <span class="wl-sheet-title">{it.sheet}</span>
-                <span class="wl-sheet-scale">{it.scale}</span>
-              </div>
+            {/* 图标放在液态玻璃卡里；晶体内部的折射由 plate.ts 的透镜（data-lens）画出 */}
+            <div class="wl-icon" aria-hidden="true">
               {i === 0 ? (
-                <svg class="wl-draw" viewBox={core.viewBox} aria-hidden="true" data-sample="#1746d1">
-                  <g class="wl-rings">
-                    {core.rings.map((ring, k) => (
-                      <g class={`wl-ring wl-ring--${k}`}>
-                        <path class="wl-ring-back" d={ring.back} />
-                        <path class="wl-ring-front" d={ring.front} />
-                      </g>
-                    ))}
-                  </g>
-                  <path class="wl-axis" d={core.axis} />
-                  <g class="wl-gem">
-                    <path class="wl-gem-back" d={core.back} />
-                    <path class="wl-gem-inner" d={core.inner} />
-                    <path class="wl-gem-front" d={core.front} />
-                  </g>
-                  <circle class="wl-gem-dot" cx={core.center.x} cy={core.center.y} r="2.6" />
-                </svg>
+                <>
+                  <span class="wl-lens" data-lens />
+                  <svg class="wl-draw wl-icon-svg" viewBox="0 0 320 220" data-sample="#1746d1">
+                    <path class="faint" d="M160 4V216" />
+                    <path class="faint" d="M42 118A118 26 0 0 1 278 118" />
+                    <path d="M42 118A118 26 0 0 0 278 118" />
+                    <path class="faint" d="M106 110L160 98L214 110M160 16V98M160 204V98" />
+                    <path d="M106 110L160 124L214 110M160 16L160 124L160 204" />
+                    <path class="strong" d="M160 16L214 110L160 204L106 110Z" />
+                    <circle class="dot" cx="160" cy="112" r="3.2" />
+                    <circle class="dot" r="3">
+                      <animateMotion dur="16s" repeatCount="indefinite" path="M278 118A118 26 0 0 1 42 118A118 26 0 0 1 278 118" />
+                    </circle>
+                  </svg>
+                </>
               ) : (
-                <svg class="wl-draw" viewBox="0 0 600 420" aria-hidden="true" data-sample="#1746d1">
-                  <path class="wl-jet" d={jet.main} />
-                  <path class="wl-jet wl-jet--accent" d={jet.accent} />
-                  <path class="wl-jet wl-jet--core" d={jet.core} />
+                <svg class="wl-draw wl-icon-svg" viewBox="0 0 320 220" data-sample="#1746d1">
+                  <g transform="translate(14 6)">
+                    <path class="strong" d="M100 6L104 20L107 40L108 56L176 100L172 108L110 98L111 112L130 127L126 132L108 126L104 134L96 134L92 126L74 132L70 127L89 112L90 98L28 108L24 100L92 56L93 40L96 20Z" />
+                    <path d="M106 34L124 44L122 47L107 44M94 34L76 44L78 47L93 44" />
+                    <path class="faint" d="M100 42V122" />
+                    <ellipse cx="100" cy="26" rx="3" ry="7" />
+                    <path class="wl-jet--core core" d="M100 70m-6 0a6 6 0 1 0 12 0a6 6 0 1 0 -12 0" />
+                    <path class="dim" d="M24 148H176M24 143V153M176 143V153M192 6V134M187 6H197M187 134H197" />
+                    <text x="100" y="161" text-anchor="middle">11.6 m</text>
+                    <text x="200" y="74">15.8 m</text>
+                  </g>
+                  <g transform="translate(236 44)">
+                    <circle cx="38" cy="20" r="6" />
+                    <path d="M2 25L32 21M44 21L74 25M34 15L27 3M42 15L49 3" />
+                    <path class="dim" d="M2 36H74" />
+                    <text x="38" y="47" text-anchor="middle">FRONT</text>
+                  </g>
+                  <g transform="translate(22 176) scale(0.84)">
+                    <path class="strong" d="M0 24L30 20L52 18L62 12L84 11L96 16L210 18L236 2L250 2L246 18L272 20L276 24L270 28L20 28Z" />
+                    <path class="faint" d="M120 22L204 23M70 20L90 26" />
+                  </g>
+                  <text x="276" y="204">SIDE</text>
                 </svg>
               )}
             </div>

@@ -41,15 +41,12 @@ const index = {
         }
       } catch {}
     </script>
-    <link rel="stylesheet" href="/styles.css?v=71" />
-    <link rel="stylesheet" href="/worldbuildings.css?v=3" />
+    <link rel="stylesheet" href="/styles.css?v=72" />
+    <link rel="stylesheet" href="/worldbuildings.css?v=4" />
     <style is:global>
+      /* 与首页世界观模块离场终点（stage.css 的 .wl-veil）和交接层（handoff.css）同色 */
       .kb-veil {
         display: none;
-      }
-
-      html.kb-veiled .kb-veil {
-        display: block;
         position: fixed;
         z-index: 1200;
         inset: 0;
@@ -57,14 +54,34 @@ const index = {
         background: radial-gradient(120% 95% at 60% 40%, #f7f8fb 0%, #d9dfec 100%);
       }
 
-      html.kb-veiled .world-page-design .kb-veil,
-      html.kb-veiled body.world-page-design .kb-veil {
+      .world-page-design .kb-veil {
         background: #eef2fb;
+      }
+
+      .world-page-portraits .kb-veil {
+        background: #efeae2;
+      }
+
+      html.kb-veiled .kb-veil,
+      html.kb-reveil .kb-veil {
+        display: block;
       }
 
       html.kb-unveil .kb-veil {
         opacity: 0;
         transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
+      }
+
+      /* 返回首页：幕布重新铺满，首页由对应的模块接住（src/scripts/handoff.ts） */
+      html.kb-reveil .kb-veil {
+        opacity: 0;
+        animation: kb-reveil 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      @keyframes kb-reveil {
+        to {
+          opacity: 1;
+        }
       }
     </style>
   </head>
@@ -82,6 +99,29 @@ const index = {
       if (document.documentElement.classList.contains("kb-veiled")) {
         requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.add("kb-unveil")));
       }
+    </script>
+    <script is:inline define:vars={{ variant }}>
+      // 返回首页：幕布铺满后再跳转，并留下接力信息（格式见 src/scripts/handoff.ts）
+      document.querySelectorAll(".world-back, .world-masthead .wordmark").forEach((link) => {
+        link.addEventListener("click", (event) => {
+          if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          event.preventDefault();
+          const html = document.documentElement;
+          if (html.classList.contains("kb-reveil")) return;
+          const back = link.classList.contains("world-back");
+          const from = !back ? "home" : variant === "portraits" ? "portraits" : "worlds";
+          try {
+            sessionStorage.setItem("kb-handoff", JSON.stringify({ to: "/", from, kind: variant, path: location.pathname, t: Date.now() }));
+          } catch {}
+          const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+          html.classList.remove("kb-veiled", "kb-unveil");
+          html.classList.add("kb-reveil");
+          setTimeout(() => location.assign(link.href), reduce ? 0 : 620);
+        });
+      });
+      window.addEventListener("pageshow", (event) => {
+        if (event.persisted) document.documentElement.classList.remove("kb-reveil");
+      });
     </script>
     <slot name="overlays" />
     <slot name="scripts" />

@@ -169,7 +169,8 @@
 }
 
 /* ---------- 浅色世界观子页：游戏设计 / 画中人 / 苍穹 ---------- */
-@view-transition { navigation: auto; }
+/* 不启用浏览器的跨文档 ViewTransition：跨页形变由交接层（src/scripts/handoff.ts）完成，
+   两者同时生效会各播一套，落地时闪一下。 */
 .world-page-light { --wl-ink: #1d1b17; --wl-soft: #6f695f; --wl-faint: rgba(29, 27, 23, .12); --wl-blue: #1746d1; color: var(--wl-ink); background: #eef0f4; }
 .world-page-light .world-masthead { color: var(--wl-ink); background: linear-gradient(rgba(243, 244, 247, .85), rgba(243, 244, 247, 0)); backdrop-filter: none; pointer-events: none; }
 .world-page-light .world-masthead a { pointer-events: auto; }

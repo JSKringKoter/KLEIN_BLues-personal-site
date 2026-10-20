@@ -97,6 +97,20 @@ html.stage-on .stage-overlay {
   --stage-dir: 1;
 }
 
+/* 与粒子溶解同步的分界线（director.ts 的 --sweep）：溶解场自上而下推进，
+   --sweep 是这条线在视口里的高度（0 顶部 → 1 底部）。
+   离场：线以上已经化进粒子，以下仍是实体版面；入场反之，线以上先凝结成形。
+   柔边宽度约为视口的 18%，与溶解场的噪声软化区间相当。 */
+html.stage-on .stage-overlay.is-sweep-out {
+  -webkit-mask-image: linear-gradient(to bottom, transparent calc(var(--sweep) * 118% - 18%), #000 calc(var(--sweep) * 118%));
+  mask-image: linear-gradient(to bottom, transparent calc(var(--sweep) * 118% - 18%), #000 calc(var(--sweep) * 118%));
+}
+
+html.stage-on .stage-overlay.is-sweep-in {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--sweep) * 118% - 18%), transparent calc(var(--sweep) * 118%));
+  mask-image: linear-gradient(to bottom, #000 calc(var(--sweep) * 118% - 18%), transparent calc(var(--sweep) * 118%));
+}
+
 html.stage-on .stage-overlay :is(a, button, [data-cursor], input, .stage-interactive) {
   pointer-events: auto;
 }
@@ -122,6 +136,13 @@ html.stage-on .stage-rise:nth-child(3) {
 
 html.stage-on .hero {
   background: transparent;
+}
+
+/* 首屏没有固定叠层，遮罩直接加在区块上：--sweep-y 是粒子前线相对区块顶部的像素高度
+   （director.ts 按同一条前线换算）。水汽、网格与文字一起被吞进粒子，而不是从粒子上面飘走。 */
+html.stage-on .hero.is-sweep-out {
+  -webkit-mask-image: linear-gradient(to bottom, transparent max(0px, calc(var(--sweep-y) - 18vh)), #000 var(--sweep-y));
+  mask-image: linear-gradient(to bottom, transparent max(0px, calc(var(--sweep-y) - 18vh)), #000 var(--sweep-y));
 }
 
 html.stage-on .about {
@@ -245,6 +266,65 @@ html.stage-on .fl .preview-number {
 html.stage-on .fl .preview-surface > p {
   margin-bottom: 2rem;
   font-size: clamp(0.95rem, min(1.5vw, 2.3vh), 1.35rem);
+}
+
+/* 入场编排（全部由 --stage-in 驱动，往回滚时自然倒放）：
+   粒子先凝结成一行行目录，各行自上而下依次滑入；目录上沿的墨线随之显出；预览卡自上而下展开。 */
+html.stage-on .fl .novel-index {
+  border-top-color: color-mix(in srgb, var(--ink) calc(var(--stage-in) * 100%), transparent);
+}
+
+html.stage-on .fl .novel-row {
+  --row-in: clamp(0, calc(var(--stage-in) * 1.75 - var(--i, 0) * 0.11), 1);
+  opacity: var(--row-in);
+  translate: calc((1 - var(--row-in)) * -3rem) 0;
+}
+
+html.stage-on .fl .novel-preview {
+  --pv: clamp(0, calc(var(--stage-in) * 1.6 - 0.45), 1);
+}
+
+html.stage-on .fl .preview-surface {
+  clip-path: inset(0 -2rem calc((1 - var(--pv)) * (100% + 2rem) - 2rem) -2rem);
+}
+
+html.stage-on .fl .preview-surface > * {
+  opacity: clamp(0, calc(var(--pv) * 2 - 0.8), 1);
+}
+
+html.stage-on .fl .fiction-collection-nav {
+  opacity: clamp(0, calc(var(--stage-in) * 2.4 - 1.4), 1);
+}
+
+/* 离场（stage/fiction.ts）：被点中的一行留下并展开成交接层，其余版面退去；篇名由交接层接走 */
+html.stage-on .fl.is-leaving :is(.fl-head, .novel-preview, .novel-row:not(.is-opening)) {
+  opacity: 0 !important;
+  filter: blur(6px);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+html.stage-on .fl.is-leaving .novel-index {
+  border-top-color: transparent;
+}
+
+.fl .novel-row.is-opening h3 {
+  visibility: hidden;
+}
+
+/* 返回：交接层收拢回这一行时，其余版面随后浮现 */
+html.stage-on .fl.is-returning :is(.fl-head, .novel-preview, .novel-row) {
+  transition:
+    opacity 0.7s ease calc(0.45s + var(--i, 0) * 0.05s),
+    filter 0.7s ease 0.45s;
+}
+
+html.stage-on .fl.is-returning .novel-index {
+  transition: border-color 0.7s ease 0.45s;
+}
+
+.stage-overlay.is-instant,
+.stage-overlay.is-instant * {
+  transition: none !important;
 }
 
 /* ---------------- 其他模块（占位标题） ---------------- */
@@ -742,6 +822,69 @@ html.stage-on .wl-veil {
   transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
 }
 
+/* 入场编排（--stage-in 驱动，往回滚时倒放）：粒子沿线稿落下后，
+   图纸从侧立的一条线翻倒成平放的桌面，实线被一笔笔描出来，虚线、晶核与说明随后浮现。 */
+html.stage-on .wl {
+  --sheet-in: clamp(0, calc(var(--stage-in) * 1.5 - 0.15), 1);
+  --draw: clamp(0, calc(var(--stage-in) * 1.35 - 0.1), 1);
+  --late: clamp(0, calc(var(--stage-in) * 2.2 - 1.2), 1);
+}
+
+html.stage-on .wl-sheet {
+  opacity: var(--sheet-in);
+  transform: rotateX(calc(56deg + (1 - var(--sheet-in)) * 34deg));
+}
+
+html.stage-on .wl-draw [pathLength] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw));
+}
+
+html.stage-on .wl-ring-back { opacity: calc(0.6 * var(--late)); }
+html.stage-on .wl-gem-back { opacity: calc(0.55 * var(--late)); }
+html.stage-on .wl-axis { opacity: calc(0.45 * var(--late)); }
+html.stage-on .wl-ring--1 .wl-ring-front,
+html.stage-on .wl-gem-dot { opacity: var(--late); }
+
+html.stage-on .wl-caption {
+  opacity: var(--late);
+  translate: 0 calc((1 - var(--late)) * 0.8rem);
+}
+
+/* 形变进行中由滚动直接驱动，去掉过渡，避免线条与图纸拖在滚动后面 */
+html.stage-on .wl:is(.is-sweep-in, .is-sweep-out) :is(.wl-sheet, .wl-caption, .wl-draw path, .wl-draw circle) {
+  transition: none;
+}
+
+/* 返回（worlds.ts 的 rewind）：从离场的最后一帧倒放——幕布揭开、晶体退远、晶环收拢、其余版面随后回来 */
+.wl.is-returning .wl-veil {
+  transition: opacity 0.9s ease 0.05s;
+}
+
+.wl.is-returning .wl-card--core .wl-gem {
+  transition: transform 1.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+}
+
+.wl.is-returning .wl-card--core .wl-ring {
+  transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s, opacity 0.9s ease 0.1s;
+}
+
+.wl.is-returning .wl-card--jet .wl-art {
+  transition: transform 1.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wl.is-returning .wl-card--core :is(.wl-sheet, .wl-axis, .wl-gem-dot) {
+  transition: opacity 0.7s ease 0.55s, transform 0.9s var(--ease);
+}
+
+.wl.is-returning :is(.wl-head, .wl-intro, .wl-colophon, .wl-caption) {
+  transition: opacity 0.8s ease 0.6s, filter 0.8s ease 0.6s;
+}
+
+.wl.is-returning .wl-card {
+  transition: opacity 0.8s ease 0.5s;
+}
+
 @media (max-width: 760px) {
   html.stage-on .wl-intro {
     display: none;
@@ -1035,6 +1178,11 @@ html.stage-on .nt-preview {
 .nt.is-leaving :is(.nt-head, .nt-filters, .nt-preview, .nt-total, .nt-axis, .nt-lanes) {
   opacity: 0 !important;
   transition: opacity 0.4s ease;
+}
+
+/* 返回（notes.ts 的 rewind）：卡片放下时，文字与坐标轴随后回来 */
+.nt.is-returning :is(.nt-head, .nt-filters, .nt-preview, .nt-total, .nt-axis, .nt-lanes) {
+  transition: opacity 0.8s ease 0.25s;
 }
 
 @media (max-width: 760px) {
@@ -1368,4 +1516,486 @@ html.stage-on .pt-fallback {
   .pt-hint {
     display: none;
   }
+}
+
+/* ---------------- 背景板（html.kb-plate，src/scripts/stage/plate.ts） ---------------- */
+
+/* 首屏去掉照片、天气小景与网格，只留色场与文字 */
+html.kb-plate .hero-orbit,
+html.kb-plate .weather-atmosphere,
+html.kb-plate .hero-grid {
+  display: none;
+}
+
+html.kb-plate.stage-on .stage-backdrop {
+  background: #dfe6ee;
+}
+
+.kb-plate-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* 首屏配色接管 .hero[data-weather]：克莱因蓝只留在 KLEIN 上 */
+html.kb-plate .hero {
+  --hero-primary: #1746d1;
+  --hero-secondary: #141a2a;
+  --hero-accent: #ef4a24;
+  color: #141a2a;
+  transition: color 0.8s ease;
+}
+
+/* 傍晚、夜晚色场变深时，首屏文字转浅 */
+html.kb-plate.kb-plate-dark .hero {
+  --hero-primary: #dfe7fb;
+  --hero-secondary: #eef2fb;
+  --hero-accent: #f2a27c;
+  color: #eef2fb;
+}
+
+/* 次级文字显式给色：父元素颜色过渡时，Chrome 不会重算子元素里 color-mix(currentColor) */
+html.kb-plate .hero-intro span,
+html.kb-plate .hero-note small {
+  color: rgba(20, 26, 42, 0.7);
+  transition: color 0.8s ease;
+}
+
+html.kb-plate.kb-plate-dark .hero-intro span,
+html.kb-plate.kb-plate-dark .hero-note small {
+  color: rgba(238, 242, 251, 0.72);
+}
+
+html.kb-plate.kb-plate-dark .hero .weather-control {
+  background: rgba(15, 23, 38, 0.42);
+}
+
+
+/* ---------------- 液态玻璃与对比度（plate.ts） ---------------- */
+
+/* 玻璃的底色、折射与柔化都由背景板的着色器画；DOM 只负责内容与留白 */
+html.kb-plate [data-glass] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.kb-glass-rims {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 只有上沿一根高光细线，往两侧渐隐（mask），外加几乎看不见的一圈边 */
+.kb-glass-rims i {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 0 0 0.5px rgba(255, 255, 255, 0.12);
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35), #000 30%, #000 70%, rgba(0, 0, 0, 0.35));
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, 0.35), #000 30%, #000 70%, rgba(0, 0, 0, 0.35));
+  will-change: transform, opacity;
+}
+
+.kb-glass-rims i.is-dark {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+}
+
+/* 亮底：深色字；暗底：浅色字（data-on 由 plate.ts 按身后的实际亮度写入） */
+html.kb-plate [data-on="light"] {
+  --t-ink: #141a2a;
+  --t-soft: rgba(20, 26, 42, 0.68);
+  --t-line: rgba(20, 26, 42, 0.16);
+  --t-accent: #1746d1;
+}
+
+html.kb-plate [data-on="dark"] {
+  --t-ink: #eef2fb;
+  --t-soft: rgba(238, 242, 251, 0.74);
+  --t-line: rgba(238, 242, 251, 0.2);
+  --t-accent: #aac2ff;
+}
+
+html.kb-plate [data-on] {
+  color: var(--t-ink);
+  transition: color 0.6s ease;
+}
+
+html.kb-plate [data-on] :is(h2, h3, h4, strong, b, dd) {
+  color: var(--t-ink);
+}
+
+html.kb-plate [data-on] :is(p, small, time, dt, .fl-deck, .fiction-archive-count, .wl-sub, .pt-sub, .nt-deck) {
+  color: var(--t-soft);
+}
+
+html.kb-plate [data-on] :is(em, .stage-eyebrow span) {
+  color: var(--t-accent);
+}
+
+html.kb-plate [data-on] :is(h2, h3, p, small, em, span, strong, b, i, time) {
+  transition: color 0.6s ease;
+}
+
+/* 玻璃一律圆角（天气胶囊等本身是全圆角的保持不变） */
+html.kb-plate [data-glass]:not(.weather-control):not(.fiction-collection-nav):not(.pt-holo):not(.nt-filters) {
+  border-radius: 22px;
+}
+
+html.kb-plate.stage-on .fl .novel-index {
+  padding: 0.9rem 1.3rem;
+  border-top: 0;
+}
+
+/* 当前行自带深色底：保持浅色字 */
+html.kb-plate [data-on] .novel-row:is(:hover, .is-active) :is(h3, span, small) {
+  color: #f3eee6;
+}
+
+/* 画中人：卡片下的玻璃托板（位置由 portraits.ts 按卡片在屏幕上的范围写入） */
+.pt-shelf {
+  display: none;
+}
+
+
+
+/* 随笔（notes/wall.ts）：卡片墙垫在一块玻璃托板上；不再需要时间轴与泳道 */
+.nt-field {
+  display: none;
+}
+
+
+
+html.kb-plate.stage-on .nt--wall :is(.nt-axis, .nt-lanes) {
+  display: none;
+}
+
+html.kb-plate.stage-on .nt--wall .nt-head h2 {
+  margin: 0.8rem 0 0.6rem;
+  font-size: clamp(2.6rem, 4.6vw, 5rem);
+}
+
+html.kb-plate.stage-on .nt--wall .nt-preview {
+  padding: 1.5rem 1.5rem 1.3rem;
+  border-top: 0;
+}
+
+html.kb-plate.stage-on .nt--wall .nt-preview::before {
+  content: "";
+  display: block;
+  width: 2.4rem;
+  height: 3px;
+  margin-bottom: 1rem;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+html.kb-plate.stage-on .nt--wall .nt-preview pre {
+  background: rgba(127, 140, 170, 0.12);
+  border-radius: 12px;
+}
+
+html.kb-plate.stage-on .nt--wall .nt-filters {
+  padding: 0.35rem;
+  border-radius: 999px;
+}
+
+html.kb-plate.stage-on .nt--wall .nt-preview {
+  width: min(20rem, 24vw);
+}
+
+html.kb-plate.stage-on .nt--wall .nt-head .nt-deck {
+  display: none;
+}
+
+/* 世界观：两张液态玻璃卡，各放一个图标 */
+.wl-icon {
+  display: none;
+}
+
+html.kb-plate.stage-on .wl-card {
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: clamp(1.4rem, 3vh, 2.4rem) 2rem clamp(1.4rem, 3vh, 2rem);
+  border-radius: 24px;
+}
+
+html.kb-plate.stage-on .wl-card .wl-art {
+  display: none;
+}
+
+html.kb-plate.stage-on .wl-icon {
+  display: block;
+  position: relative;
+  align-self: center;
+  justify-self: center;
+  width: min(100%, 30rem, calc((100vh - 26rem) * 320 / 220));
+  aspect-ratio: 320 / 220;
+  transition: transform 0.8s var(--ease);
+}
+
+html.kb-plate.stage-on .wl-card.is-hot .wl-icon {
+  transform: translateY(-6px) scale(1.03);
+}
+
+.wl-lens {
+  position: absolute;
+  left: 33.125%;
+  top: 7.27%;
+  width: 33.75%;
+  height: 85.45%;
+}
+
+.wl-icon-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: var(--t-accent, #1746d1);
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.wl-icon-svg * {
+  vector-effect: non-scaling-stroke;
+}
+
+.wl-icon-svg .strong {
+  stroke-width: 1.7;
+}
+
+.wl-icon-svg .faint {
+  opacity: 0.45;
+  stroke-dasharray: 3 5;
+}
+
+.wl-icon-svg .dim {
+  opacity: 0.5;
+  stroke-width: 0.8;
+}
+
+.wl-icon-svg .dot {
+  fill: #1746d1;
+  stroke: none;
+}
+
+.wl-icon-svg .core {
+  stroke: #d99a2b;
+  stroke-width: 1.8;
+}
+
+.wl-icon-svg text {
+  fill: var(--t-soft, #6f695f);
+  stroke: none;
+  font: 500 8px/1 Consolas, "JetBrains Mono", monospace;
+  letter-spacing: 0.12em;
+}
+
+
+html.kb-plate [data-on] :is(.wl-no, .wl-caption b) {
+  color: var(--t-accent);
+}
+
+html.kb-plate [data-on] .wl-caption em {
+  color: var(--t-soft);
+}
+
+html.kb-plate [data-on] .wl-caption::after {
+  background: var(--t-accent);
+}
+
+/* ---------------- 一纸空文：目录与简介 ---------------- */
+
+/* 目录不显示滚动条：可以继续滚的一侧淡出（fiction.ts 按滚动位置写 data-more） */
+html.kb-plate .fl .novel-index {
+  scrollbar-width: none;
+}
+
+html.kb-plate .fl .novel-index::-webkit-scrollbar {
+  display: none;
+}
+
+html.kb-plate .fl .novel-index[data-more~="down"] {
+  -webkit-mask-image: linear-gradient(#000 calc(100% - 3.2rem), transparent);
+  mask-image: linear-gradient(#000 calc(100% - 3.2rem), transparent);
+}
+
+html.kb-plate .fl .novel-index[data-more~="up"] {
+  -webkit-mask-image: linear-gradient(transparent, #000 3.2rem);
+  mask-image: linear-gradient(transparent, #000 3.2rem);
+}
+
+html.kb-plate .fl .novel-index[data-more~="up"][data-more~="down"] {
+  -webkit-mask-image: linear-gradient(transparent, #000 3.2rem, #000 calc(100% - 3.2rem), transparent);
+  mask-image: linear-gradient(transparent, #000 3.2rem, #000 calc(100% - 3.2rem), transparent);
+}
+
+/* 简介：一块薄玻璃，不再是深色色块加偏移的影子 */
+html.kb-plate.stage-on .fl .preview-surface {
+  height: auto;
+  min-height: min(22rem, calc(100vh - 22rem));
+  padding: 1.6rem 1.6rem 1.4rem;
+  color: var(--t-ink, #141a2a);
+  box-shadow: none !important;
+}
+
+html.kb-plate .fl .preview-surface::before,
+html.kb-plate .fl .preview-surface::after {
+  display: none;
+}
+
+html.kb-plate.stage-on .fl .preview-number {
+  color: var(--t-accent, #1746d1);
+  font-size: clamp(3rem, min(5vw, 8vh), 4.6rem);
+  opacity: 0.9;
+}
+
+html.kb-plate.stage-on .fl .preview-surface > p {
+  margin: auto 0 1.6rem;
+  color: var(--t-ink, #141a2a);
+  font-size: clamp(0.92rem, min(1.2vw, 2vh), 1.08rem);
+  line-height: 1.85;
+}
+
+html.kb-plate .fl .preview-meta {
+  color: var(--t-soft, rgba(20, 26, 42, 0.68));
+}
+
+html.kb-plate .fl .preview-meta i {
+  background: var(--t-line, rgba(20, 26, 42, 0.16));
+}
+
+html.kb-plate .fl .fiction-collection-nav {
+  margin-top: 0.9rem;
+  color: var(--t-ink, #141a2a);
+  border-radius: 999px;
+}
+
+/* ---------------- 世界观：卡片收小一些，居中 ---------------- */
+
+html.kb-plate.stage-on .wl-cards {
+  left: 0;
+  right: 0;
+  width: fit-content;
+  margin-inline: auto;
+  top: clamp(15rem, 33vh, 19rem);
+  bottom: clamp(4.6rem, 10vh, 6.5rem);
+  grid-template-columns: repeat(2, min(24rem, 34vw));
+  gap: clamp(1.5rem, 3.4vw, 3.6rem);
+  justify-content: center;
+}
+
+html.kb-plate.stage-on .wl-card {
+  padding: clamp(1rem, 2.2vh, 1.6rem) 1.4rem clamp(1rem, 2.2vh, 1.4rem);
+}
+
+html.kb-plate.stage-on .wl-icon {
+  width: min(100%, 20rem, calc((100vh - 31rem) * 320 / 220));
+}
+
+html.kb-plate.stage-on .wl-caption strong {
+  font-size: 1.35rem;
+}
+
+/* ---------------- 关于：与前面的模块同一套背景与玻璃 ---------------- */
+
+html.kb-plate.stage-on .about {
+  background: transparent;
+}
+
+html.kb-plate.stage-on .about::before {
+  color: color-mix(in srgb, var(--t-accent, #1746d1) 9%, transparent);
+}
+
+html.kb-plate.stage-on .about-number {
+  color: var(--t-accent, #1746d1);
+  opacity: 0.85;
+}
+
+html.kb-plate.stage-on .about-copy {
+  padding: clamp(1.6rem, 3vw, 2.6rem);
+  border-radius: 24px;
+}
+
+html.kb-plate.stage-on .about-copy h2 {
+  color: var(--t-ink, #141a2a);
+  font-size: clamp(3rem, 5.4vw, 6rem);
+}
+
+html.kb-plate.stage-on .about-copy h2 span:last-child {
+  color: var(--t-accent, #1746d1);
+}
+
+html.kb-plate.stage-on .about-intro {
+  margin-top: 2rem;
+  color: var(--t-soft, rgba(20, 26, 42, 0.68));
+}
+
+html.kb-plate.stage-on .about-contact {
+  padding: 1.2rem 1rem 1.1rem;
+  color: var(--t-ink, #141a2a);
+  border-radius: 24px;
+}
+
+html.kb-plate .about-contact::before,
+html.kb-plate .about-contact::after {
+  display: none;
+}
+
+html.kb-plate .about-contact header {
+  color: var(--t-ink, #141a2a);
+  border-bottom-color: var(--t-line, rgba(20, 26, 42, 0.16));
+}
+
+html.kb-plate .about-contact header small {
+  color: var(--t-accent, #1746d1);
+}
+
+html.kb-plate .about-contact > a,
+html.kb-plate .about-contact > div {
+  margin-top: 0.35rem;
+  color: var(--t-ink, #141a2a);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--t-line, rgba(20, 26, 42, 0.12));
+  border-radius: 0;
+  translate: none !important;
+}
+
+html.kb-plate .about-contact > :last-child {
+  border-bottom: 0;
+}
+
+html.kb-plate .about-contact > * > span,
+html.kb-plate .about-contact > a::before,
+html.kb-plate .about-contact > div::before {
+  color: var(--t-soft, rgba(20, 26, 42, 0.68));
+}
+
+html.kb-plate .about-contact > a:is(:hover, :focus-visible) {
+  color: var(--t-ink, #141a2a);
+  background: color-mix(in srgb, var(--t-ink, #141a2a) 7%, transparent);
+}
+
+html.kb-plate .about-contact > a:is(:hover, :focus-visible) :is(span, i),
+html.kb-plate .about-contact > a:is(:hover, :focus-visible)::before {
+  color: var(--t-accent, #1746d1);
+}
+
+html.kb-plate .about-contact a {
+  color: inherit;
+}
+
+html.kb-plate.stage-on .site-footer {
+  border-top-color: var(--t-line, rgba(20, 26, 42, 0.16));
+}
+
+html.kb-plate.stage-on .site-footer :is(span, a) {
+  color: var(--t-soft, rgba(20, 26, 42, 0.68));
 }
