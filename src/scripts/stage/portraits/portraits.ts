@@ -116,6 +116,10 @@ export class PortraitsModule implements StageModule {
   private frameKey = "";
   private ready = false;
   private anisotropy = 4;
+  /** 背景板原型（/?bg=new）：卡片正对镜头排成一排，直接浮在天空上 */
+  private readonly flat = document.documentElement.classList.contains("kb-plate");
+  private readonly shelf: HTMLElement | null = null;
+  private table: THREE.Mesh | null = null;
 
   constructor(overlay: HTMLElement) {
     this.overlay = overlay;
@@ -146,7 +150,10 @@ export class PortraitsModule implements StageModule {
     const table = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.ShadowMaterial({ color: "#5c4a33", opacity: 0.16 }));
     table.rotation.x = -Math.PI / 2;
     table.receiveShadow = true;
+    table.visible = !this.flat;
+    this.table = table;
     this.scene.add(table);
+
 
     // 拿起卡片时，桌面退到一层纸色的薄雾后面
     this.veil = new THREE.Mesh(
@@ -184,6 +191,10 @@ export class PortraitsModule implements StageModule {
   }
 
   private layout() {
+    if (this.flat) {
+      this.layoutFlat();
+      return;
+    }
     const n = this.cards.length;
     this.cards.forEach((c, i) => {
       if (this.narrow) {
@@ -199,6 +210,42 @@ export class PortraitsModule implements StageModule {
     });
   }
 
+  /** 正对镜头的一排（窄屏两三排）；托板在屏幕上包住整排卡片 */
+  private layoutFlat() {
+    const n = this.cards.length;
+    if (!n) return;
+    this.updateBaseCamera(0);
+    const tan = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2));
+    const aspect = this.width / this.height;
+    const scale = this.narrow ? 1.05 : 1.2;
+    const cw = CARD_W * scale;
+    const ch = CARD_H * scale;
+    const gap = cw * 0.2;
+    const cols = this.narrow ? Math.min(n, 3) : n;
+    const rows = Math.ceil(n / cols);
+    const rowW = cols * cw + (cols - 1) * gap;
+    const colH = rows * ch + (rows - 1) * gap;
+    const d = Math.max(rowW / (0.78 * 2 * tan * aspect), colH / ((this.narrow ? 0.62 : 0.5) * 2 * tan));
+    const cy = (this.narrow ? -0.12 : -0.1) * d * tan * 2;
+    this.cards.forEach((c, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const inRow = Math.min(cols, n - row * cols);
+      const x = (col - (inRow - 1) / 2) * (cw + gap);
+      const y = cy - (row - (rows - 1) / 2) * (ch + gap);
+      this.inBase(x, y, d, c.slot.position);
+      c.slot.quaternion.copy(this.baseCam.quaternion);
+    });
+    if (this.shelf) {
+      const pad = 0.34 * cw;
+      // 基准镜头坐标 (x, y, -d) → 屏幕像素
+      const corner = (x: number, y: number) => [(x / (d * tan * aspect) * 0.5 + 0.5) * this.width, (-y / (d * tan) * 0.5 + 0.5) * this.height];
+      const [x0, y0] = corner(-rowW / 2 - pad, cy + colH / 2 + pad);
+      const [x1, y1] = corner(rowW / 2 + pad, cy - colH / 2 - pad);
+      Object.assign(this.shelf.style, { left: `${x0.toFixed(1)}px`, top: `${y0.toFixed(1)}px`, width: `${(x1 - x0).toFixed(1)}px`, height: `${(y1 - y0).toFixed(1)}px` });
+    }
+  }
+
   resize(width: number, height: number) {
     this.width = width;
     this.height = height;
@@ -207,7 +254,7 @@ export class PortraitsModule implements StageModule {
     this.narrow = narrow;
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
-    if (changed) this.layout();
+    if (changed || this.flat) this.layout();
     if (this.held >= 0) this.buildTiles(this.held, false);
   }
 
@@ -493,11 +540,17 @@ export class PortraitsModule implements StageModule {
 
       // 桌面上的姿态
       this.v.copy(c.slot.position);
-      this.v.y += c.lift * 0.32;
+      if (this.flat) this.v.addScaledVector(this.fwd, -c.lift * 0.9);
+      else this.v.y += c.lift * 0.32;
       this.e.copy(c.slot.rotation);
-      this.e.x += c.tilt.y * 0.22 * c.lift;
-      this.e.y += c.tilt.x * 0.28 * c.lift;
-      this.q.setFromEuler(this.e);
+      if (this.flat) {
+        // 正对镜头：只在悬停时随指针轻轻偏一点
+        this.q.copy(c.slot.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-c.tilt.y * 0.16 * c.lift, c.tilt.x * 0.22 * c.lift, 0)));
+      } else {
+        this.e.x += c.tilt.y * 0.22 * c.lift;
+        this.e.y += c.tilt.x * 0.28 * c.lift;
+        this.q.setFromEuler(this.e);
+      }
       // 拿起：沿一条上扬的弧线到面前，正对镜头
       if (hold > 0.0001) {
         const face = this.baseCam.quaternion.clone();
@@ -515,7 +568,7 @@ export class PortraitsModule implements StageModule {
 
       const u = c.card.uniforms;
       u.uTime.value = this.time;
-      u.uHolo.value = damp(u.uHolo.value, this.holo ? lerp(0.3, 0.95, Math.max(c.lift, hold)) : 0, 6, dt);
+      u.uHolo.value = damp(u.uHolo.value, this.holo ? lerp(this.flat ? 0 : 0.3, 0.95, Math.max(c.lift, hold)) : 0, 6, dt);
       u.uGlare.value.set(0.5 + c.tilt.x * 0.4, 0.5 + c.tilt.y * 0.4);
       u.uGlareAmt.value = damp(u.uGlareAmt.value, Math.max(c.lift, hold * 0.7) * (this.holo ? 1 : 0.55), 6, dt);
       u.uDim.value = damp(u.uDim.value, this.held >= 0 && this.held !== i ? 0.35 : 0, 5, dt);

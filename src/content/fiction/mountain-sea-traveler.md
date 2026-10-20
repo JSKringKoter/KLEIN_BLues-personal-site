@@ -4,7 +4,7 @@ englishTitle: "The Demigod of Mountain and Sea"
 subtitle: "The Demigod of Mountain and Sea · KLEIN BLues"
 excerpt: "被家庭遗落的少年在山间遇见一位无人供奉的小神。花茶、竹笛与长明的香火陪伴他们走过短暂岁月，而现代生活的到来，也让神明面对被世人彻底忘却的命运。"
 cover: "/assets/images/novel-covers/mountain-sea.jpg"
-order: 5
+order: 6
 charCount: 4883
 theme: "mountainsea"
 publication:

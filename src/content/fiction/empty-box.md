@@ -3,7 +3,7 @@ title: "空箱"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "阁楼里的一只嫁妆箱保存着一名女子从少女时代到命运倾覆的全部痕迹。织物、钥匙与逐渐被取空的嫁妆，共同讲述一段被生活耗尽、又被后人轻易抹去的人生。"
 cover: "/assets/images/novel-covers/empty-box.jpg"
-order: 4
+order: 5
 charCount: 2675
 theme: "emptybox"
 publication:

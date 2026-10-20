@@ -4,7 +4,7 @@ englishTitle: "The Permafrozen Railway"
 subtitle: "The Permafrozen Railway · KLEIN BLues"
 excerpt: "一条从未迎来列车的铁路穿过常年落雪的小镇。枫与神秘少女白沿着铁轨寻找它的终点，也在现实与时间的缝隙里，追逐一班只为真正想要离开的人停靠的列车。"
 cover: "/assets/images/novel-covers/eternal-railway.jpg"
-order: 7
+order: 8
 charCount: 5009
 theme: "railway"
 publication:

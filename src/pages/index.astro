@@ -3,7 +3,6 @@ import FictionStage from "../components/stage/FictionStage.astro";
 import WorldsStage from "../components/stage/WorldsStage.astro";
 import PortraitsStage from "../components/stage/PortraitsStage.astro";
 import NotesStage from "../components/stage/NotesStage.astro";
-import AtlasStage from "../components/stage/AtlasStage.astro";
 import ImageViewer from "../components/ImageViewer.astro";
 import HandoffHead from "../components/HandoffHead.astro";
 import HandoffLayer from "../components/HandoffLayer.astro";
@@ -12,7 +11,7 @@ import "../styles/stage.css";
 import "../styles/handoff.css";
 ---
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="kb-plate">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -99,25 +98,13 @@ import "../styles/handoff.css";
         <a href="#worldbuildings"><span>02</span>世界观</a>
         <a href="#portraits"><span>03</span>画中人</a>
         <a href="#notes"><span>04</span>随笔</a>
-        <a href="#travel-map"><span>05</span>山河行迹</a>
-        <a href="#about"><span>06</span>关于</a>
+        <a href="#about"><span>05</span>关于</a>
       </nav>
       <div class="edition"><span>Independent archive</span><b>MMXXVI</b></div>
     </header>
 
     <main id="app">
       <section class="hero" id="top" aria-labelledby="heroTitle">
-        <div class="hero-grid" aria-hidden="true"></div>
-        <div class="weather-atmosphere" id="weatherAtmosphere" aria-hidden="true">
-          <div class="weather-sun"></div>
-          <div class="weather-cloud cloud-a"></div>
-          <div class="weather-cloud cloud-b"></div>
-          <div class="weather-cloud cloud-c"></div>
-          <div class="weather-fog"><i></i><i></i><i></i></div>
-          <div class="weather-particles" id="weatherParticles"></div>
-          <div class="weather-flash"></div>
-        </div>
-        <div class="hero-orbit" id="heroCollage" aria-label="精选图像"></div>
         <h1 class="hero-title" id="heroTitle">
           <span class="hero-klein">KLEIN</span>
           <span class="hero-blues">BL<span>u</span>es</span>
@@ -149,12 +136,10 @@ import "../styles/handoff.css";
       <PortraitsStage />
       <div class="stage-band" aria-hidden="true"></div>
       <NotesStage />
-      <div class="stage-band" aria-hidden="true"></div>
-      <AtlasStage />
       <div class="stage-band stage-band--end" aria-hidden="true"></div>
 
       <section class="about section" id="about" data-stage="about" aria-labelledby="aboutTitle">
-        <div class="about-number reveal">06</div>
+        <div class="about-number reveal">05</div>
         <div class="about-copy reveal">
           <p class="eyebrow">About the archive</p>
           <h2 id="aboutTitle"><span>诗歌、文字与画，</span><span>还有画中的人们。</span></h2>
@@ -186,7 +171,7 @@ import "../styles/handoff.css";
     <script is:inline src="/data.js?v=2"></script>
     <script is:inline src="/notion-notes.js?v=1"></script>
     <script is:inline src="/legacy-notes.js?v=1"></script>
-    <script is:inline src="/app.js?v=69"></script>
+    <script is:inline src="/app.js?v=70"></script>
     <script>
       import "../scripts/stage";
     </script>

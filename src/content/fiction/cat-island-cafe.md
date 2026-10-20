@@ -3,7 +3,7 @@ title: "猫屿咖啡屋"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。"
 cover: "/assets/images/novel-covers/cat-island-cafe.jpg"
-order: 8
+order: 1
 charCount: 46132
 theme: "cafe"
 publication:

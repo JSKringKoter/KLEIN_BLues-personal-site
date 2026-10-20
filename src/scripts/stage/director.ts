@@ -49,6 +49,8 @@ export class Director {
   private presence: StagePresence[] = [];
   private overlayCache: string[] = [];
   private backdropCache = "";
+  /** 背景板（plate.ts）：接管 CSS 背景，按模块插值 */
+  plate: { blend(a: string, b: string, t: number): void } | null = null;
   private segment: Segment = { a: 0, b: 0, p: 0, hold: 0 };
   private layoutDirty = true;
   private firstFrame = true;
@@ -87,9 +89,11 @@ export class Director {
         this.pixelRatio = Math.min(window.devicePixelRatio || 1, quality.maxPixelRatio);
         renderer.setPixelRatio(this.pixelRatio);
         const count = quality.tier === "high" ? 16000 : quality.tier === "mid" ? 11000 : 6000;
-        composer = new Composer(count, quality.tier === "low" ? 0 : 4);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFShadowMap;
+        // 粒子只是点缀（已减淡），数量减半；离屏目标不做多重采样（溶解的边本来就是软的）
+        composer = new Composer(Math.round(count * 0.5), 0);
+        // 不用实时阴影：画中人与随笔的阴影贴图是掉帧的主因
+        renderer.shadowMap.enabled = false;
+        composer.soften();
         for (const e of entries) e.module.attach?.(renderer);
       } catch {
         renderer = null;
@@ -304,7 +308,10 @@ export class Director {
         const range = this.ranges[i];
         if (s > range.start - f.height * 2.5 && s < range.end + f.height) {
           this.prepared.add(entry.module);
-          entry.module.prepare().catch(() => {});
+          entry.module
+            .prepare()
+            .then(() => this.prewarm(entry.module))
+            .catch(() => {});
         }
       }
     });
@@ -369,6 +376,31 @@ export class Director {
     }
     this.adaptPixelRatio(dt);
   };
+
+  /**
+   * 预热：在空闲时（尽量异步地）编译模块的着色器、上传贴图，
+   * 免得形变的第一帧才做这些（那一帧会卡上百毫秒）。
+   */
+  private prewarm(m: StageModule) {
+    const r = this.renderer;
+    if (!r) return;
+    const idle = (fn: () => void) => (typeof requestIdleCallback === "function" ? requestIdleCallback(fn, { timeout: 800 }) : setTimeout(fn, 60));
+    idle(() => {
+      try {
+        const ra = r as THREE.WebGLRenderer & { compileAsync?: (s: THREE.Object3D, c: THREE.Camera) => Promise<unknown> };
+        if (ra.compileAsync) ra.compileAsync(m.scene, m.camera).catch(() => {});
+        else r.compile(m.scene, m.camera);
+        m.scene.traverse((o) => {
+          const mat = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+          for (const x of Array.isArray(mat) ? mat : mat ? [mat] : []) {
+            for (const v of Object.values(x as unknown as Record<string, unknown>)) if (v instanceof THREE.Texture && v.image) r.initTexture(v);
+            const u = (x as THREE.ShaderMaterial).uniforms;
+            if (u) for (const k in u) if (u[k].value instanceof THREE.Texture && u[k].value.image) r.initTexture(u[k].value);
+          }
+        });
+      } catch {}
+    });
+  }
 
   private ensureBridge(a: number, b: number) {
     const key = `${a}>${b}`;
@@ -437,9 +469,13 @@ export class Director {
 
   private updateBackdrop(seg: Segment, inMorph: boolean, primary: number) {
     if (!this.backdrop) return;
+    const t = inMorph ? smooth(0.2, 0.8, seg.p) : 0;
+    if (this.plate) {
+      this.plate.blend(this.entries[inMorph ? seg.a : primary].module.id, this.entries[inMorph ? seg.b : primary].module.id, t);
+      return;
+    }
     const A = this.entries[inMorph ? seg.a : primary].module.backdrop;
     const B = this.entries[inMorph ? seg.b : primary].module.backdrop;
-    const t = inMorph ? smooth(0.2, 0.8, seg.p) : 0;
     const key = `${A.join()}|${B.join()}|${t.toFixed(3)}`;
     if (key === this.backdropCache) return;
     this.backdropCache = key;

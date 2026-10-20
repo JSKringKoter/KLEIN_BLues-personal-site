@@ -3,7 +3,7 @@ title: "白鸟之泪"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "持续不断的高原雨季困住了一名白鸟观察者，也让他走近草原上的少年与脆弱的候鸟栖地。当保护与掠夺正面相遇，洁白的羽翼成为信念、牺牲与遗忘的见证。"
 cover: "/assets/images/novel-covers/white-bird.jpg"
-order: 2
+order: 3
 charCount: 4067
 theme: "whitebird"
 publication:

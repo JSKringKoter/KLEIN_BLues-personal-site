@@ -23,6 +23,19 @@ export class FictionModule extends DomModule {
   constructor(overlay: HTMLElement) {
     super("fiction", ["#f4efe5", "#e6ddcd"], overlay);
     this.root = overlay;
+    // 目录不显示滚动条：还能往哪边滚，就让那一侧淡出
+    const index = overlay.querySelector<HTMLElement>("#novelIndex");
+    if (index) {
+      const more = () => {
+        const up = index.scrollTop > 2;
+        const down = index.scrollTop + index.clientHeight < index.scrollHeight - 2;
+        index.dataset.more = [up && "up", down && "down"].filter(Boolean).join(" ");
+      };
+      index.addEventListener("scroll", more, { passive: true });
+      new MutationObserver(more).observe(index, { childList: true });
+      new ResizeObserver(more).observe(index);
+      more();
+    }
     overlay.addEventListener("kb:fiction-open", (event) => {
       const row = (event.target as Element | null)?.closest<HTMLElement>(".novel-row");
       if (!row || !this.layer) return;

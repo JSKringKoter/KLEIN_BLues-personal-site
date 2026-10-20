@@ -37,7 +37,7 @@ const localUnfinishedNovels = [
   { id: "u04", title: "猫屿之秋", subtitle: "未尽之稿 · KLEIN BLues", charCount: 9223, textSrc: "assets/text/unfinished/maoyu-qiutian.txt?v=2", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "很多故事消失了，连同承载它们的纸张一起埋没于尘埃。那个秋天，猫耳的少女枕在肩头问：如果有一天我不辞而别，你还会记得我吗？", publication: [{ label: "最近修改", value: "2026.08.03" }] }
 ];
 const unfinishedNovels = [...localUnfinishedNovels, ...(Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [])];
-const completedNovelOrder = ["深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道", "猫屿咖啡屋"];
+const completedNovelOrder = ["猫屿咖啡屋", "深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
 const completedNovelCovers = {
   "深蓝": "assets/images/novel-covers/deep-blue.jpg",
   "白鸟之泪": "assets/images/novel-covers/white-bird.jpg",
@@ -294,6 +294,7 @@ function renderHero(indices = defaultHeroIndices, weatherTransition = false) {
     .filter(Boolean);
   heroPicks = picks;
   const collage = document.querySelector("#heroCollage");
+  if (!collage) return;
 
   collage.innerHTML = picks.map((item, index) => `
     <button class="hero-card${weatherTransition ? " is-weather-entering" : ""}" type="button" data-hero-image="${item.id}" data-index="${index}" data-cursor="IMAGE" style="--weather-order:${index}" aria-label="查看${escapeHtml(item.title)}">
@@ -332,6 +333,7 @@ function weatherLabel(kind) {
 
 function buildWeatherParticles(kind) {
   const container = document.querySelector("#weatherParticles");
+  if (!container) return;
   container.innerHTML = "";
   if (!["rain", "storm", "snow"].includes(kind)) return;
   const count = kind === "snow" ? 54 : kind === "storm" ? 92 : 76;
@@ -348,6 +350,7 @@ function buildWeatherParticles(kind) {
 }
 
 async function transitionHeroImages(indices) {
+  if (!document.querySelector("#heroCollage")) return;
   const images = indices.map((index) => data.paintings[index]).filter(Boolean);
   await Promise.all(images.map((item) => preload(item.src)));
 
@@ -805,31 +808,39 @@ async function switchNovelCollection(collection) {
   if (!["complete", "unfinished"].includes(collection) || collection === activeNovelCollection || isSwitchingNovelCollection) return;
   isSwitchingNovelCollection = true;
   const direction = collection === "unfinished" ? 1 : -1;
-  const targets = ["#novelIndex", "#novelPreview", "#fictionDeck", "#fictionTitleSuffix", "#fictionArchiveCount"];
+  const parts = () => [
+    ...document.querySelectorAll("#novelIndex > *"),
+    ...document.querySelectorAll("#novelPreview .preview-surface > *, #fictionCollectionNav > *"),
+    ...document.querySelectorAll("#fictionDeck, #fictionTitleSuffix, #fictionArchiveCount")
+  ];
 
   try {
     if (useMotion()) {
-      await new Promise((resolve) => gsap.to(targets, {
+      await new Promise((resolve) => gsap.to(parts(), {
         autoAlpha: 0,
-        x: direction * -54,
-        duration: 0.32,
-        stagger: 0.025,
-        ease: "power3.in",
+        x: direction * -18,
+        filter: "blur(6px)",
+        duration: 0.38,
+        stagger: 0.02,
+        ease: "power2.in",
         onComplete: resolve
       }));
     }
     activeNovelCollection = collection;
     renderNovels();
+    window.dispatchEvent(new CustomEvent("kb:layout"));
     if (useMotion()) {
-      await new Promise((resolve) => gsap.fromTo(targets,
-        { autoAlpha: 0, x: direction * 54 },
+      gsap.killTweensOf(["#previewNumber", "#previewExcerpt", ".preview-meta"]);
+      await new Promise((resolve) => gsap.fromTo(parts(),
+        { autoAlpha: 0, x: direction * 18, filter: "blur(6px)" },
         {
           autoAlpha: 1,
           x: 0,
-          duration: 0.58,
-          stagger: 0.035,
-          ease: "power4.out",
-          clearProps: "opacity,visibility,transform",
+          filter: "blur(0px)",
+          duration: 0.6,
+          stagger: 0.03,
+          ease: "power3.out",
+          clearProps: "opacity,visibility,transform,filter",
           onComplete: resolve
         }
       ));
@@ -2544,7 +2555,8 @@ function animateEntrance() {
   }
 
   gsap.set([".hero-klein", ".hero-blues", ".hero-note", ".hero-intro", ".scroll-cue", ".masthead"], { autoAlpha: 0 });
-  gsap.set(".hero-card", { autoAlpha: 0, scale: 0.82 });
+  const heroCards = document.querySelectorAll(".hero-card");
+  if (heroCards.length) gsap.set(heroCards, { autoAlpha: 0, scale: 0.82 });
   const bootPrimary = document.querySelector("#bootPrimary");
   const bootSecondary = document.querySelector("#bootSecondary");
   bootPrimary.textContent = "";
@@ -2571,7 +2583,7 @@ function animateEntrance() {
     .add(() => boot.remove())
     .fromTo(".hero-klein", { autoAlpha: 0, y: 90 }, { autoAlpha: 1, y: 0, duration: 1.05, ease: "expo.out" }, 1.05)
     .fromTo(".hero-blues", { autoAlpha: 0, y: -70 }, { autoAlpha: 1, y: 0, duration: 1.05, ease: "expo.out" }, 1.16)
-    .to(".hero-card", { autoAlpha: 1, scale: 1, duration: 0.9, stagger: 0.075, ease: "expo.out" }, 1.28)
+    .to(heroCards.length ? heroCards : ".hero-title", heroCards.length ? { autoAlpha: 1, scale: 1, duration: 0.9, stagger: 0.075, ease: "expo.out" } : { duration: 0.01 }, 1.28)
     .to([".hero-note", ".hero-intro", ".scroll-cue", ".masthead"], { autoAlpha: 1, duration: 0.65, stagger: 0.055, ease: "power3.out" }, 1.55);
 }
 

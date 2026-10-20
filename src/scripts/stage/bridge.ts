@@ -46,6 +46,7 @@ uniform float uSeed;
 uniform float uToneA;
 uniform float uToneB;
 uniform vec3 uEdge;
+uniform float uEdgeAmt;
 varying vec2 vUv;
 ${DISSOLVE_GLSL}
 // 离屏纹理里是预乘、线性、可能超过 1 的颜色
@@ -69,7 +70,7 @@ void main() {
   a *= keepA;
   b *= showB;
   vec4 col = b + a * (1.0 - b.a);
-  float e = edgeA * 0.55 * max(a.a, 0.35) * (1.0 - showB * 0.6);
+  float e = edgeA * 0.55 * max(a.a, 0.35) * (1.0 - showB * 0.6) * uEdgeAmt;
   col.rgb = col.rgb * (1.0 - e) + uEdge * e;
   col.a = max(col.a, e);
   // 先还原预乘再转 sRGB，否则半透明像素会溢出成发白的光斑
@@ -93,6 +94,7 @@ uniform float uTime;
 uniform float uAspect;
 uniform float uSeed;
 uniform float uPx;
+uniform float uDust;
 varying vec3 vColor;
 varying float vAlpha;
 ${DISSOLVE_GLSL}
@@ -126,7 +128,7 @@ void main() {
   gl_PointSize = max(1.0, size * uPx);
   vColor = mix(colA, colB, e);
   float live = smoothstep(0.0, 0.08, t) * (1.0 - smoothstep(0.86, 1.0, t));
-  vAlpha = live * (1.0 - behind) * (0.55 + 0.45 * rand.w);
+  vAlpha = live * (1.0 - behind) * (0.55 + 0.45 * rand.w) * uDust;
 }
 `;
 
@@ -175,6 +177,7 @@ export class Composer {
           uToneA: { value: 0 },
           uToneB: { value: 0 },
           uEdge: { value: new THREE.Color("#1746d1") },
+          uEdgeAmt: { value: 1 },
         },
         depthTest: false,
         depthWrite: false,
@@ -216,6 +219,7 @@ export class Composer {
           uAspect: { value: 1 },
           uSeed: { value: 0 },
           uPx: { value: 1 },
+          uDust: { value: 1 },
         },
         transparent: true,
         depthTest: false,
@@ -252,5 +256,11 @@ export class Composer {
     this.quad.material.dispose();
     this.points.geometry.dispose();
     this.points.material.dispose();
+  }
+
+  /** 背景板原型：粒子减淡一半，剥落边缘不再描克莱因蓝的细线（衔接交给玻璃的流动） */
+  soften() {
+    this.quad.material.uniforms.uEdgeAmt.value = 0;
+    this.points.material.uniforms.uDust.value = 0.45;
   }
 }
