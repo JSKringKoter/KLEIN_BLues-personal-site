@@ -9,7 +9,8 @@
     "preview": "astro preview",
     "import:fiction": "node scripts/import-legacy-fiction.mjs",
     "import:drafts": "node scripts/import-unfinished-fiction.mjs",
-    "import:notes": "node scripts/import-legacy-notes.mjs"
+    "import:notes": "node scripts/import-legacy-notes.mjs",
+    "images": "node scripts/build-images.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "latest",

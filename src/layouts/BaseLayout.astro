@@ -1,5 +1,9 @@
 ---
 import "../styles/global.css";
+import "../styles/handoff.css";
+import HandoffHead from "../components/HandoffHead.astro";
+import HandoffLayer from "../components/HandoffLayer.astro";
+import type { HandoffFrom, HandoffKind } from "../scripts/handoff";
 
 interface Props {
   title: string;
@@ -8,6 +12,8 @@ interface Props {
   image?: string;
   type?: "website" | "article";
   stylesheets?: string[];
+  /** 跨页形变：本页对应的首页场景与交接层的样子（见 src/scripts/handoff.ts） */
+  handoff?: { from: HandoffFrom; kind: HandoffKind; theme?: string; title: string };
 }
 
 const {
@@ -16,7 +22,8 @@ const {
   canonicalPath = "/",
   image = "/assets/images/social/kleinblues-og-v2.jpg",
   type = "website",
-  stylesheets = []
+  stylesheets = [],
+  handoff
 } = Astro.props;
 const canonical = new URL(canonicalPath, Astro.site);
 const socialImage = new URL(image, Astro.site);
@@ -33,6 +40,7 @@ const socialImage = new URL(image, Astro.site);
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    {handoff && <HandoffHead />}
     {stylesheets.map((href) => <link rel="stylesheet" href={href} />)}
     <title>{title}</title>
 
@@ -51,7 +59,12 @@ const socialImage = new URL(image, Astro.site);
   <body>
     <div class="site-noise" aria-hidden="true"></div>
     <div class="site-cursor" aria-hidden="true"><span></span></div>
+    {handoff && <HandoffLayer {...handoff} />}
     <slot />
+    <script>
+      import { setupPageHandoff } from "../scripts/handoff-page";
+      setupPageHandoff();
+    </script>
     <script>
       const cursor = document.querySelector<HTMLElement>(".site-cursor");
       const cursorLabel = cursor?.querySelector("span");

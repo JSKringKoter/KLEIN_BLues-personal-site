@@ -1,4 +1,5 @@
 import type * as THREE from "three";
+import type { Handoff } from "../handoff";
 
 /** 每帧传给各场景的公共状态 */
 export interface StageFrame {
@@ -58,8 +59,16 @@ export interface StageModule {
   prepare?(): Promise<void>;
   /** 指针按下（仅当前主场景，且未落在 DOM 交互元素上） */
   pointerDown?(ndc: THREE.Vector2, frame: StageFrame): void;
-  /** 从子页面返回（含浏览器后退的 bfcache 恢复）：撤销离场状态，并倒放离场动画 */
-  arrive?(): void;
+  /**
+   * 从子页面返回（含浏览器后退的 bfcache 恢复）：撤销离场状态，并倒放离场动画。
+   * 返回 true 表示本模块自己完成了入场形变，导演不再播放通用的入场动画。
+   */
+  arrive?(): boolean | void;
+  /**
+   * 从子页面经「返回」链接回到首页：交接层正铺满整屏（见 src/scripts/handoff.ts），
+   * 由本模块把它演变回自己的画面。返回 false 时导演改用通用的淡出。
+   */
+  receive?(handoff: Handoff): Promise<boolean>;
   dispose(): void;
 }
 

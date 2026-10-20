@@ -1,6 +1,7 @@
 ---
 // 世界观：两张静态的蓝图线稿——左：苍穹的核心（晶体 + 两道晶环）；右：核心战机。
 // 线稿在构建时由 src/scripts/stage/worlds/linework.ts 投影生成；交互见 src/scripts/stage/worlds/worlds.ts。
+// 带 pathLength="1" 的实线在滚动入场时被「描」出来（stage.css 的 --draw）。
 import { coreLinework, jetLinework } from "../../scripts/stage/worlds/linework";
 
 const core = coreLinework();
@@ -35,23 +36,23 @@ const items = [
                     {core.rings.map((ring, k) => (
                       <g class={`wl-ring wl-ring--${k}`}>
                         <path class="wl-ring-back" d={ring.back} />
-                        <path class="wl-ring-front" d={ring.front} />
+                        <path class="wl-ring-front" d={ring.front} pathLength={k === 0 ? 1 : undefined} />
                       </g>
                     ))}
                   </g>
                   <path class="wl-axis" d={core.axis} />
                   <g class="wl-gem">
                     <path class="wl-gem-back" d={core.back} />
-                    <path class="wl-gem-inner" d={core.inner} />
-                    <path class="wl-gem-front" d={core.front} />
+                    <path class="wl-gem-inner" d={core.inner} pathLength="1" />
+                    <path class="wl-gem-front" d={core.front} pathLength="1" />
                   </g>
                   <circle class="wl-gem-dot" cx={core.center.x} cy={core.center.y} r="2.6" />
                 </svg>
               ) : (
                 <svg class="wl-draw" viewBox="0 0 600 420" aria-hidden="true" data-sample="#1746d1">
-                  <path class="wl-jet" d={jet.main} />
-                  <path class="wl-jet wl-jet--accent" d={jet.accent} />
-                  <path class="wl-jet wl-jet--core" d={jet.core} />
+                  <path class="wl-jet" d={jet.main} pathLength="1" />
+                  <path class="wl-jet wl-jet--accent" d={jet.accent} pathLength="1" />
+                  <path class="wl-jet wl-jet--core" d={jet.core} pathLength="1" />
                 </svg>
               )}
             </div>

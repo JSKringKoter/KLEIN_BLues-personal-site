@@ -40,7 +40,8 @@ export class Snapper {
 
   private get blocked() {
     const html = document.documentElement;
-    return document.body.classList.contains("is-locked") || html.classList.contains("kb-reading") || html.classList.contains("kb-hold");
+    // kb-busy：跨页形变进行中（离场或接住返回），这时不能动滚动位置
+    return document.body.classList.contains("is-locked") || ["kb-reading", "kb-hold", "kb-busy"].some((c) => html.classList.contains(c));
   }
 
   private points() {
@@ -133,7 +134,8 @@ export class Snapper {
   private onWheel = (e: WheelEvent) => {
     if (e.ctrlKey) return;
     if (this.blocked) {
-      if (document.documentElement.classList.contains("kb-hold") && e.cancelable) e.preventDefault();
+      const html = document.documentElement;
+      if ((html.classList.contains("kb-hold") || html.classList.contains("kb-busy")) && e.cancelable) e.preventDefault();
       return;
     }
     const dy = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : 0;
@@ -189,6 +191,7 @@ export class Snapper {
   };
 
   private onTouchMove = (e: TouchEvent) => {
+    if (document.documentElement.classList.contains("kb-busy") && e.cancelable) e.preventDefault();
     if (this.touchY < 0 || this.blocked) return;
     const dy = this.touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 4) return;

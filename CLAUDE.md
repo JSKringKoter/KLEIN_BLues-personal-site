@@ -52,6 +52,7 @@ npx astro check    # 仅做类型/模板检查
   - `notes` → `src/pages/notes/[slug].astro` → `/notes/[slug]/`
   - slug 即 markdown 文件名。`fiction`/`drafts` 的 `theme` 是 zod enum，新主题需先在 schema 中添加，并在 CSS 中提供对应的 `theme-<name>` 样式。
 - **小说正文不经 Markdown 渲染**：`[slug].astro` 取 `work.body`，交给 `src/lib/novel.ts` 的 `parseNovelDocument()` 自定义解析为 blocks（段落/空行/章节标题/宫商谱歌词）。解析时会跳过与标题重复的首行、去除署名/日期类落款（`footerPatterns`），`# 标题·English` 会拆成中英文，并对「猫屿咖啡屋」做特例处理。修改小说排版时应改这里，而不是写 Markdown 语法。
+- **阅读页**（`fiction/[slug].astro`、`unfinished/[slug].astro`）的工具栏不吸附，随文章滚走；标题永远单行，超出列宽时由 `src/scripts/title-fit.ts` 写回 `--title-size` 收字号，交接层 `.kb-handoff-title` 同样不折行。页面不启用浏览器跨文档 ViewTransition（`public/worldbuildings.css` 里已注明原因），跨页形变只由 `src/scripts/handoff.ts` 的交接层完成。
 - 笔记则走标准 `render()` Markdown 渲染，客户端用 KaTeX auto-render 渲染公式。
 - `src/layouts/BaseLayout.astro`：通用 SEO/OG 元数据、自定义光标（任何带 `data-cursor="LABEL"` 的元素悬停时显示标签）、`src/styles/global.css`。可通过 `stylesheets` prop 额外引入 public 下的 CSS。
 - 世界观页面（`/worldbuildings/cangqiong/`、`/worldbuildings/portraits/`）使用 `WorldLayout.astro`，样式在 `public/worldbuildings.css`；人像画廊页复用 `public/app.js` 中的画廊运行时，组件在 `PortraitGallery.astro`、`ImageViewer.astro`。首页的世界观入口卡片在 `WorldbuildingEntries.astro`。

@@ -34,10 +34,10 @@ const localUnfinishedNovels = [
   { id: "u01", title: "且听风雪", subtitle: "未尽之稿 · KLEIN BLues", charCount: 1155, textSrc: "assets/text/unfinished/qieting-fengxue.txt?v=2", cover: "assets/images/novel-covers/qieting-fengxue.svg", excerpt: "铺开纸笔，墨水饱蘸，本想就此落笔，你却犹豫了。窗外初雪纷飞，旧信与思念都被封存在同一个寒冬。", publication: [{ label: "写于", value: "2022.10.06" }, { label: "文档更新", value: "2026.05.27" }] },
   { id: "u02", title: "南城往事", subtitle: "未尽之稿 · KLEIN BLues", charCount: 391, textSrc: "assets/text/unfinished/nancheng-wangshi.txt?v=2", cover: "assets/images/novel-covers/nancheng-wangshi.svg", excerpt: "太阳晒着港口，运河是绿的。繁华的南城巷在雨幕里一闪而过，只剩破败小楼与一盏没有熄灭的烛。", publication: [{ label: "文档更新", value: "2026.05.27" }] },
   { id: "u03", title: "尘埃深处", subtitle: "天空之梦 · 未尽 · KLEIN BLues", charCount: 26978, textSrc: "assets/text/unfinished/chenai-shenchu.txt?v=2", cover: "assets/images/novel-covers/chenai-shenchu.svg", excerpt: "在没有四季、没有生命的荒漠星球 EHIS-4，人们早已忘记地球与秋天。一点意外出现的生机，却让细雨重新有了可能。", publication: [{ label: "最近修改", value: "2026.07.13" }] },
-  { id: "u04", title: "猫屿咖啡屋", subtitle: "未尽之稿 · KLEIN BLues", charCount: 30853, textSrc: "assets/text/unfinished/maoyu-kafeiwu.txt?v=2", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。", publication: [{ label: "最近修改", value: "2026.07.13" }] }
+  { id: "u04", title: "猫屿之秋", subtitle: "未尽之稿 · KLEIN BLues", charCount: 9223, textSrc: "assets/text/unfinished/maoyu-qiutian.txt?v=2", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "很多故事消失了，连同承载它们的纸张一起埋没于尘埃。那个秋天，猫耳的少女枕在肩头问：如果有一天我不辞而别，你还会记得我吗？", publication: [{ label: "最近修改", value: "2026.08.03" }] }
 ];
 const unfinishedNovels = [...localUnfinishedNovels, ...(Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [])];
-const completedNovelOrder = ["深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
+const completedNovelOrder = ["深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道", "猫屿咖啡屋"];
 const completedNovelCovers = {
   "深蓝": "assets/images/novel-covers/deep-blue.jpg",
   "白鸟之泪": "assets/images/novel-covers/white-bird.jpg",
@@ -45,7 +45,8 @@ const completedNovelCovers = {
   "空箱": "assets/images/novel-covers/empty-box.jpg",
   "山海行人": "assets/images/novel-covers/mountain-sea.jpg",
   "黄昏的魔术师": "assets/images/novel-covers/twilight-magician.svg",
-  "永远的铁道": "assets/images/novel-covers/eternal-railway.jpg"
+  "永远的铁道": "assets/images/novel-covers/eternal-railway.jpg",
+  "猫屿咖啡屋": "assets/images/novel-covers/cat-island-cafe.jpg"
 };
 const completedNovelExcerpts = {
   "深蓝": "在北境漫长的极夜里，一位失去记忆的钢琴家与新来的邻居反复相识。未完成的乐曲、被遗忘的约定，以及海岸尽头的深蓝，逐渐拼回一段不愿消失的过去。",
@@ -54,11 +55,13 @@ const completedNovelExcerpts = {
   "空箱": "阁楼里的一只嫁妆箱保存着一名女子从少女时代到命运倾覆的全部痕迹。织物、钥匙与逐渐被取空的嫁妆，共同讲述一段被生活耗尽、又被后人轻易抹去的人生。",
   "山海行人": "被家庭遗落的少年在山间遇见一位无人供奉的小神。花茶、竹笛与长明的香火陪伴他们走过短暂岁月，而现代生活的到来，也让神明面对被世人彻底忘却的命运。",
   "黄昏的魔术师": "失意的旅人在斯通古城外遇见继承父亲旧梦的少女。一次筹备于麦田与落日之间的魔术表演，让两个人重新理解离别、承诺，以及平凡生活中仍然存在的奇迹。",
-  "永远的铁道": "一条从未迎来列车的铁路穿过常年落雪的小镇。枫与神秘少女白沿着铁轨寻找它的终点，也在现实与时间的缝隙里，追逐一班只为真正想要离开的人停靠的列车。"
+  "永远的铁道": "一条从未迎来列车的铁路穿过常年落雪的小镇。枫与神秘少女白沿着铁轨寻找它的终点，也在现实与时间的缝隙里，追逐一班只为真正想要离开的人停靠的列车。",
+  "猫屿咖啡屋": "旧城还留着最后一口气。那个金黄色的秋天，湖边、雨声与一位有着卡其色长发和猫耳的女孩，共同留下了一间咖啡屋的故事。"
 };
 const completedNovelSubtitles = {
   "山海行人": "The Demigod of Mountain and Sea · KLEIN BLues",
-  "永远的铁道": "The Permafrozen Railway · KLEIN BLues"
+  "永远的铁道": "The Permafrozen Railway · KLEIN BLues",
+  "猫屿咖啡屋": "Cat Island Coffee House · KLEIN BLues"
 };
 const completedNovelSources = {
   "深蓝": { textSrc: "assets/text/finished/deep-blue.txt?v=2", charCount: 20171, publication: [{ label: "完成", value: "2025.04.21—04.27" }, { label: "第一次修改", value: "2025.05.01" }, { label: "文档更新", value: "2026.07.13" }] },
@@ -67,7 +70,8 @@ const completedNovelSources = {
   "空箱": { textSrc: "assets/text/finished/empty-box.txt?v=2", charCount: 2675, publication: [{ label: "成稿", value: "2023.08.29" }, { label: "文档更新", value: "2026.07.13" }] },
   "山海行人": { textSrc: "assets/text/finished/mountain-sea.txt?v=2", charCount: 4883, publication: [{ label: "成稿", value: "2023.07.23" }] },
   "黄昏的魔术师": { textSrc: "assets/text/finished/twilight-magician.txt?v=2", charCount: 8693, publication: [{ label: "成稿", value: "2023.09.12" }, { label: "修订", value: "2023.09.18" }, { label: "文档更新", value: "2026.07.13" }] },
-  "永远的铁道": { textSrc: "assets/text/finished/eternal-railway.txt?v=2", charCount: 5009, publication: [{ label: "成稿", value: "2023.01.25" }] }
+  "永远的铁道": { textSrc: "assets/text/finished/eternal-railway.txt?v=2", charCount: 5009, publication: [{ label: "成稿", value: "2023.01.25" }] },
+  "猫屿咖啡屋": { textSrc: "assets/text/finished/maoyu-kafeiwu.txt?v=2", charCount: 46132, publication: [{ label: "最近修改", value: "2026.10.13" }] }
 };
 const completedNovels = [
   ...completedNovelOrder.map((title) => data.novels.find((novel) => novel.title === title)).filter(Boolean),
@@ -113,21 +117,14 @@ const atlasProvinceCopy = {
     summary: "越过海面抵达花鸟岛，岛屿在夜色里保留了一场清醒的蓝色梦境。"
   }
 };
-const completedNovelRoutes = {
-  "深蓝": "/fiction/deep-blue/",
-  "白鸟之泪": "/fiction/white-bird-tears/",
-  "彼岸之冬": "/fiction/winter-of-the-other-shore/",
-  "空箱": "/fiction/empty-box/",
-  "山海行人": "/fiction/mountain-sea-traveler/",
-  "黄昏的魔术师": "/fiction/twilight-magician/",
-  "永远的铁道": "/fiction/eternal-railway/"
-};
-const unfinishedNovelRoutes = {
-  "且听风雪": "/unfinished/listen-to-wind-and-snow/",
-  "南城往事": "/unfinished/south-city-memories/",
-  "尘埃深处": "/unfinished/in-the-depths-of-dust/",
-  "猫屿咖啡屋": "/unfinished/cat-island-cafe/"
-};
+// 篇名 → { href, theme }：由 src/components/stage/FictionStage.astro 在构建时从 content collection 生成
+const fictionRoutes = (() => {
+  try {
+    return JSON.parse(document.querySelector("#fictionRoutes")?.textContent || "{}");
+  } catch {
+    return {};
+  }
+})();
 const fallbackTechnicalNotes = [
   { id: "t01", category: "前端", title: "把网页动画留在合成层", date: "2026.06.18", read: "8 MIN", summary: "从一次滚动卡顿出发，整理 transform、opacity、布局抖动与图层提升之间真正值得记住的边界。", tags: ["Performance", "GSAP", "CSS"], code: "const frame = () => {\n  element.style.transform = `translate3d(0, ${offset}px, 0)`;\n  requestAnimationFrame(frame);\n};" },
   { id: "t02", category: "前端", title: "React 并发渲染中的状态优先级", date: "2026.05.27", read: "11 MIN", summary: "用搜索、筛选和昂贵列表渲染作为例子，区分立即反馈与可延迟更新，避免把所有优化都塞进 memo。", tags: ["React", "Concurrency", "UX"], code: "startTransition(() => {\n  setQuery(nextQuery);\n});\n\nconst visible = useDeferredValue(results);" },
@@ -387,7 +384,8 @@ async function resetWeatherTheme() {
   delete hero.dataset.weather;
   buildWeatherParticles("default");
   document.querySelector('meta[name="theme-color"]').content = "#f1eadf";
-  document.querySelector("#weatherReading").hidden = true;
+  // 读数同时是「读取当地天气」的入口，切回默认时保留
+  setWeatherReading({ temperature: NaN, label: "默认天气", place: "点击读取当地天空", badge: "LIVE" });
 }
 
 function setWeatherReading({ temperature, label, place, badge = "LIVE" }) {
@@ -469,7 +467,7 @@ async function fetchCurrentWeather(latitude, longitude) {
 async function requestLocalWeather() {
   if (weatherLoading) return;
   weatherLoading = true;
-  setWeatherReading({ temperature: NaN, label: "正在读取当地天空", place: "浏览器将请求定位权限", badge: "···" });
+  setWeatherReading({ temperature: NaN, label: "正在读取当地天空", place: "等待浏览器定位授权", badge: "···" });
 
   if (!navigator.geolocation) {
     setWeatherReading({ temperature: NaN, label: "默认天气", place: "浏览器不支持定位 · 可手动切换", badge: "--" });
@@ -512,7 +510,14 @@ async function initWeather() {
     return;
   }
 
-  requestLocalWeather();
+  // 定位权限只在访客点击天气读数时请求；此前已授权过的浏览器直接读取，不会再弹窗
+  document.querySelector("#weatherReading").addEventListener("click", requestLocalWeather);
+  let granted = false;
+  try {
+    granted = (await navigator.permissions?.query({ name: "geolocation" }))?.state === "granted";
+  } catch {}
+  if (granted) requestLocalWeather();
+  else setWeatherReading({ temperature: NaN, label: "默认天气", place: "点击读取当地天空", badge: "LIVE" });
 }
 
 const readerThemes = {
@@ -750,26 +755,38 @@ function renderNovels() {
     return;
   }
 
-  index.innerHTML = novels.map((novel, position) => `
-    <button class="novel-row" type="button" data-novel="${novel.id}" data-cursor="ENTER" style="--row-color:${storyColors[position % storyColors.length]};--novel-cover:${novel.cover ? `url(&quot;${novel.cover}&quot;)` : "none"}" aria-label="阅读《${escapeHtml(novel.title)}》">
+  index.innerHTML = novels.map((novel, position) => {
+    const route = fictionRoutes[novel.title];
+    // 有独立阅读页的篇目是真正的链接（可以新标签打开）；data-sample 让形变粒子凝结成一行行目录
+    const tag = route ? "a" : "button";
+    const target = route ? `href="${route.href}" data-route="${route.href}" data-theme="${route.theme}"` : 'type="button"';
+    return `
+    <${tag} class="novel-row" ${target} data-novel="${novel.id}" data-cursor="ENTER" data-sample="#1d1b17" style="--i:${position};--row-color:${storyColors[position % storyColors.length]};--novel-cover:${novel.cover ? `url(&quot;${novel.cover}&quot;)` : "none"}" aria-label="阅读《${escapeHtml(novel.title)}》">
       <span class="novel-no">${String(position + 1).padStart(2, "0")}</span>
       <h3>${escapeHtml(novel.title)}</h3>
       <small>${Number(novel.charCount || 0).toLocaleString("zh-CN")} 字</small>
       <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
-    </button>
-  `).join("");
+    </${tag}>
+  `;
+  }).join("");
 
   index.querySelectorAll("[data-novel]").forEach((row, position) => {
     const novel = novels[position];
     row.addEventListener("pointerenter", () => updateNovelPreview(novel, position));
     row.addEventListener("focus", () => updateNovelPreview(novel, position));
-    row.addEventListener("click", () => {
-      const route = unfinished ? unfinishedNovelRoutes[novel.title] : completedNovelRoutes[novel.title];
-      if (route) {
-        window.location.assign(route);
+    row.addEventListener("click", (event) => {
+      if (!row.dataset.route) {
+        openReader(novel, row, position, novels.length);
         return;
       }
-      openReader(novel, row, position, novels.length);
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      // 交给三维舞台（src/scripts/stage/fiction.ts）做离场形变；没有舞台时按普通链接跳转
+      const handled = !row.dispatchEvent(new CustomEvent("kb:fiction-open", {
+        bubbles: true,
+        cancelable: true,
+        detail: { href: row.dataset.route, title: novel.title, theme: row.dataset.theme || "" }
+      }));
+      if (handled) event.preventDefault();
     });
   });
 
@@ -820,6 +837,13 @@ async function switchNovelCollection(collection) {
   } finally {
     isSwitchingNovelCollection = false;
   }
+}
+
+// 供舞台在跨页返回时直接切到对应的文集（不播切换动画）
+function showNovelCollection(collection) {
+  if (!["complete", "unfinished"].includes(collection) || collection === activeNovelCollection) return;
+  activeNovelCollection = collection;
+  renderNovels();
 }
 
 function setupFictionSwitch() {
@@ -2155,19 +2179,31 @@ function getViewerSize(item) {
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
+// 查看器用 scripts/build-images.mjs 生成的中等尺寸 webp（长边 ≤ 2400px），没有生成时回退到原图
+function viewerSrc(item) {
+  const path = new URL(item.src, window.location.origin + "/").pathname;
+  const match = path.match(/^\/assets\/images\/([^/]+)\/([^/]+)\.(png|jpe?g)$/i);
+  return match ? `/assets/images/viewer/${match[1]}/${match[2]}.webp` : path;
+}
+
 async function setViewerContent(index) {
   const item = viewerImages[index];
   if (!item) return;
-  const sampledImage = await preload(item.src);
+  let src = viewerSrc(item);
+  let sampledImage = await preload(src);
+  if (!sampledImage.naturalWidth && src !== item.src) {
+    src = item.src;
+    sampledImage = await preload(src);
+  }
   viewerIndex = index;
   const image = document.querySelector("#viewerImage");
   const figure = document.querySelector(".viewer-figure");
   const size = getViewerSize(item);
   figure.style.width = `${size.width}px`;
   figure.style.height = `${size.height}px`;
-  image.src = item.src;
+  image.src = src;
   image.alt = item.title;
-  document.querySelector("#viewerBlur").src = item.src;
+  document.querySelector("#viewerBlur").src = src;
   document.querySelector("#viewerTitle").textContent = item.title;
   document.querySelector("#viewerGroup").textContent = item.note || item.group || "Selected work";
   const exif = document.querySelector("#viewerExif");
@@ -2575,6 +2611,7 @@ function init() {
 
 // 供 src/scripts/stage 的三维模块共用：查看器与数据
 window.KB = {
+  showNovelCollection,
   openViewer,
   closeViewer,
   photoWorks,

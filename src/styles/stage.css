@@ -97,6 +97,20 @@ html.stage-on .stage-overlay {
   --stage-dir: 1;
 }
 
+/* 与粒子溶解同步的分界线（director.ts 的 --sweep）：溶解场自上而下推进，
+   --sweep 是这条线在视口里的高度（0 顶部 → 1 底部）。
+   离场：线以上已经化进粒子，以下仍是实体版面；入场反之，线以上先凝结成形。
+   柔边宽度约为视口的 18%，与溶解场的噪声软化区间相当。 */
+html.stage-on .stage-overlay.is-sweep-out {
+  -webkit-mask-image: linear-gradient(to bottom, transparent calc(var(--sweep) * 118% - 18%), #000 calc(var(--sweep) * 118%));
+  mask-image: linear-gradient(to bottom, transparent calc(var(--sweep) * 118% - 18%), #000 calc(var(--sweep) * 118%));
+}
+
+html.stage-on .stage-overlay.is-sweep-in {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--sweep) * 118% - 18%), transparent calc(var(--sweep) * 118%));
+  mask-image: linear-gradient(to bottom, #000 calc(var(--sweep) * 118% - 18%), transparent calc(var(--sweep) * 118%));
+}
+
 html.stage-on .stage-overlay :is(a, button, [data-cursor], input, .stage-interactive) {
   pointer-events: auto;
 }
@@ -122,6 +136,13 @@ html.stage-on .stage-rise:nth-child(3) {
 
 html.stage-on .hero {
   background: transparent;
+}
+
+/* 首屏没有固定叠层，遮罩直接加在区块上：--sweep-y 是粒子前线相对区块顶部的像素高度
+   （director.ts 按同一条前线换算）。水汽、网格与文字一起被吞进粒子，而不是从粒子上面飘走。 */
+html.stage-on .hero.is-sweep-out {
+  -webkit-mask-image: linear-gradient(to bottom, transparent max(0px, calc(var(--sweep-y) - 18vh)), #000 var(--sweep-y));
+  mask-image: linear-gradient(to bottom, transparent max(0px, calc(var(--sweep-y) - 18vh)), #000 var(--sweep-y));
 }
 
 html.stage-on .about {
@@ -245,6 +266,65 @@ html.stage-on .fl .preview-number {
 html.stage-on .fl .preview-surface > p {
   margin-bottom: 2rem;
   font-size: clamp(0.95rem, min(1.5vw, 2.3vh), 1.35rem);
+}
+
+/* 入场编排（全部由 --stage-in 驱动，往回滚时自然倒放）：
+   粒子先凝结成一行行目录，各行自上而下依次滑入；目录上沿的墨线随之显出；预览卡自上而下展开。 */
+html.stage-on .fl .novel-index {
+  border-top-color: color-mix(in srgb, var(--ink) calc(var(--stage-in) * 100%), transparent);
+}
+
+html.stage-on .fl .novel-row {
+  --row-in: clamp(0, calc(var(--stage-in) * 1.75 - var(--i, 0) * 0.11), 1);
+  opacity: var(--row-in);
+  translate: calc((1 - var(--row-in)) * -3rem) 0;
+}
+
+html.stage-on .fl .novel-preview {
+  --pv: clamp(0, calc(var(--stage-in) * 1.6 - 0.45), 1);
+}
+
+html.stage-on .fl .preview-surface {
+  clip-path: inset(0 -2rem calc((1 - var(--pv)) * (100% + 2rem) - 2rem) -2rem);
+}
+
+html.stage-on .fl .preview-surface > * {
+  opacity: clamp(0, calc(var(--pv) * 2 - 0.8), 1);
+}
+
+html.stage-on .fl .fiction-collection-nav {
+  opacity: clamp(0, calc(var(--stage-in) * 2.4 - 1.4), 1);
+}
+
+/* 离场（stage/fiction.ts）：被点中的一行留下并展开成交接层，其余版面退去；篇名由交接层接走 */
+html.stage-on .fl.is-leaving :is(.fl-head, .novel-preview, .novel-row:not(.is-opening)) {
+  opacity: 0 !important;
+  filter: blur(6px);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+html.stage-on .fl.is-leaving .novel-index {
+  border-top-color: transparent;
+}
+
+.fl .novel-row.is-opening h3 {
+  visibility: hidden;
+}
+
+/* 返回：交接层收拢回这一行时，其余版面随后浮现 */
+html.stage-on .fl.is-returning :is(.fl-head, .novel-preview, .novel-row) {
+  transition:
+    opacity 0.7s ease calc(0.45s + var(--i, 0) * 0.05s),
+    filter 0.7s ease 0.45s;
+}
+
+html.stage-on .fl.is-returning .novel-index {
+  transition: border-color 0.7s ease 0.45s;
+}
+
+.stage-overlay.is-instant,
+.stage-overlay.is-instant * {
+  transition: none !important;
 }
 
 /* ---------------- 其他模块（占位标题） ---------------- */
@@ -742,6 +822,69 @@ html.stage-on .wl-veil {
   transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
 }
 
+/* 入场编排（--stage-in 驱动，往回滚时倒放）：粒子沿线稿落下后，
+   图纸从侧立的一条线翻倒成平放的桌面，实线被一笔笔描出来，虚线、晶核与说明随后浮现。 */
+html.stage-on .wl {
+  --sheet-in: clamp(0, calc(var(--stage-in) * 1.5 - 0.15), 1);
+  --draw: clamp(0, calc(var(--stage-in) * 1.35 - 0.1), 1);
+  --late: clamp(0, calc(var(--stage-in) * 2.2 - 1.2), 1);
+}
+
+html.stage-on .wl-sheet {
+  opacity: var(--sheet-in);
+  transform: rotateX(calc(56deg + (1 - var(--sheet-in)) * 34deg));
+}
+
+html.stage-on .wl-draw [pathLength] {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--draw));
+}
+
+html.stage-on .wl-ring-back { opacity: calc(0.6 * var(--late)); }
+html.stage-on .wl-gem-back { opacity: calc(0.55 * var(--late)); }
+html.stage-on .wl-axis { opacity: calc(0.45 * var(--late)); }
+html.stage-on .wl-ring--1 .wl-ring-front,
+html.stage-on .wl-gem-dot { opacity: var(--late); }
+
+html.stage-on .wl-caption {
+  opacity: var(--late);
+  translate: 0 calc((1 - var(--late)) * 0.8rem);
+}
+
+/* 形变进行中由滚动直接驱动，去掉过渡，避免线条与图纸拖在滚动后面 */
+html.stage-on .wl:is(.is-sweep-in, .is-sweep-out) :is(.wl-sheet, .wl-caption, .wl-draw path, .wl-draw circle) {
+  transition: none;
+}
+
+/* 返回（worlds.ts 的 rewind）：从离场的最后一帧倒放——幕布揭开、晶体退远、晶环收拢、其余版面随后回来 */
+.wl.is-returning .wl-veil {
+  transition: opacity 0.9s ease 0.05s;
+}
+
+.wl.is-returning .wl-card--core .wl-gem {
+  transition: transform 1.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.5s ease;
+}
+
+.wl.is-returning .wl-card--core .wl-ring {
+  transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s, opacity 0.9s ease 0.1s;
+}
+
+.wl.is-returning .wl-card--jet .wl-art {
+  transition: transform 1.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wl.is-returning .wl-card--core :is(.wl-sheet, .wl-axis, .wl-gem-dot) {
+  transition: opacity 0.7s ease 0.55s, transform 0.9s var(--ease);
+}
+
+.wl.is-returning :is(.wl-head, .wl-intro, .wl-colophon, .wl-caption) {
+  transition: opacity 0.8s ease 0.6s, filter 0.8s ease 0.6s;
+}
+
+.wl.is-returning .wl-card {
+  transition: opacity 0.8s ease 0.5s;
+}
+
 @media (max-width: 760px) {
   html.stage-on .wl-intro {
     display: none;
@@ -1035,6 +1178,11 @@ html.stage-on .nt-preview {
 .nt.is-leaving :is(.nt-head, .nt-filters, .nt-preview, .nt-total, .nt-axis, .nt-lanes) {
   opacity: 0 !important;
   transition: opacity 0.4s ease;
+}
+
+/* 返回（notes.ts 的 rewind）：卡片放下时，文字与坐标轴随后回来 */
+.nt.is-returning :is(.nt-head, .nt-filters, .nt-preview, .nt-total, .nt-axis, .nt-lanes) {
+  transition: opacity 0.8s ease 0.25s;
 }
 
 @media (max-width: 760px) {

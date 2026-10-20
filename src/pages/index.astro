@@ -5,8 +5,11 @@ import PortraitsStage from "../components/stage/PortraitsStage.astro";
 import NotesStage from "../components/stage/NotesStage.astro";
 import AtlasStage from "../components/stage/AtlasStage.astro";
 import ImageViewer from "../components/ImageViewer.astro";
+import HandoffHead from "../components/HandoffHead.astro";
+import HandoffLayer from "../components/HandoffLayer.astro";
 import "../styles/world3d.css";
 import "../styles/stage.css";
+import "../styles/handoff.css";
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -65,12 +68,13 @@ import "../styles/stage.css";
         if (sessionStorage.getItem("kb-booted") === "1") document.documentElement.classList.add("kb-seen");
       } catch {}
     </script>
+    <HandoffHead />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/vendor/katex/katex.min.css" />
-    <link rel="stylesheet" href="/styles.css?v=71" />
-    <link rel="stylesheet" href="/worldbuildings.css?v=3" />
+    <link rel="stylesheet" href="/styles.css?v=72" />
+    <link rel="stylesheet" href="/worldbuildings.css?v=4" />
   </head>
   <body>
+    <HandoffLayer />
     <div class="boot" id="boot" aria-hidden="true">
       <div class="boot-mark">
         <span class="boot-primary" id="bootPrimary"></span>
@@ -125,10 +129,10 @@ import "../styles/stage.css";
         </div>
         <p class="hero-intro"><strong>人物与往事的收藏集。</strong><span>在尘封的信笺之间，寻找未完成的故事。</span></p>
         <div class="weather-control" id="weatherControl">
-          <div class="weather-reading" id="weatherReading" aria-live="polite">
+          <button class="weather-reading" id="weatherReading" type="button" aria-live="polite" aria-label="读取当地天气（需要定位权限）" data-cursor="LOCATE">
             <strong id="weatherTemperature">LIVE</strong>
-            <span><b id="weatherCondition">正在读取当地天空</b><small id="weatherPlace">允许定位后自动匹配</small></span>
-          </div>
+            <span><b id="weatherCondition">默认天气</b><small id="weatherPlace">点击读取当地天空</small></span>
+          </button>
           <button class="weather-cycle" id="weatherCycle" type="button" aria-label="手动切换天气" data-cursor="SWITCH">
             <span id="weatherCycleLabel">切换天气</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 8a7 7 0 1 0 1 5M19 3v5h-5" /></svg>
@@ -179,14 +183,10 @@ import "../styles/stage.css";
     <ImageViewer />
 
     <script is:inline src="/vendor/gsap.min.js"></script>
-    <script is:inline src="/vendor/marked.min.js"></script>
-    <script is:inline src="/vendor/katex/katex.min.js"></script>
-    <script is:inline src="/vendor/katex/contrib/auto-render.min.js"></script>
-    <script is:inline src="/data.js"></script>
+    <script is:inline src="/data.js?v=2"></script>
     <script is:inline src="/notion-notes.js?v=1"></script>
-    <script is:inline src="/notion-content.js?v=1"></script>
     <script is:inline src="/legacy-notes.js?v=1"></script>
-    <script is:inline src="/app.js?v=68"></script>
+    <script is:inline src="/app.js?v=69"></script>
     <script>
       import "../scripts/stage";
     </script>

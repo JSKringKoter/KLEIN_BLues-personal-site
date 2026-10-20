@@ -1,0 +1,22 @@
+---
+// 放在 <head> 里：首帧之前读取上一页留下的 kb-handoff（src/scripts/handoff.ts 的 leave），
+// 命中本页时给 <html> 加 kb-handoff-in，交接层随之铺满，页面不会先闪出自己的版面。
+---
+<script is:inline>
+  try {
+    var kbHandoff = JSON.parse(sessionStorage.getItem("kb-handoff") || "null");
+    sessionStorage.removeItem("kb-handoff");
+    var kbHere = location.pathname.replace(/\/+$/, "") || "/";
+    var kbQuiet = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (kbHandoff && !kbQuiet && kbHandoff.to === kbHere && Date.now() - kbHandoff.t < 15000) {
+      window.KB_HANDOFF = kbHandoff;
+      document.documentElement.classList.add("kb-handoff-in");
+      document.documentElement.dataset.handoff = kbHandoff.from;
+      // 首页：正在接住一段形变，开屏动画与首屏镜头推进都不再播放
+      if (kbHere === "/") {
+        sessionStorage.setItem("kb-booted", "1");
+        document.documentElement.classList.add("kb-seen");
+      }
+    }
+  } catch (e) {}
+</script>

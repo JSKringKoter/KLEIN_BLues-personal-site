@@ -2,6 +2,17 @@
 import { detectQuality } from "../world3d/quality";
 import type { StageModule } from "./core";
 import type { TrackEntry } from "./director";
+import { HandoffLayer, incoming, settle } from "../handoff";
+
+/** 没有三维舞台可以接住返回时：交接层直接淡出 */
+async function dismissHandoff() {
+  if (!incoming()) return;
+  document.documentElement.dataset.handoffClaimed = "1";
+  const layer = HandoffLayer.find();
+  await layer?.fade(600);
+  layer?.hide();
+  settle();
+}
 
 // 与旧运行时（public/app.js）的天气事件对接：本模块在 DOMContentLoaded 之前注册
 let pendingWeather: string | undefined;
@@ -17,13 +28,17 @@ async function boot() {
   const backdrop = document.querySelector<HTMLElement>("#stageBackdrop");
   const hero = document.querySelector<HTMLElement>("#top");
   const quality = detectQuality();
-  if (!canvas || !hero || !quality) return;
+  if (!canvas || !hero || !quality) {
+    dismissHandoff();
+    return;
+  }
 
-  const [{ Director }, { HeroModule }, { WorldsModule }, { PaperModule, DomModule }, { PortraitsModule }, { NotesModule }, { Snapper }] = await Promise.all([
+  const [{ Director }, { HeroModule }, { WorldsModule }, { PaperModule }, { FictionModule }, { PortraitsModule }, { NotesModule }, { Snapper }] = await Promise.all([
     import("./director"),
     import("./hero"),
     import("./worlds/worlds"),
     import("./paper"),
+    import("./fiction"),
     import("./portraits/portraits"),
     import("./notes/notes"),
     import("./snap"),
@@ -42,7 +57,7 @@ async function boot() {
     const el = track(id);
     if (el) entries.push({ module, el, kind: "pinned", overlay: overlay(id) });
   };
-  add("fiction", new DomModule("fiction", ["#f4efe5", "#e6ddcd"], overlay("fiction")));
+  add("fiction", new FictionModule(overlay("fiction")!));
   add("worlds", new WorldsModule(overlay("worlds")!));
   add("portraits", new PortraitsModule(overlay("portraits")!));
   add("notes", new NotesModule(overlay("notes")!));
@@ -54,6 +69,7 @@ async function boot() {
   const director = new Director(canvas, backdrop, entries, quality);
   if (!director.webgl) {
     document.documentElement.classList.remove("stage-on");
+    dismissHandoff();
     return;
   }
   (window as unknown as { KB_STAGE?: unknown }).KB_STAGE = director;
@@ -63,13 +79,28 @@ async function boot() {
       event.preventDefault();
       director.dispose();
       document.documentElement.classList.remove("has-webgl", "stage-on");
+      // 退回普通文档流：撤掉导演写在各叠层上的显隐状态，否则其余模块会一直不可见、不可点
+      for (const e of entries) {
+        const o = e.overlay;
+        if (!o) continue;
+        o.inert = false;
+        o.classList.remove("is-active", "is-sweep-in", "is-sweep-out", "is-leaving");
+        for (const prop of ["visibility", "--stage-in", "--stage-dir", "--sweep"]) o.style.removeProperty(prop);
+      }
     },
     { once: true },
   );
   director.start();
   new Snapper(director);
 
-  // 从子页面返回时，按 hash 落到对应模块
+  // 经「返回」链接回来：交接层已经铺满，由出发的模块把它演变回自己的画面
+  const handoff = incoming();
+  if (handoff) {
+    director.receive(handoff);
+    return;
+  }
+
+  // 其他方式回到某个模块（直接打开 /#xxx、浏览器后退且没有 bfcache）：按 hash 落到对应模块
   const hash = location.hash.replace("#", "");
   const byHash: Record<string, string> = { fiction: "fiction", worldbuildings: "worlds", portraits: "portraits", notes: "notes", "travel-map": "atlas" };
   if (byHash[hash]) {

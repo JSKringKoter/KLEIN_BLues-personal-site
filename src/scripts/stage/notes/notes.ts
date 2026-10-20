@@ -1,6 +1,9 @@
 // 随笔而录：一张坐标纸上摊开的索引卡。
 // 「全部」时按时间铺成一条条类别泳道（横轴是年份）；选择类别时，该类卡片起身聚到中央排成网格，其余沉下去。
+// 离场：卡片被拿起、镜头推近，交接层从卡片的屏幕轮廓展开成笔记页的底色，标题从卡面飞到中央（src/scripts/handoff.ts）。
+// 返回：笔记页把画面收回交接状态后回到这里，整屏收拢回那张卡片，卡片放下、镜头退回。
 import * as THREE from "three";
+import { HandoffLayer, leave, normPath, reducedMotion, settle, type Handoff } from "../../handoff";
 import { Rng, Tween, clamp, damp, easeInOut, easeOut, lerp, setCursor, type SampleBuffers, type StageFrame, type StageModule, type StagePresence } from "../core";
 
 interface Note {
@@ -142,7 +145,11 @@ export class NotesModule implements StageModule {
   private readonly layoutMix = new Tween(0);
   private time = 0;
   private leaving = false;
+  /** 0..1：镜头向选中卡片推近的程度（离场时升到 1，返回时从 1 落回） */
+  private focus = 0;
+  private leaveTimer = 0;
   private ready = false;
+  private readonly layer = HandoffLayer.find();
 
   constructor(overlay: HTMLElement) {
     this.overlay = overlay;
@@ -386,9 +393,31 @@ export class NotesModule implements StageModule {
     });
   }
 
-  /** 从笔记页后退回来（bfcache）：撤销离场 */
-  arrive() {
-    this.leaving = false;
+  /** 卡片在屏幕上的外接矩形 */
+  private cardRect(i: number) {
+    const m = this.cards[i].mesh;
+    m.updateMatrixWorld();
+    this.camera.updateMatrixWorld();
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    for (const sx of [-1, 1])
+      for (const sz of [-1, 1]) {
+        this.tmp.set((sx * CARD_W) / 2, 0.003, (sz * CARD_H) / 2).applyMatrix4(m.matrixWorld).project(this.camera);
+        const x = (this.tmp.x * 0.5 + 0.5) * this.width;
+        const y = (-this.tmp.y * 0.5 + 0.5) * this.height;
+        x0 = Math.min(x0, x);
+        x1 = Math.max(x1, x);
+        y0 = Math.min(y0, y);
+        y1 = Math.max(y1, y);
+      }
+    return { left: x0, top: y0, width: x1 - x0, height: y1 - y0 };
+  }
+
+  /** 卡面上标题文字的大致位置（cardTexture 里第一行标题） */
+  private static titleOnCard(r: { left: number; top: number; width: number; height: number }) {
+    return { left: r.left + r.width * 0.165, top: r.top + r.height * 0.24, width: r.width * 0.7, height: r.height * 0.15 };
   }
 
   private open(i: number) {
@@ -396,8 +425,74 @@ export class NotesModule implements StageModule {
     this.leaving = true;
     this.selected = i;
     this.overlay.classList.add("is-leaving");
-    const url = `/notes/${this.cards[i].note.id}/`;
-    setTimeout(() => location.assign(url), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 750);
+    const note = this.cards[i].note;
+    const url = `/notes/${note.id}/`;
+    leave(url, { from: "notes", kind: "notes", title: note.title, path: location.pathname });
+    if (reducedMotion() || !this.layer) {
+      location.assign(url);
+      return;
+    }
+    document.documentElement.classList.add("kb-busy");
+    // 先让卡片被拿起、镜头推近一段，再从卡片展开
+    this.leaveTimer = window.setTimeout(async () => {
+      if (!this.leaving) return;
+      const r = this.cardRect(i);
+      this.layer!.configure({ kind: "notes", title: note.title, fromColor: "#fdfcf8" });
+      await this.layer!.expand({ rect: r, titleFrom: NotesModule.titleOnCard(r), titleColor: "#1d1b17", duration: 900 });
+      if (this.leaving) location.assign(url);
+    }, 380);
+  }
+
+  /** 交接层收拢回卡片，卡片放下、镜头退回 */
+  private async rewind(i: number) {
+    const layer = this.layer!;
+    const html = document.documentElement;
+    html.classList.add("kb-busy");
+    clearTimeout(this.leaveTimer);
+    this.selected = i;
+    this.selectNote(i);
+    this.leaving = true;
+    this.overlay.classList.add("is-leaving", "is-instant");
+    // 瞬间摆到离场的最后一帧：卡片在手上、镜头已推近
+    this.focus = 1;
+    const m = this.cards[i].mesh;
+    m.position.y = this.cards[i].target.y + 1;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    this.overlay.classList.remove("is-instant");
+    const rect = this.cardRect(i);
+    layer.configure({ kind: "notes", title: this.cards[i].note.title, fromColor: "#fdfcf8" });
+    const done = layer.collapse({ rect, titleTo: NotesModule.titleOnCard(rect), titleColor: "#1d1b17", duration: 900 });
+    // 交接层收到一半时卡片开始放下，文字随之回来
+    window.setTimeout(() => {
+      this.leaving = false;
+      this.overlay.classList.remove("is-leaving");
+      this.overlay.classList.add("is-returning");
+    }, 650);
+    await done;
+    layer.hide();
+    settle();
+    html.classList.remove("kb-busy");
+    window.setTimeout(() => this.overlay.classList.remove("is-returning"), 1200);
+  }
+
+  async receive(h: Handoff) {
+    if (!this.layer || reducedMotion()) return false;
+    for (let n = 0; n < 60 && !this.ready; n++) await new Promise((r) => requestAnimationFrame(r));
+    const id = normPath(h.path ?? "").split("/").pop();
+    const i = this.cards.findIndex((c) => c.note.id === id);
+    if (i < 0) return false;
+    await this.rewind(i);
+    return true;
+  }
+
+  /** 从笔记页后退回来（bfcache）：页面停在离场的最后一帧，原地倒放 */
+  arrive() {
+    if (!this.leaving || this.selected < 0 || !this.layer) {
+      this.leaving = false;
+      return false;
+    }
+    this.rewind(this.selected);
+    return true;
   }
 
   private pick(x: number, y: number) {
@@ -431,10 +526,11 @@ export class NotesModule implements StageModule {
     const tx = this.narrow ? 0 : 1.2;
     cam.position.set(tx + f.pointer.x * 0.4, dist * 0.8 + enter * 2.5 - pr.hold * 0.4, dist * 0.6 + enter * 1.4 - pr.hold * 0.3);
     this.tmp.set(tx, 0, this.narrow ? 0.4 : -0.35);
-    if (this.leaving && this.selected >= 0) {
+    this.focus = damp(this.focus, this.leaving ? 1 : 0, this.leaving ? 3.5 : 2.6, dt);
+    if (this.focus > 0.001 && this.selected >= 0) {
       const c = this.cards[this.selected].mesh.position;
-      this.tmp.lerp(c, 0.5);
-      cam.position.lerp(new THREE.Vector3(c.x, c.y + 1.4, c.z + 0.6), 0.08);
+      this.tmp.lerp(c, 0.5 * this.focus);
+      cam.position.lerp(new THREE.Vector3(c.x, c.y + 1.4, c.z + 0.6), 0.32 * this.focus);
     }
     cam.lookAt(this.tmp);
     cam.updateMatrixWorld();

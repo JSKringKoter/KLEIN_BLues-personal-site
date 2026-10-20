@@ -1,7 +1,11 @@
 // 世界观：两张静态的蓝图线稿。平时一动不动；
 // 悬停「苍穹」时两道晶环放大到整页尺度，点击后晶体被推近、画面溶进世界观页的底色，再跳转。
-// 画布上不画东西，形变粒子落在线稿与图纸上（DomModule）。
-import { DomModule } from "../paper";
+// 滚动形变：粒子沿着线稿的真实路径凝结，图纸随 --stage-in 立起、线条被描出来（见 stage.css）。
+// 返回：子页面铺满同色幕布后回到这里，先摆回离场的最后一帧，再倒放——晶体退远、晶环收拢、幕布揭开。
+import * as THREE from "three";
+import { DomModule, type ScreenPoint } from "../paper";
+import { HandoffLayer, reducedMotion, settle, type Handoff } from "../../handoff";
+import type { Rng } from "../core";
 
 const ROUTES = ["/worldbuildings/cangqiong/", "/worldbuildings/game-design/"];
 // 与 WorldLayout 的 variant 对应：落地页用同色的幕布接住这一段过渡
@@ -11,7 +15,9 @@ export class WorldsModule extends DomModule {
   private readonly root: HTMLElement;
   private readonly cards: HTMLAnchorElement[];
   private leaving = false;
+  private left = -1;
   private timer = 0;
+  private returnTimer = 0;
 
   constructor(overlay: HTMLElement) {
     super("worlds", ["#f3f4f7", "#dde2ea"], overlay);
@@ -62,24 +68,106 @@ export class WorldsModule extends DomModule {
 
   private go(k: number) {
     if (this.leaving) return;
-    this.leaving = true;
     this.hot(k, true);
+    this.leaving = true;
+    this.left = k;
     this.root.classList.add("is-leaving");
     this.root.dataset.leaving = String(k);
+    document.documentElement.classList.add("kb-busy");
     try {
       sessionStorage.setItem("kb-from", "worlds");
       sessionStorage.setItem("kb-veil", VEILS[k]);
     } catch {}
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    this.timer = window.setTimeout(() => location.assign(ROUTES[k]), reduce ? 0 : k === 0 ? 1150 : 1000);
+    this.timer = window.setTimeout(() => location.assign(ROUTES[k]), reducedMotion() ? 0 : k === 0 ? 1150 : 1000);
   }
 
-  /** 从子页面后退回来（bfcache）：撤销离场 */
-  arrive() {
+  /** 倒放离场：先瞬间摆到离场的最后一帧（晶体推近、幕布铺满），下一帧再退回原处 */
+  private rewind(k: number, before?: () => void) {
     clearTimeout(this.timer);
+    clearTimeout(this.returnTimer);
+    const html = document.documentElement;
+    html.classList.add("kb-busy");
     this.leaving = false;
-    this.root.classList.remove("is-leaving", "is-hot-0", "is-hot-1");
-    delete this.root.dataset.leaving;
-    this.cards.forEach((c) => c.classList.remove("is-hot"));
+    if (k === 0) this.measureRings();
+    this.root.classList.add("is-instant", "is-leaving", `is-hot-${k}`);
+    this.root.dataset.leaving = String(k);
+    this.cards[k].classList.add("is-hot");
+    void this.root.offsetWidth;
+    this.root.classList.remove("is-instant");
+    before?.();
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        this.root.classList.add("is-returning");
+        this.root.classList.remove("is-leaving", "is-hot-0", "is-hot-1");
+        this.cards.forEach((c) => c.classList.remove("is-hot"));
+        html.classList.remove("kb-busy");
+        this.returnTimer = window.setTimeout(() => {
+          this.root.classList.remove("is-returning");
+          delete this.root.dataset.leaving;
+        }, 1700);
+      }),
+    );
+    this.left = -1;
+  }
+
+  async receive(h: Handoff) {
+    const k = VEILS.indexOf(h.kind ?? "");
+    if (k < 0 || reducedMotion()) return false;
+    const layer = HandoffLayer.find();
+    // 叠层里的幕布与交接层同色同形：先让幕布就位，再撤掉交接层，两者交接处看不出来
+    this.rewind(k, () => {
+      layer?.hide();
+      settle();
+    });
+    return true;
+  }
+
+  /** 从子页面后退回来（bfcache）：页面停在离场的最后一帧，原地倒放 */
+  arrive() {
+    if (this.left < 0) {
+      clearTimeout(this.timer);
+      this.leaving = false;
+      return false;
+    }
+    this.rewind(this.left);
+    return true;
+  }
+
+  /** 粒子沿线稿的真实路径落下（其余落在图纸与标题上），凝结出来的就是这两张图 */
+  protected points(count: number, rng: Rng): ScreenPoint[] {
+    const base = super.points(Math.round(count * 0.3), rng);
+    const blue = new THREE.Color("#1746d1");
+    const amber = new THREE.Color("#d99a2b");
+    const lines: { pts: { x: number; y: number }[]; len: number; c: THREE.Color }[] = [];
+    this.root.querySelectorAll<SVGPathElement>(".wl-draw path").forEach((path) => {
+      const m = path.getScreenCTM();
+      const total = path.getTotalLength();
+      if (!m || !(total > 0)) return;
+      // 先折成折线，避免对复杂路径反复调用 getPointAtLength
+      const n = Math.min(240, Math.max(16, Math.round(total / 6)));
+      const pts: { x: number; y: number }[] = [];
+      for (let i = 0; i <= n; i++) {
+        const q = path.getPointAtLength((total * i) / n);
+        pts.push({ x: m.a * q.x + m.c * q.y + m.e, y: m.b * q.x + m.d * q.y + m.f });
+      }
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      if (len < 2) return;
+      lines.push({ pts, len, c: path.classList.contains("wl-jet--core") ? amber : blue });
+    });
+    const total = lines.reduce((a, l) => a + l.len, 0);
+    if (!total) return base;
+    const out = base;
+    const want = count - base.length;
+    for (let i = 0; i < want; i++) {
+      let pick = rng.next() * total;
+      let k = 0;
+      while (k < lines.length - 1 && pick > lines[k].len) pick -= lines[k++].len;
+      const { pts, c } = lines[k];
+      const j = Math.floor(rng.next() * (pts.length - 1));
+      const t = rng.next();
+      out.push({ x: pts[j].x + (pts[j + 1].x - pts[j].x) * t, y: pts[j].y + (pts[j + 1].y - pts[j].y) * t, c });
+    }
+    return out;
   }
 }

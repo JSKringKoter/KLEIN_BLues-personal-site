@@ -22,10 +22,11 @@ const canonicalPath = `/notes/${note.id}/`;
   canonicalPath={canonicalPath}
   type="article"
   stylesheets={["/vendor/katex/katex.min.css"]}
+  handoff={{ from: "notes", kind: "notes", title: note.data.title }}
 >
   <main class="note-page">
-    <header class="note-toolbar">
-      <a href="/#notes" data-cursor="BACK" aria-label="返回随笔而录">
+    <header class="note-toolbar" data-handoff-part>
+      <a href="/#notes" data-cursor="BACK" aria-label="返回随笔而录" data-handoff-back>
         <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
         <span>返回随笔</span>
       </a>
@@ -34,12 +35,12 @@ const canonicalPath = `/notes/${note.id}/`;
     </header>
     <article class="note-article">
       <header class="note-title-block">
-        <div><span>{note.data.status}</span><i></i><span>ENGINEERING NOTE</span></div>
-        <h1>{note.data.title}</h1>
-        <p>{note.data.summary}</p>
-        <div class="note-tags">{note.data.tags.map((tag) => <span>{tag}</span>)}</div>
+        <div data-handoff-part style="--part:1"><span>{note.data.status}</span><i></i><span>ENGINEERING NOTE</span></div>
+        <h1 data-handoff-target>{note.data.title}</h1>
+        <p data-handoff-part style="--part:2">{note.data.summary}</p>
+        <div class="note-tags" data-handoff-part style="--part:3">{note.data.tags.map((tag) => <span>{tag}</span>)}</div>
       </header>
-      <div class="note-content"><Content /></div>
+      <div class="note-content" data-handoff-part style="--part:4"><Content /></div>
     </article>
   </main>
   <script is:inline src="/vendor/katex/katex.min.js"></script>

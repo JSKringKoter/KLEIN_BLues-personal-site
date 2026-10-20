@@ -1,0 +1,108 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const exits = [
+  { no: "01", label: "一纸空文", href: "/#fiction" },
+  { no: "02", label: "世界观", href: "/#worldbuildings" },
+  { no: "03", label: "画中人", href: "/#portraits" },
+  { no: "04", label: "随笔而录", href: "/#notes" },
+];
+---
+
+<BaseLayout title="未曾写下的一页 | KLEIN BLues" description="这一页不存在，或已经被移到了别处。" canonicalPath="/404/">
+  <main class="lost-page">
+    <header class="lost-toolbar">
+      <a href="/" data-cursor="HOME"><strong>KLEIN</strong><span>BLues</span></a>
+      <span>ERROR 404 · PAGE NOT FOUND</span>
+    </header>
+    <section class="lost-sheet">
+      <p class="lost-no">404</p>
+      <h1>这一页，<br /><em>还没有写下。</em></h1>
+      <p class="lost-copy">你要找的文字也许换了位置，也许本就停在未完成的地方。可以从下面任意一处，回到档案里。</p>
+      <nav class="lost-exits" aria-label="返回站点">
+        {exits.map((exit) => (
+          <a href={exit.href} data-cursor="ENTER"><span>{exit.no}</span>{exit.label}<i aria-hidden="true">→</i></a>
+        ))}
+      </nav>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .lost-page {
+    min-height: 100vh;
+    background: radial-gradient(circle at 84% 10%, rgba(23, 70, 209, 0.09), transparent 28rem), linear-gradient(140deg, #f1ece2, #d9d5cc);
+    animation: reader-fade 1.1s var(--ease) both;
+  }
+  .lost-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1.2rem clamp(1rem, 3vw, 3rem);
+    border-bottom: 1px solid var(--line);
+  }
+  .lost-toolbar a {
+    display: flex;
+    gap: 0.3rem;
+    font-family: var(--serif);
+    font-size: 1.3rem;
+  }
+  .lost-toolbar a span {
+    color: var(--blue);
+    font-style: italic;
+  }
+  .lost-toolbar > span {
+    color: rgba(17, 16, 14, 0.48);
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+  }
+  .lost-sheet {
+    width: min(60rem, calc(100% - 2rem));
+    margin: 0 auto;
+    padding: clamp(4rem, 12vh, 9rem) clamp(1rem, 5vw, 5rem) 6rem;
+    animation: reader-sheet-enter 1.1s var(--ease) both;
+  }
+  .lost-no {
+    margin: 0;
+    color: var(--signal);
+    font: italic 1rem var(--serif);
+    letter-spacing: 0.2em;
+  }
+  .lost-sheet h1 {
+    margin: 1.6rem 0 2rem;
+    font: 400 clamp(3.4rem, 8vw, 7.4rem) / 0.94 var(--serif);
+    letter-spacing: -0.055em;
+  }
+  .lost-sheet h1 em {
+    color: var(--blue);
+  }
+  .lost-copy {
+    max-width: 32rem;
+    margin: 0 0 3.5rem;
+    color: rgba(17, 16, 14, 0.62);
+    font-family: "Iowan Old Style", "STSong", serif;
+    line-height: 1.9;
+  }
+  .lost-exits {
+    border-top: 1px solid var(--ink);
+  }
+  .lost-exits a {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr auto;
+    align-items: center;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--line);
+    font: 400 clamp(1.4rem, 2.6vw, 2.2rem) var(--serif);
+    letter-spacing: -0.03em;
+    transition: color 0.4s var(--ease), padding 0.5s var(--ease);
+  }
+  .lost-exits a span {
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+  .lost-exits a:hover,
+  .lost-exits a:focus-visible {
+    padding-left: 0.8rem;
+    color: var(--blue);
+  }
+</style>
