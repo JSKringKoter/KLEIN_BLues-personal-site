@@ -1,0 +1,531 @@
+---
+// 《构界》游戏设计：上半部是机制介绍（一局游戏、生命与能量、装备、破碎核心、秩序核心、秩序位、关卡），
+// 下半部是武器图鉴（138 件，数据见 src/data/the-built/weapons.json，可筛选、搜索、排序，点开看完整档案）。
+// 页面里不放任何手绘原图，图示与图标全部是 SVG（src/components/the-built/TbIcons.astro）。交互见 src/scripts/pages/the-built.ts。
+import WorldLayout from "../../layouts/WorldLayout.astro";
+import TbIcons from "../../components/the-built/TbIcons.astro";
+import WeaponDetail from "../../components/the-built/WeaponDetail.astro";
+import weaponsJson from "../../data/the-built/weapons.json";
+import { TAGS, TYPES, VOLUMES, cardLine, cardStats, hexPoints, icon, pts, statIcon, statValue, type Weapon, type WeaponType } from "../../lib/the-built";
+import "../../styles/the-built.css";
+
+const weapons = weaponsJson as Weapon[];
+const typeOrder: WeaponType[] = ["melee", "bow", "gun", "skill"];
+const typeCount = Object.fromEntries(typeOrder.map((t) => [t, weapons.filter((w) => w.type === t).length])) as Record<WeaponType, number>;
+const volCount = Object.fromEntries(VOLUMES.map((v) => [v, weapons.filter((w) => w.vol === v).length]));
+
+/** 数字加重（机制文字用） */
+const hl = (s: string) =>
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/([+−×-]?\d+(?:\.\d+)?(?:\/\d+)?%?)/g, '<b class="tb-num">$1</b>');
+
+const firstNum = (v?: string) => {
+  const m = v?.match(/\d+(?:\.\d+)?/);
+  return m ? Number(m[0]) : -1;
+};
+const allStats = (w: Weapon) => w.blocks.flatMap((b) => b.stats ?? []);
+const searchText = (w: Weapon) =>
+  [w.name, TYPES[w.type].name, ...(w.quotes ?? []), ...(w.tags ?? []), ...w.blocks.flatMap((b) => [b.label, b.text ?? "", ...(b.notes ?? [])])].join(" ").toLowerCase();
+
+const ORDERS = [
+  { key: "doom", name: "灭亡", sym: "湮", en: "DOOM", color: "#b8433b", passive: "直接处决生命低于 20% 的非 BOSS 敌人", relic: "灭亡之刃", relicNote: "伤害 +30%", skill: "狂暴", skillNote: "攻击 +25%，持续 7 秒", cd: 100 },
+  { key: "genesis", name: "创生", sym: "璨", en: "GENESIS", color: "#c3962c", passive: "受击时 20% 几率格挡，恢复效果 +25%", relic: "创生之芒", relicNote: "伤害减免 15%", skill: "壁垒", skillNote: "20 秒内持续回复生命和能量，减伤与格挡率提升", cd: 200 },
+  { key: "purge", name: "净化", sym: "涤", en: "PURIFICATION", color: "#2b97b3", passive: "抗打断，负面效果时长减半，能量回复 +50%", relic: "净化之弓", relicNote: "对黑暗属性敌人伤害 +50%", skill: "速决", skillNote: "攻击间隔 −70%，持续 5 秒", cd: 100 },
+  { key: "sin", name: "罪恶", sym: "浊", en: "SIN", color: "#5b3f86", passive: "碎核获取 ×2，移速 +15%", relic: "罪恶之铳", relicNote: "对光明属性敌人伤害 +50%，自身受伤 +50%", skill: "暗箭", skillNote: "隐身 5 秒，第一击伤害翻倍", cd: 80 },
+  { key: "wisdom", name: "智慧", sym: "识", en: "WISDOM", color: "#2f5fd0", passive: "能量上限 ×1.5，能量消耗减半", relic: "智慧之书", relicNote: "敌人攻速 −30%，移速 −50%", skill: "反目", skillNote: "视野内的普通敌人倒戈", cd: 150 },
+  { key: "evolve", name: "进化", sym: "灵", en: "EVOLUTION", color: "#3f8a58", passive: "带一名帷幕随从，随击杀数进化", relic: "进化之杖", relicNote: "进化所需击杀数减少 1/3", skill: "繁衍", skillNote: "20 秒内多一名同阶随从", cd: 120 },
+];
+
+// 秩序核心的六边形：中心 (120,120)，外 100、内 38
+const OUT = hexPoints(120, 120, 100);
+const IN = hexPoints(120, 120, 38);
+const segs = ORDERS.map((o, i) => ({ ...o, poly: pts([IN[i], OUT[i], OUT[(i + 1) % 6], IN[(i + 1) % 6]]) }));
+// 首屏大徽记：外 150、中 112、内 44
+const H1 = hexPoints(170, 170, 150);
+const H2 = hexPoints(170, 170, 112);
+const H3 = hexPoints(170, 170, 44);
+
+const ROUTE = [
+  { key: "temple", icon: "temple", name: "圣殿", note: "选择一条路线", rooms: 0 },
+  { key: "a", icon: "", name: "A 关", note: "随机普通关卡", rooms: 2 },
+  { key: "rest1", icon: "rest", name: "休息区", note: "", rooms: 0 },
+  { key: "b", icon: "", name: "B 关", note: "尽头有守关敌人", rooms: 2 },
+  { key: "rest2", icon: "rest", name: "休息区", note: "", rooms: 0 },
+  { key: "c", icon: "boss", name: "C 关", note: "路线专属 · 终点 BOSS", rooms: 3 },
+];
+
+const SLOTS = [
+  { key: "1", name: "圣装", note: "路线专属武器" },
+  { key: "2", name: "武器", note: "近战或远程，随时切换" },
+  { key: "3", name: "武器", note: "可与第二栏对调" },
+  { key: "Q", name: "秩序技能", note: "同系核心 + 圣装才能使用；否则可放一个小技能" },
+  { key: "E", name: "主动技能", note: "可替换" },
+  { key: "◇", name: "秩序核心", note: "被动 · 只能在休息区更换" },
+];
+
+const STAGES = [
+  {
+    key: "citadel",
+    name: "坚城",
+    en: "THE CITADEL",
+    rules: ["荒原上随机出现全自动炮塔，每 1.5 秒一组三连发，可被电磁武器干扰", "城墙挡住道路，累计受到 15 点伤害后坍塌", "城防炮手站在墙上，只有瞄准状态的远程武器打得到；脚下的墙塌了，他会摔下来眩晕 2 秒"],
+    boss: "践行者 · 金汤",
+  },
+  {
+    key: "night",
+    name: "永夜",
+    en: "ETERNAL NIGHT",
+    rules: ["光明区与黑暗区：在黑暗里待 7 秒视野开始缩小，待满 35 秒失去 50% 生命上限、被送回灯塔", "灯塔和部分武器、技能可以照明，普通的火不行；黄昏区的灯塔不亮，但能回复 30 点能量", "暗夜行者只在黑暗中活动，会瞬移近身"],
+    boss: "践行者 · 三更",
+    bossNote: "双端镰刀，红蓝两种标记同时存在时受到 5 点伤害；半血进入「解放」",
+  },
+  {
+    key: "mirror",
+    name: "幻镜",
+    en: "THE MIRROR",
+    rules: ["地图分为镜外、镜面、镜内三个区域", "镜面区的敌人死后分裂成两个生命减半的镜像（精英与 BOSS 除外）", "镜外区的敌人受到的远程伤害减半"],
+    boss: "践行者 · 万乘",
+    bossNote: "2/3 与 1/3 血量时分裂成三个精英；最后分成六块，60 秒内没清完就以 1/3 血量重组",
+  },
+  {
+    key: "stair",
+    name: "天路",
+    en: "SKYWARD STAIR",
+    rules: ["固定地图的长阶梯，每段由一名圣使把守，到达天台前无法攻击他", "集齐 3 块圣使令才能前进；集齐 4 块额外获得 100 个碎核，并从三件装备中选一件"],
+    envoys: [
+      { name: "杀戒", note: "周期性给敌人加护盾" },
+      { name: "禁欲", note: "碎核获取减半" },
+      { name: "永生", note: "敌人死亡后 30% 几率复活" },
+      { name: "裁决", note: "敌人半血后伤害翻倍" },
+    ],
+  },
+  {
+    key: "lotus",
+    name: "红莲场",
+    en: "CRIMSON LOTUS",
+    rules: ["每击杀一名敌人获得 1 点怨念，每 3 秒衰减 1 点", "攒满 25 点进入 10 秒「修罗」：攻击 +30%，每秒失去 1 点生命，每杀一名回复 2 点；触发时先扣 5 点生命，最低留 1 点", "红莲怨鬼打中你给 2 点怨念，死亡自爆造成 2 点伤害和 3 点怨念"],
+  },
+];
+
+const SECTIONS = [
+  { id: "run", no: "01", name: "一局游戏", en: "THE RUN" },
+  { id: "vitals", no: "02", name: "生命与能量", en: "VITALS" },
+  { id: "loadout", no: "03", name: "装备", en: "LOADOUT" },
+  { id: "shards", no: "04", name: "破碎核心", en: "SHARDS" },
+  { id: "orders", no: "05", name: "秩序核心", en: "ORDERS" },
+  { id: "seats", no: "06", name: "秩序位", en: "ORDER SEATS" },
+  { id: "stages", no: "07", name: "关卡", en: "STAGES" },
+  { id: "arsenal", no: "A", name: "武器图鉴", en: "ARSENAL" },
+];
+---
+<WorldLayout title="《构界》游戏设计 | WORLDBUILDINGS · KLEIN BLues" description="《构界》：2.5D 俯视角 Roguelike 动作游戏的机制设计与 138 件武器的概念图鉴。" canonicalPath="/worldbuildings/the-built/" variant="built">
+  <TbIcons />
+  <div class="tb" data-tb>
+    <nav class="tb-rail" aria-label="页内目录">
+      <ol>
+        {SECTIONS.map((s) => (
+          <li><a href={`#${s.id}`} data-tb-nav={s.id}><span>{s.no}</span>{s.name}</a></li>
+        ))}
+      </ol>
+    </nav>
+
+    <!-- 首屏 -->
+    <header class="tb-hero">
+      <div class="tb-hero-copy">
+        <p class="stage-eyebrow"><span>02</span> Game design</p>
+        <h1><span class="tb-bracket">《</span>构界<span class="tb-bracket">》</span><small>THE BUILT</small></h1>
+        <p class="tb-hero-lead">2.5D 俯视角 · Roguelike · 动作</p>
+        <p class="tb-hero-desc">你是一颗名为「构界」的秩序核心。在随机生成的关卡里战斗、收集碎片、更换武器——每一局都从零开始，死亡即结束。</p>
+        <div class="tb-hero-entries">
+          <a href="#run" data-cursor="DOWN"><small>PART Ⅰ</small><strong>机制</strong><span>七章 · 一局游戏的全部规则</span>{<Fragment set:html={icon("arrow")} />}</a>
+          <a href="#arsenal" data-cursor="DOWN"><small>PART Ⅱ</small><strong>武器图鉴</strong><span>{weapons.length} 件 · 八卷概念设计</span>{<Fragment set:html={icon("arrow")} />}</a>
+        </div>
+      </div>
+      <figure class="tb-emblem" aria-hidden="true">
+        <svg viewBox="0 0 340 340">
+          <circle class="tb-emblem-ring" cx="170" cy="170" r="164" />
+          <circle class="tb-emblem-ticks" cx="170" cy="170" r="158" />
+          {ORDERS.map((o, i) => (
+            <polygon class="tb-emblem-seg" style={`--oc:${o.color};--d:${i * 0.12}s`} points={pts([H3[i], H2[i], H2[(i + 1) % 6], H3[(i + 1) % 6]])} />
+          ))}
+          <polygon class="tb-emblem-outer" points={pts(H1)} />
+          <polygon class="tb-emblem-mid" points={pts(H2)} />
+          <polygon class="tb-emblem-inner" points={pts(H3)} />
+          {H2.map((p, i) => <line class="tb-emblem-spoke" x1={H3[i][0]} y1={H3[i][1]} x2={H1[i][0]} y2={H1[i][1]} />)}
+          {ORDERS.map((o, i) => {
+            const a = ((60 * i - 60) * Math.PI) / 180;
+            return <text class="tb-emblem-sym" x={170 + 80 * Math.cos(a)} y={170 + 80 * Math.sin(a)} style={`--oc:${o.color}`}>{o.sym}</text>;
+          })}
+          <circle class="tb-emblem-core" cx="170" cy="170" r="7" />
+        </svg>
+        <figcaption>ORDER CORE · 六种秩序</figcaption>
+      </figure>
+      <dl class="tb-facts">
+        <div><dt>单局</dt><dd><b>75</b> 分钟</dd></div>
+        <div><dt>大关</dt><dd><b>3</b> 关 · <b>7</b> 小关</dd></div>
+        <div><dt>秩序</dt><dd><b>6</b> 种流派</dd></div>
+        <div><dt>关卡</dt><dd><b>5</b> 种地形规则</dd></div>
+        <div><dt>武器</dt><dd><b>{weapons.length}</b> 件</dd></div>
+      </dl>
+    </header>
+
+    <!-- 01 一局游戏 -->
+    <section class="tb-sec" id="run" aria-labelledby="runTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-01</span><h2 id="runTitle">一局游戏</h2><small>THE RUN</small></header>
+      <p class="tb-sec-lead">开局在圣殿选一条路线，依次通过 A、B、C 三个大关。地图、敌人、掉落与可交互物件每次都随机生成；每个小关从安全屋出发，大关之间有休息区。</p>
+      <ol class="tb-route">
+        {ROUTE.map((r) => (
+          <li class={`tb-route-node tb-route-node--${r.key}${r.rooms ? " is-stage" : ""}`}>
+            <span class="tb-route-mark">{r.icon ? <Fragment set:html={icon(r.icon)} /> : r.name.slice(0, 1)}</span>
+            <strong>{r.name}</strong>
+            {r.rooms > 0 && <span class="tb-route-rooms">{Array.from({ length: r.rooms }, () => <i />)}<small>{r.rooms} 小关</small></span>}
+            {r.note && <em>{r.note}</em>}
+          </li>
+        ))}
+      </ol>
+      <p class="tb-route-foot"><span>完整探索约 <b class="tb-num">75</b> 分钟</span><span>死亡即结束</span></p>
+    </section>
+
+    <!-- 02 生命与能量 -->
+    <section class="tb-sec" id="vitals" aria-labelledby="vitalsTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-02</span><h2 id="vitalsTitle">生命与能量</h2><small>VITALS</small></header>
+      <div class="tb-vitals">
+        <div class="tb-meter">
+          <h3><span>生命</span><b>10</b></h3>
+          <div class="tb-hearts" aria-label="10 点生命">
+            {Array.from({ length: 10 }, (_, i) => <span class={i >= 8 ? "is-hit" : ""} set:html={icon("heart")} />)}
+          </div>
+          <p>敌人一次通常只打掉 <b class="tb-num">1～2</b> 点——每一次受击都清楚可数。</p>
+        </div>
+        <div class="tb-meter tb-meter--energy">
+          <h3><span>能量</span><b>200</b></h3>
+          <div class="tb-energy" aria-label="200 点能量">{Array.from({ length: 20 }, () => <i />)}</div>
+          <p>远程攻击与技能共用的燃料。近战不消耗能量。</p>
+        </div>
+      </div>
+      <ul class="tb-items">
+        <li>
+          <span class="tb-item-icon" set:html={icon("core")} />
+          <strong>修复核心</strong>
+          <span class="tb-deltas"><b>生命 +50%</b><b>能量 +50%</b><b>护盾 1s</b></span>
+          <em>难度越高，能携带的数量越少。</em>
+        </li>
+        <li>
+          <span class="tb-item-icon" set:html={icon("vial")} />
+          <strong>加固液</strong>
+          <span class="tb-deltas"><b>生命上限 +2</b></span>
+        </li>
+        <li>
+          <span class="tb-item-icon tb-item-icon--alt" set:html={icon("vial")} />
+          <strong>激发剂</strong>
+          <span class="tb-deltas"><b class="is-minus">生命上限 −2</b><b>能量上限 +30</b></span>
+          <em>用血量换火力。</em>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 03 装备 -->
+    <section class="tb-sec" id="loadout" aria-labelledby="loadoutTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-03</span><h2 id="loadoutTitle">装备</h2><small>LOADOUT</small></header>
+      <ol class="tb-hud" aria-label="装备栏位">
+        {SLOTS.map((s) => (
+          <li class={`tb-slot tb-slot--${s.key === "◇" ? "core" : /\d/.test(s.key) ? "weapon" : "skill"}`}>
+            <kbd>{s.key}</kbd>
+            <strong>{s.name}</strong>
+            <span>{s.note}</span>
+          </li>
+        ))}
+      </ol>
+      <ul class="tb-types">
+        {typeOrder.map((t) => (
+          <li style={`--tc:${TYPES[t].color}`}>
+            <span class="tb-type-icon" set:html={icon(`type-${t}`)} />
+            <strong>{TYPES[t].name}<small>{TYPES[t].en}</small></strong>
+            <span>{TYPES[t].use}</span>
+          </li>
+        ))}
+      </ul>
+      <div class="tb-notes">
+        <p><span set:html={icon("wrench")} />远程武器有耐久，归零就不能再用；可以在安全屋或击败 BOSS 后花碎核修复。</p>
+        <p><span set:html={icon("anvil")} />武器能用碎核升级，到 <b class="tb-num">Ⅲ</b>、<b class="tb-num">Ⅴ</b> 级时解锁额外的被动效果。</p>
+      </div>
+    </section>
+
+    <!-- 04 破碎核心 -->
+    <section class="tb-sec" id="shards" aria-labelledby="shardsTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-04</span><h2 id="shardsTitle">破碎核心</h2><small>SHARDS</small></header>
+      <p class="tb-sec-lead">碎核是唯一的货币，只靠击杀获得。</p>
+      <div class="tb-flow">
+        <ul class="tb-flow-in" aria-label="来源">
+          <li><span set:html={icon("skull")} />普通敌人<b>+2</b></li>
+          <li><span set:html={icon("skull")} />精英<b>+5</b></li>
+          <li><span set:html={icon("boss")} />BOSS<b>+20</b></li>
+        </ul>
+        <div class="tb-flow-hub" aria-hidden="true">
+          <span set:html={icon("shard")} />
+          <small>碎核</small>
+        </div>
+        <ul class="tb-flow-out" aria-label="用途">
+          <li><span set:html={icon("energy")} /><strong>回复能量</strong><em><b class="tb-num">1</b> 碎核 → <b class="tb-num">2</b> 能量</em></li>
+          <li><span set:html={icon("shop")} /><strong>武器商店</strong><em>近战、远程、小技能各一件</em></li>
+          <li><span set:html={icon("anvil")} /><strong>工匠小屋</strong><em>为主武器打造配件，最多三次：<b class="tb-num">5</b> · <b class="tb-num">10</b> · <b class="tb-num">20</b></em></li>
+          <li><span set:html={icon("cross")} /><strong>急救站</strong><em><b class="tb-num">20</b> 碎核换修复核心，另送一次 <b class="tb-num">3</b> 点生命</em></li>
+          <li><span set:html={icon("wrench")} /><strong>修理与升级</strong><em>远程武器的耐久，以及所有武器的等级</em></li>
+        </ul>
+      </div>
+      <p class="tb-drop">敌人有几率掉落武器；BOSS 必定掉落近战、远程、圣装各一件。</p>
+    </section>
+
+    <!-- 05 秩序核心 -->
+    <section class="tb-sec" id="orders" aria-labelledby="ordersTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-05</span><h2 id="ordersTitle">秩序核心</h2><small>ORDERS</small></header>
+      <p class="tb-sec-lead">秩序核心决定一局的流派。每一种都由三部分组成：被动、圣装、秩序技能。</p>
+      <div class="tb-orders" data-tb-orders data-order={ORDERS[0].key}>
+        <div class="tb-orders-wheel">
+          <svg viewBox="0 0 240 240" aria-hidden="true">
+            {segs.map((o) => <polygon class="tb-oseg" data-seg={o.key} style={`--oc:${o.color}`} points={o.poly} />)}
+            <polygon class="tb-ohex" points={pts(OUT)} />
+            <polygon class="tb-ohex" points={pts(IN)} />
+            <circle class="tb-ocore" cx="120" cy="120" r="5" />
+          </svg>
+          <div class="tb-orders-keys" role="tablist" aria-label="六种秩序">
+            {ORDERS.map((o, i) => (
+              <button type="button" role="tab" id={`otab-${o.key}`} aria-controls={`opanel-${o.key}`} aria-selected={i === 0 ? "true" : "false"} data-order-key={o.key} style={`--oc:${o.color};--i:${i}`} data-cursor="SWITCH">
+                <span>{o.sym}</span>
+                <small>{o.name}</small>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div class="tb-orders-panels">
+          {ORDERS.map((o, i) => (
+            <article class="tb-opanel" role="tabpanel" id={`opanel-${o.key}`} aria-labelledby={`otab-${o.key}`} hidden={i !== 0} style={`--oc:${o.color}`}>
+              <header><span class="tb-opanel-sym">{o.sym}</span><h3>{o.name}<small>{o.en}</small></h3></header>
+              <dl>
+                <div><dt>被动</dt><dd set:html={hl(o.passive)} /></div>
+                <div><dt>圣装</dt><dd><strong>{o.relic}</strong><span set:html={hl(o.relicNote)} /></dd></div>
+                <div><dt>秩序技能 · Q</dt><dd><strong>{o.skill}</strong><span set:html={hl(o.skillNote)} /><span class="tb-cd"><Fragment set:html={statIcon({ k: "CD", v: `${o.cd}秒` })} />冷却 <b class="tb-num">{o.cd}</b>s</span></dd></div>
+              </dl>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 秩序位 -->
+    <section class="tb-sec" id="seats" aria-labelledby="seatsTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-06</span><h2 id="seatsTitle">秩序位与难度</h2><small>ORDER SEATS</small></header>
+      <ol class="tb-seats">
+        <li class="is-zero"><span>0</span><small>起始</small></li>
+        {ORDERS.map((o, i) => (
+          <li style={`--oc:${o.color}`}>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><polygon points={pts(hexPoints(20, 20, 17))} /></svg>
+            <span>{i + 1}</span>
+            <small>{o.name}</small>
+          </li>
+        ))}
+      </ol>
+      <p class="tb-sec-lead tb-seats-note">在当前秩序位下，通关一条还没通关过的路线：秩序位 <b class="tb-num">+1</b>，难度上升一档，同时解锁这条路线的秩序核心、圣装图纸与外观。六条路线全部通关，秩序位就满了。</p>
+    </section>
+
+    <!-- 07 关卡 -->
+    <section class="tb-sec" id="stages" aria-labelledby="stagesTitle">
+      <header class="tb-sec-head"><span class="tb-sec-no">M-07</span><h2 id="stagesTitle">关卡</h2><small>STAGES</small></header>
+      <p class="tb-sec-lead">五种普通关卡，每一种都有一条改变打法的地形规则。</p>
+      <ul class="tb-stages">
+        {STAGES.map((s, i) => (
+          <li class={`tb-stage tb-stage--${s.key}`}>
+            <header>
+              <svg class="tb-glyph" viewBox="0 0 64 64" aria-hidden="true">
+                {s.key === "citadel" && (
+                  <>
+                    <path d="M6 52V28h7v-7h7v7h7v-7h10v7h7v-7h7v7h7v24z" />
+                    <path d="M27 52V42a5 5 0 0 1 10 0v10" />
+                    <path class="f" d="M2 52h60" />
+                  </>
+                )}
+                {s.key === "night" && (
+                  <>
+                    <path d="M44 10a20 20 0 1 0 12 32 15 15 0 1 1-12-32z" />
+                    <path d="M14 54l3-17h5l3 17z" />
+                    <path class="f" d="M19.5 37v-6M12 29l-5-3M27 29l5-3" />
+                  </>
+                )}
+                {s.key === "mirror" && (
+                  <>
+                    <path class="f" d="M32 6v52" />
+                    <path d="M27 16 10 48h17z" />
+                    <path class="f" d="M37 16l17 32H37z" />
+                  </>
+                )}
+                {s.key === "stair" && (
+                  <>
+                    <path d="M6 56h10v-9h10v-9h10v-9h10v-9h12" />
+                    <circle cx="52" cy="14" r="3" />
+                    <path class="f" d="M6 56h52" />
+                  </>
+                )}
+                {s.key === "lotus" && (
+                  <>
+                    <path d="M32 50c-7-8-7-19 0-30 7 11 7 22 0 30z" />
+                    <path d="M32 50c-12-1-19-9-20-21 10 2 17 9 20 21zM32 50c12-1 19-9 20-21-10 2-17 9-20 21z" />
+                    <path class="f" d="M12 54h40" />
+                  </>
+                )}
+              </svg>
+              <span class="tb-stage-no">S-0{i + 1}</span>
+              <h3>{s.name}<small>{s.en}</small></h3>
+            </header>
+            <ul class="tb-rules">
+              {s.rules.map((r) => <li set:html={hl(r)} />)}
+            </ul>
+            {s.envoys && (
+              <ul class="tb-envoys">
+                {s.envoys.map((e) => (
+                  <li><strong>{e.name}</strong><span set:html={hl(e.note)} /></li>
+                ))}
+              </ul>
+            )}
+            {s.boss && (
+              <p class="tb-boss">
+                <span set:html={icon("boss")} />
+                <span><small>守关</small><strong>{s.boss}</strong>{s.bossNote && <em set:html={hl(s.bossNote)} />}</span>
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- 武器图鉴 -->
+    <section class="tb-sec tb-arsenal" id="arsenal" aria-labelledby="arsenalTitle" data-tb-arsenal>
+      <header class="tb-sec-head"><span class="tb-sec-no">A</span><h2 id="arsenalTitle">武器图鉴</h2><small>ARSENAL · {weapons.length}</small></header>
+
+      <div class="tb-legend">
+        <ul class="tb-legend-types">
+          {typeOrder.map((t) => (
+            <li style={`--tc:${TYPES[t].color}`}><span set:html={icon(`type-${t}`)} />{TYPES[t].name}<b>{typeCount[t]}</b></li>
+          ))}
+        </ul>
+        <ul class="tb-legend-stats">
+          <li><span set:html={icon("damage")} />伤害<em>10<i class="tb-crit">15</i></em><small>斜线后为暴击伤害</small></li>
+          <li><span set:html={statIcon({ k: "A", v: "25%" })} />暴击率</li>
+          <li><span set:html={icon("energy")} />能量</li>
+          <li><span set:html={statIcon({ k: "CD", v: "30秒" })} />冷却</li>
+          <li><span set:html={icon("mag")} />弹匣</li>
+          <li><span set:html={icon("reload")} />换弹</li>
+          {Object.entries(TAGS).map(([k, t]) => (
+            <li><span set:html={icon(t.icon)} />{k}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div class="tb-controls">
+        <div class="tb-filter" role="group" aria-label="按类型筛选">
+          <button type="button" data-filter-type="" aria-pressed="true" data-cursor="SWITCH">全部<b>{weapons.length}</b></button>
+          {typeOrder.map((t) => (
+            <button type="button" data-filter-type={t} aria-pressed="false" style={`--tc:${TYPES[t].color}`} data-cursor="SWITCH"><span set:html={icon(`type-${t}`)} />{TYPES[t].name}<b>{typeCount[t]}</b></button>
+          ))}
+        </div>
+        <div class="tb-filter tb-filter--vol" role="group" aria-label="按卷筛选">
+          <button type="button" data-filter-vol="" aria-pressed="true" data-cursor="SWITCH">全卷</button>
+          {VOLUMES.map((v) => (
+            <button type="button" data-filter-vol={v} aria-pressed="false" title={`第 ${v} 卷 · ${volCount[v]} 件`} data-cursor="SWITCH">{v}</button>
+          ))}
+        </div>
+        <label class="tb-search">
+          <span set:html={icon("search")} />
+          <input type="search" placeholder="搜索武器、效果……" data-tb-search aria-label="搜索武器" />
+        </label>
+        <label class="tb-sort">
+          <span>排序</span>
+          <select data-tb-sort aria-label="排序方式">
+            <option value="order">卷序</option>
+            <option value="dmg">伤害</option>
+            <option value="crit">暴击率</option>
+            <option value="cd">冷却（短 → 长）</option>
+            <option value="name">名称</option>
+          </select>
+        </label>
+        <p class="tb-count" aria-live="polite"><b data-tb-count>{weapons.length}</b> / {weapons.length}</p>
+      </div>
+
+      <ol class="tb-grid" data-tb-grid>
+        {weapons.map((w, n) => {
+          const t = TYPES[w.type];
+          const line = cardLine(w);
+          const stats = cardStats(w);
+          const all = allStats(w);
+          const long = w.name.length > 9;
+          return (
+            <li
+              class="tb-card"
+              style={`--tc:${t.color}`}
+              data-type={w.type}
+              data-vol={w.vol}
+              data-order={n}
+              data-dmg={firstNum(all.find((s) => s.k === "D")?.v)}
+              data-crit={firstNum(all.find((s) => s.k === "A")?.v)}
+              data-cd={firstNum(all.find((s) => s.k === "CD")?.v)}
+              data-name={w.name}
+              data-q={searchText(w)}
+            >
+              <button type="button" class="tb-card-btn" data-tb-open aria-haspopup="dialog" aria-label={`${w.name}，${t.name}，查看完整档案`} data-cursor="OPEN">
+                <span class="tb-card-top">
+                  <span class="tb-card-type" set:html={icon(`type-${w.type}`) + t.name} />
+                  <span class="tb-card-no">{w.vol} · {String(w.idx).padStart(2, "0")}</span>
+                </span>
+                <strong class:list={["tb-card-name", { "is-long": long }]}>{w.name}</strong>
+                {line.text && <span class:list={["tb-card-line", { "is-quote": line.quote }]}>{line.text}</span>}
+                <span class="tb-card-foot">
+                  {stats.length ? (
+                    <span class="tb-card-stats">
+                      {stats.map((s) => (
+                        <span class={`tb-chip tb-chip--${s.k}`} title={s.k}>
+                          <Fragment set:html={statIcon(s)} />
+                          <span set:html={statValue(s)} />
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span class="tb-card-stats tb-card-stats--none">—</span>
+                  )}
+                  {w.tags?.map((tag) => <span class="tb-card-tag" title={TAGS[tag]?.note ?? tag} set:html={icon(TAGS[tag]?.icon ?? "tag-once")} />)}
+                </span>
+              </button>
+              <template data-tb-dossier>
+                <WeaponDetail w={w} />
+              </template>
+            </li>
+          );
+        })}
+      </ol>
+      <p class="tb-empty" data-tb-empty hidden>没有找到符合条件的武器。</p>
+    </section>
+
+    <footer class="tb-foot">
+      <span>《构界》 · 咖啡屋工作室</span>
+      <span>KLEIN BLues / GAME DESIGN ARCHIVE</span>
+    </footer>
+  </div>
+
+  <dialog class="tb-drawer" data-tb-drawer aria-label="武器档案" slot="overlays">
+    <div class="tb-drawer-bar">
+      <button type="button" data-tb-prev aria-label="上一件" data-cursor="PREV">←</button>
+      <span data-tb-pos></span>
+      <button type="button" data-tb-next aria-label="下一件" data-cursor="NEXT">→</button>
+      <button type="button" class="tb-drawer-close" data-tb-close aria-label="关闭" data-cursor="CLOSE" set:html={icon("close")} />
+    </div>
+    <div class="tb-drawer-body" data-tb-body></div>
+  </dialog>
+
+  <Fragment slot="scripts">
+    <script>
+      import { mountTheBuilt } from "../../scripts/pages/the-built";
+      const root = document.querySelector<HTMLElement>("[data-tb]");
+      if (root) mountTheBuilt(root);
+    </script>
+  </Fragment>
+</WorldLayout>

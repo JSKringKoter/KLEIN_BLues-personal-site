@@ -3,7 +3,7 @@
 // 落地：页面头部的内联脚本读到 kb-handoff 后，首帧就铺好同样的交接状态，再由这里演变成落地页的版面。
 
 export type HandoffFrom = "fiction" | "worlds" | "notes" | "portraits" | "home";
-export type HandoffKind = "fiction" | "notes" | "sky" | "design" | "portraits" | "home";
+export type HandoffKind = "fiction" | "notes" | "sky" | "built" | "design" | "portraits" | "home";
 
 export interface Handoff {
   /** 落地页路径（不含末尾斜杠） */

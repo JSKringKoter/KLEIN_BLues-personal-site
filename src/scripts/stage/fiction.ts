@@ -14,6 +14,9 @@ interface OpenDetail {
 
 const PAPER = "#f1eadf";
 
+/** url(...) 里的相对路径转成绝对地址：交接层的样式在打包后的 /_astro/*.css 里，相对路径会被解析到 /_astro/ 下面 */
+const absUrl = (v: string) => v.replace(/url\((['"]?)(.*?)\1\)/g, (_m, _q, u: string) => `url("${new URL(u, location.href).href}")`);
+
 export class FictionModule extends DomModule {
   private readonly root: HTMLElement;
   private readonly layer = HandoffLayer.find();
@@ -51,7 +54,7 @@ export class FictionModule extends DomModule {
       theme: d.theme,
       title: d.title,
       fromColor: cs.getPropertyValue("--row-color").trim(),
-      fromImage: cs.getPropertyValue("--novel-cover").trim(),
+      fromImage: absUrl(cs.getPropertyValue("--novel-cover").trim()),
     });
   }
 
