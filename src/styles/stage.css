@@ -779,7 +779,7 @@ html.stage-on .wl-veil {
 }
 
 .wl[data-leaving="1"] .wl-veil {
-  background: #f2f1ec;
+  background: #eef2fb;
 }
 
 .wl[data-leaving="2"] .wl-veil {
