@@ -122,7 +122,7 @@ const SECTIONS = [
 ---
 <WorldLayout title="《构界》游戏设计 | WORLDBUILDINGS · KLEIN BLues" description="《构界》：2.5D 俯视角 Roguelike 动作游戏的机制设计与 138 件武器的概念图鉴。" canonicalPath="/worldbuildings/the-built/" variant="built">
   <TbIcons />
-  <div class="tb" data-tb>
+  <div class="tb-page" data-tb>
     <nav class="tb-rail" aria-label="页内目录">
       <ol>
         {SECTIONS.map((s) => (
@@ -132,17 +132,14 @@ const SECTIONS = [
     </nav>
 
     <!-- 首屏 -->
-    <header class="tb-hero">
+    <header class="tb-hero" data-tb-hero>
       <div class="tb-hero-copy">
         <p class="stage-eyebrow"><span>02</span> Game design</p>
-        <h1><span class="tb-bracket">《</span>构界<span class="tb-bracket">》</span><small>THE BUILT</small></h1>
-        <p class="tb-hero-lead">2.5D 俯视角 · Roguelike · 动作</p>
+        <h1><span class="tb-bracket">《</span>构界<span class="tb-bracket">》</span></h1>
+        <p class="tb-hero-sub">THE BUILT · 2.5D 俯视角 · Roguelike · 动作</p>
         <p class="tb-hero-desc">你是一颗名为「构界」的秩序核心。在随机生成的关卡里战斗、收集碎片、更换武器——每一局都从零开始，死亡即结束。</p>
-        <div class="tb-hero-entries">
-          <a href="#run" data-cursor="DOWN"><small>PART Ⅰ</small><strong>机制</strong><span>七章 · 一局游戏的全部规则</span>{<Fragment set:html={icon("arrow")} />}</a>
-          <a href="#arsenal" data-cursor="DOWN"><small>PART Ⅱ</small><strong>武器图鉴</strong><span>{weapons.length} 件 · 八卷概念设计</span>{<Fragment set:html={icon("arrow")} />}</a>
-        </div>
       </div>
+
       <figure class="tb-emblem" aria-hidden="true">
         <svg viewBox="0 0 340 340">
           <circle class="tb-emblem-ring" cx="170" cy="170" r="164" />
@@ -162,18 +159,37 @@ const SECTIONS = [
         </svg>
         <figcaption>ORDER CORE · 六种秩序</figcaption>
       </figure>
-      <dl class="tb-facts">
-        <div><dt>单局</dt><dd><b>75</b> 分钟</dd></div>
-        <div><dt>大关</dt><dd><b>3</b> 关 · <b>7</b> 小关</dd></div>
-        <div><dt>秩序</dt><dd><b>6</b> 种流派</dd></div>
-        <div><dt>关卡</dt><dd><b>5</b> 种地形规则</dd></div>
-        <div><dt>武器</dt><dd><b>{weapons.length}</b> 件</dd></div>
-      </dl>
+
+      <aside class="tb-index" aria-label="目录">
+        <header><span>CONTENTS</span><b>机制 · 图鉴</b></header>
+        <ol>
+          {SECTIONS.map((s) => (
+            <li class:list={{ "is-part": s.id === "arsenal" }}>
+              <a href={`#${s.id}`} data-cursor="DOWN">
+                <span class="tb-index-no">{s.no}</span>
+                <span class="tb-index-name"><strong>{s.name}</strong><small>{s.en}</small></span>
+                {<Fragment set:html={icon("arrow")} />}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </aside>
+
+      <div class="tb-hero-tools">
+        <a class="tb-hero-cta" href="#arsenal" data-cursor="DOWN"><i aria-hidden="true"></i><span>武器图鉴 · {weapons.length}</span></a>
+        <dl class="tb-facts">
+          <div><dt>单局</dt><dd><b>75</b> 分钟</dd></div>
+          <div><dt>大关</dt><dd><b>3</b> · <b>7</b> 小关</dd></div>
+          <div><dt>秩序</dt><dd><b>6</b> 种</dd></div>
+          <div><dt>关卡</dt><dd><b>5</b> 种</dd></div>
+        </dl>
+      </div>
     </header>
 
+    <div class="tb">
     <!-- 01 一局游戏 -->
     <section class="tb-sec" id="run" aria-labelledby="runTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-01</span><h2 id="runTitle">一局游戏</h2><small>THE RUN</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">01</span><h2 id="runTitle">一局游戏</h2><small>THE RUN</small></header>
       <p class="tb-sec-lead">开局在圣殿选一条路线，依次通过 A、B、C 三个大关。地图、敌人、掉落与可交互物件每次都随机生成；每个小关从安全屋出发，大关之间有休息区。</p>
       <ol class="tb-route">
         {ROUTE.map((r) => (
@@ -190,7 +206,7 @@ const SECTIONS = [
 
     <!-- 02 生命与能量 -->
     <section class="tb-sec" id="vitals" aria-labelledby="vitalsTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-02</span><h2 id="vitalsTitle">生命与能量</h2><small>VITALS</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">02</span><h2 id="vitalsTitle">生命与能量</h2><small>VITALS</small></header>
       <div class="tb-vitals">
         <div class="tb-meter">
           <h3><span>生命</span><b>10</b></h3>
@@ -228,7 +244,7 @@ const SECTIONS = [
 
     <!-- 03 装备 -->
     <section class="tb-sec" id="loadout" aria-labelledby="loadoutTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-03</span><h2 id="loadoutTitle">装备</h2><small>LOADOUT</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">03</span><h2 id="loadoutTitle">装备</h2><small>LOADOUT</small></header>
       <ol class="tb-hud" aria-label="装备栏位">
         {SLOTS.map((s) => (
           <li class={`tb-slot tb-slot--${s.key === "◇" ? "core" : /\d/.test(s.key) ? "weapon" : "skill"}`}>
@@ -255,7 +271,7 @@ const SECTIONS = [
 
     <!-- 04 破碎核心 -->
     <section class="tb-sec" id="shards" aria-labelledby="shardsTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-04</span><h2 id="shardsTitle">破碎核心</h2><small>SHARDS</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">04</span><h2 id="shardsTitle">破碎核心</h2><small>SHARDS</small></header>
       <p class="tb-sec-lead">碎核是唯一的货币，只靠击杀获得。</p>
       <div class="tb-flow">
         <ul class="tb-flow-in" aria-label="来源">
@@ -280,7 +296,7 @@ const SECTIONS = [
 
     <!-- 05 秩序核心 -->
     <section class="tb-sec" id="orders" aria-labelledby="ordersTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-05</span><h2 id="ordersTitle">秩序核心</h2><small>ORDERS</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">05</span><h2 id="ordersTitle">秩序核心</h2><small>ORDERS</small></header>
       <p class="tb-sec-lead">秩序核心决定一局的流派。每一种都由三部分组成：被动、圣装、秩序技能。</p>
       <div class="tb-orders" data-tb-orders data-order={ORDERS[0].key}>
         <div class="tb-orders-wheel">
@@ -316,7 +332,7 @@ const SECTIONS = [
 
     <!-- 06 秩序位 -->
     <section class="tb-sec" id="seats" aria-labelledby="seatsTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-06</span><h2 id="seatsTitle">秩序位与难度</h2><small>ORDER SEATS</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">06</span><h2 id="seatsTitle">秩序位与难度</h2><small>ORDER SEATS</small></header>
       <ol class="tb-seats">
         <li class="is-zero"><span>0</span><small>起始</small></li>
         {ORDERS.map((o, i) => (
@@ -332,7 +348,7 @@ const SECTIONS = [
 
     <!-- 07 关卡 -->
     <section class="tb-sec" id="stages" aria-labelledby="stagesTitle">
-      <header class="tb-sec-head"><span class="tb-sec-no">M-07</span><h2 id="stagesTitle">关卡</h2><small>STAGES</small></header>
+      <header class="tb-sec-head"><span class="tb-sec-no">07</span><h2 id="stagesTitle">关卡</h2><small>STAGES</small></header>
       <p class="tb-sec-lead">五种普通关卡，每一种都有一条改变打法的地形规则。</p>
       <ul class="tb-stages">
         {STAGES.map((s, i) => (
@@ -509,6 +525,7 @@ const SECTIONS = [
       <span>《构界》 · 咖啡屋工作室</span>
       <span>KLEIN BLues / GAME DESIGN ARCHIVE</span>
     </footer>
+    </div>
   </div>
 
   <dialog class="tb-drawer" data-tb-drawer aria-label="武器档案" slot="overlays">

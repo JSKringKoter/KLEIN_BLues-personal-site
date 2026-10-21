@@ -21,6 +21,9 @@ function setupRail(root: HTMLElement) {
     { rootMargin: "-40% 0px -55% 0px" },
   );
   root.querySelectorAll<HTMLElement>(".tb-sec[id]").forEach((s) => io.observe(s));
+  // 首屏有自己的目录面板；滚过首屏后才显示左侧目录
+  const hero = root.querySelector<HTMLElement>("[data-tb-hero]");
+  if (hero) new IntersectionObserver(([e]) => root.classList.toggle("is-past-hero", !e.isIntersecting), { rootMargin: "-30% 0px 0px 0px" }).observe(hero);
 }
 
 /** 章节进入视口时浮现（只播一次） */
