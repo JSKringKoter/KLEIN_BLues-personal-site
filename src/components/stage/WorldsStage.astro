@@ -1,9 +1,10 @@
 ---
-// 世界观：两张液态玻璃卡——左：苍穹（一颗会折射天空的晶体与星轨）；右：核心战机（工程三视图）。
+// 世界观：三张液态玻璃卡——苍穹（一颗会折射天空的晶体与星轨）、《构界》（六种秩序拼成的秩序核心）、核心战机（工程三视图）。
 // 交互见 src/scripts/stage/worlds/worlds.ts。
 const items = [
-  { no: "01", en: "THE UNIVERSE", title: "苍穹", sub: "世界观", desc: "一颗晶体，是另一个世界在此处的投影。", href: "/worldbuildings/cangqiong/", cta: "进入世界", sheet: "KB-00  苍穹 · 核心", scale: "SHARD OF ANOTHER WORLD" },
-  { no: "02", en: "GAME DESIGN", title: "核心战机", sub: "游戏设计", desc: "从设定到机制，一份仍在绘制的设计图。", href: "/worldbuildings/game-design/", cta: "展开图纸", sheet: "KB-01  核心战机", scale: "SCALE 1:48" },
+  { kind: "core", no: "01", en: "THE UNIVERSE", title: "苍穹", sub: "世界观", href: "/worldbuildings/cangqiong/", cta: "进入世界" },
+  { kind: "built", no: "02", en: "THE BUILT", title: "《构界》", sub: "游戏设计", href: "/worldbuildings/the-built/", cta: "翻开档案" },
+  { kind: "jet", no: "03", en: "GAME DESIGN", title: "核心战机", sub: "游戏设计", href: "/worldbuildings/game-design/", cta: "展开图纸" },
 ];
 ---
 
@@ -19,10 +20,10 @@ const items = [
     <div class="wl-cards stage-rise">
       {
         items.map((it, i) => (
-          <a class:list={["wl-card", i === 0 ? "wl-card--core" : "wl-card--jet"]} href={it.href} data-wl={i} data-cursor="ENTER">
+          <a class:list={["wl-card", `wl-card--${it.kind}`]} href={it.href} data-wl={i} data-cursor="ENTER">
             {/* 图标放在液态玻璃卡里；晶体内部的折射由 plate.ts 的透镜（data-lens）画出 */}
             <div class="wl-icon" aria-hidden="true">
-              {i === 0 ? (
+              {it.kind === "core" ? (
                 <>
                   <span class="wl-lens" data-lens />
                   <svg class="wl-draw wl-icon-svg" viewBox="0 0 320 220" data-sample="#1746d1">
@@ -38,6 +39,19 @@ const items = [
                     </circle>
                   </svg>
                 </>
+              ) : it.kind === "built" ? (
+                <svg class="wl-draw wl-icon-svg" viewBox="0 0 320 220" data-sample="#1746d1">
+                  <circle class="faint" cx="160" cy="110" r="104" />
+                  <polygon class="strong" points="160.0,18.0 239.7,64.0 239.7,156.0 160.0,202.0 80.3,156.0 80.3,64.0" />
+                  <polygon points="160.0,46.0 215.4,78.0 215.4,142.0 160.0,174.0 104.6,142.0 104.6,78.0" />
+                  <polygon points="160.0,84.0 182.5,97.0 182.5,123.0 160.0,136.0 137.5,123.0 137.5,97.0" />
+                  <path class="faint" d="M160.0 84.0L160.0 18.0M182.5 97.0L239.7 64.0M182.5 123.0L239.7 156.0M160.0 136.0L160.0 202.0M137.5 123.0L80.3 156.0M137.5 97.0L80.3 64.0" />
+                  <polygon class="seg" points="160.0,84.0 160.0,46.0 215.4,78.0 182.5,97.0" />
+                  <polygon class="seg seg--b" points="160.0,136.0 160.0,174.0 104.6,142.0 137.5,123.0" />
+                  <circle class="dot" cx="160" cy="110" r="3.2" />
+                  <path class="dim" d="M40 110H58M262 110H280M160 2V14M160 206V218" />
+                  <text x="34" y="214">ORDER CORE · Ⅵ</text>
+                </svg>
               ) : (
                 <svg class="wl-draw wl-icon-svg" viewBox="0 0 320 220" data-sample="#1746d1">
                   <g transform="translate(14 6)">
@@ -67,7 +81,6 @@ const items = [
             <div class="wl-caption">
               <span class="wl-no">{it.no} / {it.en}</span>
               <strong>{it.title}<small>{it.sub}</small></strong>
-              <em>{it.desc}</em>
               <b>{it.cta} →</b>
             </div>
           </a>

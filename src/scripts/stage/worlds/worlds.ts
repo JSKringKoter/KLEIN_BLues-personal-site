@@ -7,9 +7,9 @@ import { DomModule, type ScreenPoint } from "../paper";
 import { HandoffLayer, reducedMotion, settle, type Handoff } from "../../handoff";
 import type { Rng } from "../core";
 
-const ROUTES = ["/worldbuildings/cangqiong/", "/worldbuildings/game-design/"];
+const ROUTES = ["/worldbuildings/cangqiong/", "/worldbuildings/the-built/", "/worldbuildings/game-design/"];
 // 与 WorldLayout 的 variant 对应：落地页用同色的幕布接住这一段过渡
-const VEILS = ["sky", "design"];
+const VEILS = ["sky", "built", "design"];
 
 export class WorldsModule extends DomModule {
   private readonly root: HTMLElement;
@@ -98,7 +98,7 @@ export class WorldsModule extends DomModule {
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         this.root.classList.add("is-returning");
-        this.root.classList.remove("is-leaving", "is-hot-0", "is-hot-1");
+        this.root.classList.remove("is-leaving", "is-hot-0", "is-hot-1", "is-hot-2");
         this.cards.forEach((c) => c.classList.remove("is-hot"));
         html.classList.remove("kb-busy");
         this.returnTimer = window.setTimeout(() => {

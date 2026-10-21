@@ -78,13 +78,10 @@ html.stage-on .stage-band--end {
   height: 70vh;
 }
 
+/* 停留区间短一些：滚轮一动，形变就开始，看得见要去哪里（吸附见 stage/snap.ts） */
 html.stage-on .stage-track {
-  height: 60vh;
+  height: 24vh;
   padding: 0;
-}
-
-html.stage-on .stage-track--fiction {
-  height: 60vh;
 }
 
 html.stage-on .stage-overlay {
@@ -747,7 +744,7 @@ html.stage-on .wl-cards {
   transition: opacity 0.8s ease;
 }
 
-html.stage-on .wl.is-hot-0 .wl-card--jet {
+html.stage-on .wl.is-hot-0 .wl-card:not(.wl-card--core) {
   opacity: 0.28;
 }
 
@@ -782,6 +779,10 @@ html.stage-on .wl-veil {
 }
 
 .wl[data-leaving="1"] .wl-veil {
+  background: #f2f1ec;
+}
+
+.wl[data-leaving="2"] .wl-veil {
   background: #eef2fb;
 }
 
@@ -815,6 +816,11 @@ html.stage-on .wl-veil {
 .wl.is-leaving .wl-card--core :is(.wl-sheet, .wl-axis, .wl-gem-dot) {
   opacity: 0;
   transition: opacity 0.4s ease;
+}
+
+.wl.is-leaving :is(.wl-card--jet, .wl-card--built) .wl-icon {
+  transform: scale(2.6) !important;
+  transition: transform 1s cubic-bezier(0.7, 0, 0.3, 1);
 }
 
 .wl.is-leaving .wl-card--jet .wl-art {
@@ -1886,8 +1892,8 @@ html.kb-plate.stage-on .wl-cards {
   margin-inline: auto;
   top: clamp(15rem, 33vh, 19rem);
   bottom: clamp(4.6rem, 10vh, 6.5rem);
-  grid-template-columns: repeat(2, min(24rem, 34vw));
-  gap: clamp(1.5rem, 3.4vw, 3.6rem);
+  grid-template-columns: repeat(3, min(21rem, 27vw));
+  gap: clamp(1.2rem, 2.6vw, 2.8rem);
   justify-content: center;
 }
 
@@ -1896,7 +1902,22 @@ html.kb-plate.stage-on .wl-card {
 }
 
 html.kb-plate.stage-on .wl-icon {
-  width: min(100%, 20rem, calc((100vh - 31rem) * 320 / 220));
+  width: min(100%, 18rem, calc((100vh - 31rem) * 320 / 220));
+}
+
+/* 《构界》卡：秩序核心里两块高亮的秩序色块 */
+.wl-icon-svg .seg {
+  fill: #b8433b;
+  fill-opacity: 0.22;
+  stroke: none;
+}
+
+.wl-icon-svg .seg--b {
+  fill: #2b97b3;
+}
+
+.wl-card--built.is-hot .wl-icon-svg .seg {
+  fill-opacity: 0.45;
 }
 
 html.kb-plate.stage-on .wl-caption strong {

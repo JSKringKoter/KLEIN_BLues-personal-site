@@ -51,7 +51,7 @@ async function boot() {
   const glass: [string, number][] = [
     [".weather-control", 0],
     [".fl .novel-index", 0], [".fl .preview-surface", 1], [".fl .fiction-collection-nav", 2],
-    [".wl-card--core", 0], [".wl-card--jet", 1],
+    [".wl-card--core", 0], [".wl-card--built", 1], [".wl-card--jet", 2],
     [".pt .pt-holo", 0],
     [".nt .nt-preview", 0], [".nt .nt-filters", 1],
     [".about-copy", 0], [".about-contact", 1],

@@ -1,0 +1,65 @@
+---
+// 一件武器的完整档案（详情抽屉里显示的内容；页面里每张卡片各带一份，打开时由 the-built.ts 拷进抽屉）。
+import { STATS, TAGS, TYPES, blockKind, icon, richText, statIcon, statValue, type Weapon } from "../../lib/the-built";
+
+interface Props {
+  w: Weapon;
+}
+const { w } = Astro.props;
+const t = TYPES[w.type];
+const KIND_LABEL: Record<string, string> = { attack: "攻击", passive: "被动", active: "主动", desc: "描述", up: "强化" };
+---
+
+<article class="tb-dossier" style={`--tc:${t.color}`}>
+  <header class="tb-dossier-head">
+    <span class="tb-dossier-type"><Fragment set:html={icon(`type-${w.type}`)} />{t.name}<small>{t.en}</small></span>
+    <span class="tb-dossier-no">VOL.{w.vol} · {String(w.idx).padStart(2, "0")}</span>
+    <h3>{w.name}</h3>
+    {
+      w.tags?.length ? (
+        <ul class="tb-tags">
+          {w.tags.map((tag) => (
+            <li title={TAGS[tag]?.note ?? tag}>
+              <Fragment set:html={icon(TAGS[tag]?.icon ?? "tag-once")} />
+              {tag}
+            </li>
+          ))}
+        </ul>
+      ) : null
+    }
+    {w.quotes?.map((q) => <p class="tb-quote">{q}</p>)}
+  </header>
+
+  <div class="tb-blocks">
+    {
+      w.blocks.map((b) => {
+        const kind = blockKind(b.label);
+        const showLabel = KIND_LABEL[kind] !== b.label;
+        return (
+          <section class={`tb-block tb-block--${kind}`}>
+            <h4>
+              <span class="tb-kind">{showLabel ? b.label : KIND_LABEL[kind]}</span>
+            </h4>
+            {b.text && <p set:html={richText(b.text)} />}
+            {b.notes?.map((n) => <p class="tb-note" set:html={richText(n)} />)}
+            {b.stats?.length ? (
+              <dl class="tb-statline">
+                {b.stats.map((s) => (
+                  <div class={`tb-stat tb-stat--${s.k}`}>
+                    <dt>
+                      <Fragment set:html={statIcon(s)} />
+                      <span>{STATS[s.k].name}</span>
+                      {s.sub && <small>{s.sub}</small>}
+                    </dt>
+                    <dd set:html={statValue(s)} />
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+          </section>
+        );
+      })
+    }
+  </div>
+  {w.outro && <p class="tb-quote tb-quote--outro">{w.outro}</p>}
+</article>

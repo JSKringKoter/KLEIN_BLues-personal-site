@@ -3,14 +3,15 @@ interface Props {
   title: string;
   description: string;
   canonicalPath: string;
-  variant?: "portraits" | "sky" | "design";
+  variant?: "portraits" | "sky" | "built" | "design";
 }
 const { title, description, canonicalPath, variant = "sky" } = Astro.props;
 const canonical = new URL(canonicalPath, Astro.site);
 const socialImage = new URL("/assets/images/social/kleinblues-og-v2.jpg", Astro.site);
 const index = {
-  sky: { label: "01 / THE UNIVERSE", href: "/worldbuildings/game-design/", text: "核心战机 ↗" },
-  design: { label: "02 / GAME DESIGN", href: "/worldbuildings/portraits/", text: "画中人 ↗" },
+  sky: { label: "01 / THE UNIVERSE", href: "/worldbuildings/the-built/", text: "《构界》 ↗" },
+  built: { label: "02 / THE BUILT", href: "/worldbuildings/game-design/", text: "核心战机 ↗" },
+  design: { label: "03 / GAME DESIGN", href: "/worldbuildings/portraits/", text: "画中人 ↗" },
   portraits: { label: "03 / ORIGINAL CHARACTERS", href: "/worldbuildings/cangqiong/", text: "苍穹 ↗" },
 }[variant];
 ---
@@ -21,7 +22,7 @@ const index = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content={variant === "sky" ? "#eef1f6" : variant === "design" ? "#eef2fb" : "#f3efe8"} />
+    <meta name="theme-color" content={variant === "sky" ? "#eef1f6" : variant === "design" ? "#eef2fb" : variant === "built" ? "#f2f1ec" : "#f3efe8"} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
     <meta property="og:type" content="website" />
@@ -56,6 +57,10 @@ const index = {
 
       .world-page-design .kb-veil {
         background: #eef2fb;
+      }
+
+      .world-page-built .kb-veil {
+        background: #f2f1ec;
       }
 
       .world-page-portraits .kb-veil {

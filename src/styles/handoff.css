@@ -68,6 +68,7 @@ html.kb-handoff-in .kb-handoff,
 .kb-handoff[data-kind="notes"] .kb-handoff-bg { background: var(--note-bg); }
 .kb-handoff[data-kind="sky"] .kb-handoff-bg { background: radial-gradient(120% 95% at 60% 40%, #f7f8fb 0%, #d9dfec 100%); }
 .kb-handoff[data-kind="design"] .kb-handoff-bg { background: #eef2fb; }
+.kb-handoff[data-kind="built"] .kb-handoff-bg { background: #f2f1ec; }
 .kb-handoff[data-kind="portraits"] .kb-handoff-bg { background: #efeae2; }
 .kb-handoff[data-kind="home"] .kb-handoff-bg { background: #f1eadf; }
 

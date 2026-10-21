@@ -764,7 +764,7 @@ function renderNovels() {
     const tag = route ? "a" : "button";
     const target = route ? `href="${route.href}" data-route="${route.href}" data-theme="${route.theme}"` : 'type="button"';
     return `
-    <${tag} class="novel-row" ${target} data-novel="${novel.id}" data-cursor="ENTER" data-sample="#1d1b17" style="--i:${position};--row-color:${storyColors[position % storyColors.length]};--novel-cover:${novel.cover ? `url(&quot;${novel.cover}&quot;)` : "none"}" aria-label="阅读《${escapeHtml(novel.title)}》">
+    <${tag} class="novel-row" ${target} data-novel="${novel.id}" data-cursor="ENTER" data-sample="#1d1b17" style="--i:${position};--row-color:${storyColors[position % storyColors.length]};--novel-cover:${novel.cover ? `url(&quot;${assetUrl(novel.cover)}&quot;)` : "none"}" aria-label="阅读《${escapeHtml(novel.title)}》">
       <span class="novel-no">${String(position + 1).padStart(2, "0")}</span>
       <h3>${escapeHtml(novel.title)}</h3>
       <small>${Number(novel.charCount || 0).toLocaleString("zh-CN")} 字</small>
@@ -794,6 +794,12 @@ function renderNovels() {
   });
 
   updateNovelPreview(novels[0], 0);
+}
+
+// 资源路径一律转成站点根路径：这些值会经 CSS 变量进入打包后的 /_astro/*.css，相对路径会被解析到 /_astro/ 下面
+function assetUrl(src) {
+  if (!src) return "";
+  return /^(https?:|data:|blob:|\/)/.test(src) ? src : `/${src}`;
 }
 
 function updateEmptyNovelPreview() {
@@ -867,15 +873,16 @@ function updateNovelPreview(novel, position) {
   const surface = document.querySelector(".preview-surface");
   const excerpt = String(novel.excerpt || novel.paragraphs?.[0] || "").replace(/\s+/g, " ").trim();
   surface.style.setProperty("--preview-color", storyColors[position % storyColors.length]);
-  surface.style.setProperty("--preview-image", novel.cover ? `url("${novel.cover}")` : "none");
+  surface.style.setProperty("--preview-image", novel.cover ? `url("${assetUrl(novel.cover)}")` : "none");
   document.querySelector("#previewNumber").textContent = String(position + 1).padStart(2, "0");
   document.querySelector("#previewExcerpt").textContent = excerpt.length > 150 ? `${excerpt.slice(0, 150)}…` : excerpt;
   document.querySelector("#previewCount").textContent = `${Number(novel.charCount || 0).toLocaleString("zh-CN")} characters`;
 
   if (useMotion()) {
+    // overwrite 会打断切换文集时的模糊动画：这里显式把模糊与横向位移收回，并在结束时清掉内联样式，免得卡在半模糊
     gsap.fromTo(["#previewNumber", "#previewExcerpt", ".preview-meta"],
       { autoAlpha: 0, y: 14 },
-      { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.045, ease: "power3.out", overwrite: true }
+      { autoAlpha: 1, x: 0, y: 0, filter: "blur(0px)", duration: 0.45, stagger: 0.045, ease: "power3.out", overwrite: true, clearProps: "filter,transform" }
     );
   }
 }

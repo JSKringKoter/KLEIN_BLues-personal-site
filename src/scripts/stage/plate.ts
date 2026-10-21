@@ -669,6 +669,8 @@ export class Plate {
       const m = this.lens.module;
       const wgt = m === this.a ? (this.a === this.b ? 1 : 1 - this.t) : m === this.b ? this.t : 0;
       la = smooth(clamp01(wgt * 1.6 - 0.4));
+      // 卡片淡出时（例如点了别的世界观卡、离场时）透镜也一起淡出
+      if (la > 0) for (let n: HTMLElement | null = this.lens.el; n && !n.matches("[data-overlay]"); n = n.parentElement) la *= parseFloat(getComputedStyle(n).opacity) || 0;
       const r = la > 0 ? this.rectOf(this.lens.el, m) : null;
       if (r) gl.uniform4f(U.LZ, (r[0] + r[2]) / 2, (r[1] + r[3]) / 2, (r[2] - r[0]) / 2, (r[3] - r[1]) / 2);
       else la = 0;
