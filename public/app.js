@@ -71,7 +71,7 @@ const completedNovelSources = {
   "山海行人": { textSrc: "assets/text/finished/mountain-sea.txt?v=2", charCount: 4883, publication: [{ label: "成稿", value: "2023.07.23" }] },
   "黄昏的魔术师": { textSrc: "assets/text/finished/twilight-magician.txt?v=2", charCount: 8693, publication: [{ label: "成稿", value: "2023.09.12" }, { label: "修订", value: "2023.09.18" }, { label: "文档更新", value: "2026.07.13" }] },
   "永远的铁道": { textSrc: "assets/text/finished/eternal-railway.txt?v=2", charCount: 5009, publication: [{ label: "成稿", value: "2023.01.25" }] },
-  "猫屿咖啡屋": { textSrc: "assets/text/finished/maoyu-kafeiwu.txt?v=2", charCount: 46132, publication: [{ label: "最近修改", value: "2026.10.13" }] }
+  "猫屿咖啡屋": { textSrc: "assets/text/finished/maoyu-kafeiwu.txt?v=3", charCount: 46613, publication: [{ label: "最近修改", value: "2026.10.13" }] }
 };
 const completedNovels = [
   ...completedNovelOrder.map((title) => data.novels.find((novel) => novel.title === title)).filter(Boolean),

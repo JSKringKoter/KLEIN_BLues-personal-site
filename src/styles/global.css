@@ -118,6 +118,23 @@ img { max-width: 100%; }
 .reader-chapter.is-minor h3 { font-size: clamp(1.65rem,3.2vw,2.6rem); line-height: 1; }
 .reader-chapter.is-major + .reader-spacer + .reader-chapter.is-minor { margin-top: 0; }
 
+/* 原稿里换了字体的段落：营业牌（幼圆）、文件名（微软雅黑）、信与落款（楷体）、致谢 */
+.reader-sign { display: grid; justify-items: center; gap: .2rem; width: min(17rem,100%); margin: 2.4rem auto; padding: 1.5rem 1.6rem 1.3rem; font-family: "YouYuan","幼圆","Yuanti SC","PingFang SC",sans-serif; background: rgba(255,251,242,.5); border: 1px solid rgba(17,16,14,.16); border-radius: .9rem; box-shadow: 0 .9rem 2rem -1.6rem rgba(60,38,18,.55); transform: rotate(-1.2deg); }
+.reader-sign strong { font-size: 1.32em; font-weight: 400; letter-spacing: .12em; }
+.reader-sign small { color: var(--signal); font-size: .78em; letter-spacing: .3em; }
+.reader-sign ul { display: grid; gap: .1rem; width: 100%; margin: .8rem 0 0; padding: .8rem 0 0; border-top: 1px dashed rgba(17,16,14,.22); list-style: none; }
+.reader-sign li { display: flex; align-items: baseline; gap: .6rem; }
+.reader-sign li::after { content: ""; order: 1; flex: 1; border-bottom: 1px dotted rgba(17,16,14,.3); }
+.reader-sign li i { order: 2; color: var(--blue); font-style: normal; }
+.reader-body > .reader-file { width: max-content; max-width: 100%; margin: 1.8rem auto; padding: .45rem .9rem; overflow: hidden; color: rgba(17,16,14,.78); font-family: "Microsoft YaHei","PingFang SC",sans-serif; font-size: .86em; text-indent: 0; text-overflow: ellipsis; white-space: nowrap; background: rgba(255,255,255,.42); border: 1px solid rgba(17,16,14,.14); border-radius: .3rem; }
+.reader-letter { margin: 2.6rem 0 1.4rem; padding: clamp(1.6rem,4vw,2.6rem) clamp(1.3rem,4vw,2.8rem); font-family: "STKaiti","KaiTi","楷体",serif; font-size: 1.04em; background: linear-gradient(transparent calc(2.06em - 1px), rgba(140,89,44,.13) 0) 0 clamp(1.6rem,4vw,2.6rem) / 100% 2.06em, rgba(255,251,242,.46); border: 1px solid rgba(17,16,14,.12); }
+.reader-letter p { margin: 0; text-align: justify; text-indent: 2em; text-justify: inter-ideograph; }
+.reader-letter p.is-salutation { text-indent: 0; }
+.reader-body > .reader-signature { margin: 0 0 1rem; font-family: "STKaiti","KaiTi","楷体",serif; font-size: 1.12em; text-align: right; text-indent: 0; }
+.reader-credit { display: grid; justify-items: center; gap: .3rem; margin-top: 5rem; padding-top: 2rem; color: rgba(17,16,14,.56); border-top: 1px solid var(--line); text-align: center; }
+.reader-credit p { margin: 0; font-size: .78rem; letter-spacing: .2em; }
+.reader-credit small { font-size: .82rem; line-height: 1.9; }
+
 .reader-toc { position: fixed; z-index: 15; top: 50%; right: clamp(.55rem,1.7vw,1.8rem); display: flex; flex-direction: column; align-items: flex-end; gap: .55rem; transform: translateY(-50%); }
 .reader-toc a { position: relative; display: block; width: 2rem; height: .55rem; }
 .reader-toc a::after { content: ""; position: absolute; top: 50%; right: 0; width: 1.1rem; height: 1px; background: currentColor; opacity: .38; transition: .4s var(--ease); }

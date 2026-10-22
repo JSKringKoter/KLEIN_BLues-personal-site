@@ -80,6 +80,7 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
               </header>
             );
           }
+          if (block.type !== "notation") return null;
           return (
             <figure class="reader-notation" aria-label="古典音律歌词">
               <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>

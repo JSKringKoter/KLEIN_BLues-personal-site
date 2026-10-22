@@ -11,7 +11,15 @@ export type NovelBlock =
   | NovelHeading
   | { type: "paragraph"; text: string }
   | { type: "spacer" }
+  | { type: "sign"; lines: string[] }
+  | { type: "file"; text: string }
+  | { type: "letter"; lines: string[] }
+  | { type: "signature"; text: string }
+  | { type: "credit"; lines: string[] }
   | { type: "notation"; lyric: string; notation: string; pairs: Array<{ lyric: string; notation: string }> };
+
+/** 用 :::名字 … ::: 包住的版式块，对应原稿里的特殊字体段落 */
+const fenceTags = new Set(["sign", "letter", "signature", "credit", "file"]);
 
 const footerPatterns = [
   /^(?:By\s+)?KLEIN\s*BLues\.?$/i,
@@ -80,6 +88,24 @@ export function parseNovelDocument(source: string, title: string) {
     }
 
     if (isFooter(line)) continue;
+
+    const fenceMatch = line.match(/^:::(\w+)$/);
+    if (fenceMatch && fenceTags.has(fenceMatch[1])) {
+      const kind = fenceMatch[1];
+      const collected: string[] = [];
+      while (index + 1 < lines.length && lines[index + 1].trim() !== ":::") {
+        index += 1;
+        const inner = lines[index].replace(/[​-‍﻿]/g, "").trim();
+        if (inner) collected.push(inner);
+      }
+      index += 1;
+      if (kind === "file" || kind === "signature") {
+        blocks.push({ type: kind, text: collected.join(" ") });
+      } else {
+        blocks.push({ type: kind as "sign" | "letter" | "credit", lines: collected });
+      }
+      continue;
+    }
 
     const headingMatch = line.match(/^(#{1,2})\s+(.+)$/);
     if (headingMatch) {
