@@ -82,6 +82,40 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
               </header>
             );
           }
+          if (block.type === "sign") {
+            const [name, status, ...items] = block.lines;
+            return (
+              <div class="reader-sign" aria-label="咖啡屋门口的营业牌">
+                <strong>{name}</strong>
+                {status && <small>{status}</small>}
+                <ul>
+                  {items.map((line) => {
+                    const priced = line.match(/^(.+?)\s+([\d.]+)$/);
+                    return (
+                      <li>{priced ? <><span>{priced[1]}</span><i>{priced[2]}</i></> : line}</li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          }
+          if (block.type === "file") return <p class="reader-file">{block.text}</p>;
+          if (block.type === "letter") {
+            return (
+              <div class="reader-letter" aria-label="卡布奇诺留下的信">
+                {block.lines.map((line, index) => <p class:list={[index === 0 && "is-salutation"]}>{line}</p>)}
+              </div>
+            );
+          }
+          if (block.type === "signature") return <p class="reader-signature">{block.text}</p>;
+          if (block.type === "credit") {
+            return (
+              <footer class="reader-credit">
+                <p>{block.lines[0]}</p>
+                {block.lines.slice(1).map((line) => <small>{line.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 ? <b>{part}</b> : part))}</small>)}
+              </footer>
+            );
+          }
           return (
             <figure class="reader-notation" aria-label="古典音律歌词">
               <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>
