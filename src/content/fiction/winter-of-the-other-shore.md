@@ -4,7 +4,7 @@ englishTitle: "Winter of the Other World"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "一颗水仙块茎牵引柯尔利特回到被风雪封存的小镇。教堂、温泉与名为铃的少女在错位的记忆中重现，迫使他面对一场多年以前未曾伸手阻止的灾难。"
 cover: "/assets/images/novel-covers/winter-shore.jpg"
-order: 4
+order: 5
 charCount: 23477
 theme: "winter"
 publication: []

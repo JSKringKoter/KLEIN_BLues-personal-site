@@ -3,7 +3,7 @@ title: "深蓝"
 subtitle: "Original fiction · KLEIN BLues"
 excerpt: "在北境漫长的极夜里，一位失去记忆的钢琴家与新来的邻居反复相识。未完成的乐曲、被遗忘的约定，以及海岸尽头的深蓝，逐渐拼回一段不愿消失的过去。"
 cover: "/assets/images/novel-covers/deep-blue.jpg"
-order: 2
+order: 3
 charCount: 20171
 theme: "deepblue"
 publication:
