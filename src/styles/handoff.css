@@ -5,6 +5,7 @@
  */
 
 /* 小说主题底色：阅读页 .reader-backdrop 与交接层共用 */
+.theme-du { --reader-bg: radial-gradient(circle at 86% 14%, rgba(196, 150, 62, 0.16), transparent 28rem), radial-gradient(circle at 10% 82%, rgba(128, 42, 36, 0.09), transparent 30rem), linear-gradient(140deg, #f0ede6, #d6d8db 60%, #e2d9c8); }
 .theme-deepblue { --reader-bg: radial-gradient(circle at 12% 18%, rgba(36, 89, 197, 0.19), transparent 25rem), radial-gradient(circle at 89% 74%, rgba(23, 70, 209, 0.14), transparent 33rem), linear-gradient(135deg, #efeee9, #ccd8e4 58%, #e3ddd3); }
 .theme-whitebird { --reader-bg: radial-gradient(circle at 88% 18%, rgba(192, 207, 214, 0.5), transparent 30rem), linear-gradient(135deg, #f2efe7, #dce2e2); }
 .theme-winter { --reader-bg: radial-gradient(circle at 10% 20%, rgba(93, 137, 168, 0.13), transparent 26rem), linear-gradient(145deg, #eef0ee, #ced9df); }

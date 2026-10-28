@@ -37,8 +37,9 @@ const localUnfinishedNovels = [
   { id: "u04", title: "猫屿之秋", subtitle: "未尽之稿 · KLEIN BLues", charCount: 9223, textSrc: "assets/text/unfinished/maoyu-qiutian.txt?v=2", cover: "assets/images/novel-covers/maoyu-kafeiwu.svg", excerpt: "很多故事消失了，连同承载它们的纸张一起埋没于尘埃。那个秋天，猫耳的少女枕在肩头问：如果有一天我不辞而别，你还会记得我吗？", publication: [{ label: "最近修改", value: "2026.08.03" }] }
 ];
 const unfinishedNovels = [...localUnfinishedNovels, ...(Array.isArray(data.unfinishedNovels) ? data.unfinishedNovels : [])];
-const completedNovelOrder = ["猫屿咖啡屋", "深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
+const completedNovelOrder = ["渡", "猫屿咖啡屋", "深蓝", "白鸟之泪", "彼岸之冬", "空箱", "山海行人", "黄昏的魔术师", "永远的铁道"];
 const completedNovelCovers = {
+  "渡": "assets/images/novel-covers/du.jpg",
   "深蓝": "assets/images/novel-covers/deep-blue.jpg",
   "白鸟之泪": "assets/images/novel-covers/white-bird.jpg",
   "彼岸之冬": "assets/images/novel-covers/winter-shore.jpg",
@@ -49,6 +50,7 @@ const completedNovelCovers = {
   "猫屿咖啡屋": "assets/images/novel-covers/cat-island-cafe.jpg"
 };
 const completedNovelExcerpts = {
+  "渡": "五岁那年，他被认作上一世的仁波切。寺院与夏季牧场之间隔着一条雪水沟，最窄的地方，大人一步就能跨过去。沟对面捡牛粪的女孩，是唯一还叫他达瓦的人。",
   "深蓝": "在北境漫长的极夜里，一位失去记忆的钢琴家与新来的邻居反复相识。未完成的乐曲、被遗忘的约定，以及海岸尽头的深蓝，逐渐拼回一段不愿消失的过去。",
   "白鸟之泪": "持续不断的高原雨季困住了一名白鸟观察者，也让他走近草原上的少年与脆弱的候鸟栖地。当保护与掠夺正面相遇，洁白的羽翼成为信念、牺牲与遗忘的见证。",
   "彼岸之冬": "一颗水仙块茎牵引柯尔利特回到被风雪封存的小镇。教堂、温泉与名为铃的少女在错位的记忆中重现，迫使他面对一场多年以前未曾伸手阻止的灾难。",
@@ -64,8 +66,9 @@ const completedNovelSubtitles = {
   "猫屿咖啡屋": "Cat Island Coffee House · KLEIN BLues"
 };
 const completedNovelSources = {
+  "渡": { textSrc: "assets/text/finished/du.txt?v=1", charCount: 7053, publication: [{ label: "完成", value: "2026.10.28" }] },
   "深蓝": { textSrc: "assets/text/finished/deep-blue.txt?v=2", charCount: 20171, publication: [{ label: "完成", value: "2025.04.21—04.27" }, { label: "第一次修改", value: "2025.05.01" }, { label: "文档更新", value: "2026.07.13" }] },
-  "白鸟之泪": { textSrc: "assets/text/finished/white-bird.txt?v=2", charCount: 4067, publication: [{ label: "完成", value: "2026.05.28" }, { label: "文档更新", value: "2026.07.13" }] },
+  "白鸟之泪": { textSrc: "assets/text/finished/white-bird.txt?v=3", charCount: 3754, publication: [{ label: "完成", value: "2026.05.28" }, { label: "最近修改", value: "2026.10.28" }] },
   "彼岸之冬": { textSrc: "assets/text/finished/winter-shore.txt?v=2", charCount: 23477, publication: [{ label: "文档更新", value: "2026.07.13" }] },
   "空箱": { textSrc: "assets/text/finished/empty-box.txt?v=2", charCount: 2675, publication: [{ label: "成稿", value: "2023.08.29" }, { label: "文档更新", value: "2026.07.13" }] },
   "山海行人": { textSrc: "assets/text/finished/mountain-sea.txt?v=2", charCount: 4883, publication: [{ label: "成稿", value: "2023.07.23" }] },

@@ -6,7 +6,7 @@ window.SITE_DATA = {
       "id": "n01",
       "title": "白鸟之泪",
       "subtitle": "",
-      "charCount": 4078
+      "charCount": 3754
     },
     {
       "id": "n02",
@@ -49,6 +49,12 @@ window.SITE_DATA = {
       "title": "猫屿咖啡屋",
       "subtitle": "Cat Island Coffee House",
       "charCount": 46613
+    },
+    {
+      "id": "n09",
+      "title": "渡",
+      "subtitle": "",
+      "charCount": 7053
     }
   ],
   "paintings": [

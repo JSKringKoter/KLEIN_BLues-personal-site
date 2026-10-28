@@ -12,7 +12,7 @@ const fiction = defineCollection({
     cover: z.string(),
     order: z.number().int().positive(),
     charCount: z.number().int().nonnegative(),
-    theme: z.enum(["deepblue", "whitebird", "winter", "emptybox", "mountainsea", "magician", "railway", "cafe"]),
+    theme: z.enum(["du", "deepblue", "whitebird", "winter", "emptybox", "mountainsea", "magician", "railway", "cafe"]),
     publication: z.array(z.object({
       label: z.string(),
       value: z.string()
