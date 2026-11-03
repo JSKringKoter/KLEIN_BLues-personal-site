@@ -13,13 +13,14 @@ export type NovelBlock =
   | { type: "spacer" }
   | { type: "sign"; lines: string[] }
   | { type: "file"; text: string }
-  | { type: "letter"; lines: string[] }
+  | { type: "letter"; lines: string[]; signature?: string }
   | { type: "signature"; text: string }
   | { type: "credit"; lines: string[] }
+  | { type: "aside"; text: string }
   | { type: "notation"; lyric: string; notation: string; pairs: Array<{ lyric: string; notation: string }> };
 
 /** 用 :::名字 … ::: 包住的版式块，对应原稿里的特殊字体段落 */
-const fenceTags = new Set(["sign", "letter", "signature", "credit", "file"]);
+const fenceTags = new Set(["sign", "letter", "signature", "credit", "file", "aside"]);
 
 const footerPatterns = [
   /^(?:By\s+)?KLEIN\s*BLues\.?$/i,
@@ -99,7 +100,18 @@ export function parseNovelDocument(source: string, title: string) {
         if (inner) collected.push(inner);
       }
       index += 1;
-      if (kind === "file" || kind === "signature") {
+      if (kind === "signature") {
+        // 紧跟在信后面的落款收进信里
+        let last = blocks.length - 1;
+        while (blocks[last]?.type === "spacer") last -= 1;
+        const letter = blocks[last];
+        if (letter?.type === "letter") {
+          blocks.length = last + 1;
+          letter.signature = collected.join(" ");
+        } else {
+          blocks.push({ type: "signature", text: collected.join(" ") });
+        }
+      } else if (kind === "file" || kind === "aside") {
         blocks.push({ type: kind, text: collected.join(" ") });
       } else {
         blocks.push({ type: kind as "sign" | "letter" | "credit", lines: collected });
