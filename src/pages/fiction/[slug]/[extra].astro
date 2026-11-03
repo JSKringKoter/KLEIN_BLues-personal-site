@@ -1,0 +1,74 @@
+---
+// 番外页（未删减片段、后日谈）：/fiction/<本篇>/<番外>/，版式与阅读页一致，返回时回到本篇末尾的入口
+import { getCollection, type CollectionEntry } from "astro:content";
+import NovelBody from "../../../components/NovelBody.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { parseNovelDocument } from "../../../lib/novel";
+
+export async function getStaticPaths() {
+  const works = await getCollection("fiction");
+  const extras = await getCollection("extras");
+  return extras.map((extra) => {
+    const parent = works.find((work) => work.id === extra.data.parent);
+    if (!parent) throw new Error(`番外 ${extra.id} 的 parent「${extra.data.parent}」不存在`);
+    const siblings = extras.filter((item) => item.data.parent === parent.id).length;
+    return { params: { slug: parent.id, extra: extra.id }, props: { extra, parent, siblings } };
+  });
+}
+
+interface Props {
+  extra: CollectionEntry<"extras">;
+  parent: CollectionEntry<"fiction">;
+  siblings: number;
+}
+
+const { extra, parent, siblings } = Astro.props;
+const document = parseNovelDocument(extra.body ?? "", extra.data.title);
+const parentPath = `/fiction/${parent.id}/`;
+const socialImage = parent.data.cover.replace(/\.svg$/, ".og.jpg");
+const position = `番外 ${String(extra.data.order).padStart(2, "0")} / ${String(siblings).padStart(2, "0")}`;
+---
+
+<BaseLayout
+  title={`《${extra.data.title}》 · ${parent.data.title} | KLEIN BLues`}
+  description={extra.data.excerpt}
+  canonicalPath={`${parentPath}${extra.id}/`}
+  image={socialImage}
+  type="article"
+  handoff={{ from: "fiction", kind: "fiction", theme: parent.data.theme, title: extra.data.title }}
+>
+  <main class:list={["fiction-reader", `theme-${parent.data.theme}`]} data-reader>
+    <div class="reader-backdrop" aria-hidden="true"></div>
+
+    <header class="reader-toolbar" data-handoff-part>
+      <a href={`${parentPath}#extras`} aria-label={`返回《${parent.data.title}》`} data-cursor="BACK" data-handoff-back>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M25 16H7m7-7-7 7 7 7" /></svg>
+        <span>返回《{parent.data.title}》</span>
+      </a>
+    </header>
+
+    <article class="reader-sheet">
+      <header class="reader-title-block">
+        <p data-handoff-part style="--part:1">{position} · {extra.data.charCount.toLocaleString("zh-CN")} 字</p>
+        <h1 data-handoff-target>{extra.data.title}</h1>
+        <p class="reader-subtitle" data-handoff-part style="--part:2">{extra.data.subtitle}</p>
+        {extra.data.publication.length > 0 && (
+          <dl class="reader-publication" data-handoff-part style="--part:3">
+            {extra.data.publication.map((item) => (
+              <div><dt>{item.label}</dt><dd>{item.value}</dd></div>
+            ))}
+          </dl>
+        )}
+      </header>
+
+      <div class="reader-body" data-handoff-part style="--part:5">
+        <NovelBody blocks={document.blocks} />
+      </div>
+    </article>
+  </main>
+
+  <script>
+    import { setupTitleFit } from "../../../scripts/title-fit";
+    setupTitleFit();
+  </script>
+</BaseLayout>

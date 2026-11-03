@@ -1,0 +1,72 @@
+---
+// 小说正文：把 parseNovelDocument() 的 blocks 排成阅读页的版面（小说与番外共用）
+import type { NovelBlock } from "../lib/novel";
+
+interface Props {
+  blocks: NovelBlock[];
+}
+const { blocks } = Astro.props;
+const priced = (line: string) => line.match(/^(.+?)\s+(\d+(?:\.\d+)?元?)$/);
+---
+
+{blocks.map((block) => {
+  if (block.type === "spacer") return <div class="reader-spacer" aria-hidden="true"></div>;
+  if (block.type === "paragraph") return <p>{block.text}</p>;
+  if (block.type === "heading") {
+    const Heading = block.level === 1 ? "h2" : "h3";
+    return (
+      <header class:list={["reader-chapter", block.level === 1 ? "is-major" : "is-minor"]} id={block.id} data-chapter={block.id}>
+        <Heading>{block.title}</Heading>
+        {block.english && <em lang="en">{block.english}</em>}
+      </header>
+    );
+  }
+  if (block.type === "sign") {
+    // 没有价格的行是店名与营业状态，其余是价目
+    const [name, status] = block.lines.filter((line) => !priced(line));
+    const items = block.lines.filter((line) => priced(line));
+    return (
+      <div class="reader-sign" aria-label="咖啡屋门口的小牌子">
+        {name && <strong>{name}</strong>}
+        {status && <small>{status}</small>}
+        <ul class:list={[!name && "is-bare"]}>
+          {items.map((line) => {
+            const [, item, price] = priced(line)!;
+            return <li><span>{item}</span><i>{price}</i></li>;
+          })}
+        </ul>
+      </div>
+    );
+  }
+  if (block.type === "file") return <p class="reader-file">{block.text}</p>;
+  if (block.type === "aside") return <div class="reader-aside">{block.text}</div>;
+  if (block.type === "letter") {
+    return (
+      <div class="reader-letter" aria-label="卡布奇诺留下的信">
+        {block.lines.map((line, index) => <p class:list={[index === 0 && "is-salutation"]}>{line}</p>)}
+        {block.signature && <p class="reader-letter-signature">{block.signature}</p>}
+      </div>
+    );
+  }
+  if (block.type === "signature") return <p class="reader-signature">{block.text}</p>;
+  if (block.type === "credit") {
+    return (
+      <footer class="reader-credit">
+        <p>{block.lines[0]}</p>
+        {block.lines.slice(1).map((line) => <small>{line.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 ? <b>{part}</b> : part))}</small>)}
+      </footer>
+    );
+  }
+  return (
+    <figure class="reader-notation" aria-label="古典音律歌词">
+      <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>
+      {block.pairs.length > 0 ? (
+        <div class="notation-score" style={`--notation-count:${block.pairs.length}`}>
+          {block.pairs.map((pair) => <span><b>{pair.lyric}</b><i>{pair.notation}</i></span>)}
+        </div>
+      ) : (
+        <div class="notation-raw"><p>{block.lyric}</p><small>{block.notation}</small></div>
+      )}
+    </figure>
+  );
+})}

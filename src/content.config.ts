@@ -50,6 +50,23 @@ const drafts = defineCollection({
   })
 });
 
+// 正文之外的番外（未删减片段、后日谈）：挂在 parent 那篇小说的末尾，路由为 /fiction/<parent>/<slug>/
+const extras = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/extras" }),
+  schema: z.object({
+    title: z.string(),
+    parent: z.string(),
+    subtitle: z.string(),
+    excerpt: z.string(),
+    order: z.number().int().positive(),
+    charCount: z.number().int().nonnegative(),
+    publication: z.array(z.object({
+      label: z.string(),
+      value: z.string()
+    })).default([])
+  })
+});
+
 const notes = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./src/content/notes" }),
   schema: z.object({
@@ -64,4 +81,4 @@ const notes = defineCollection({
   })
 });
 
-export const collections = { fiction, drafts, notes };
+export const collections = { fiction, drafts, extras, notes };

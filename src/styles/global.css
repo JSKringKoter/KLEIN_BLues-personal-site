@@ -134,6 +134,28 @@ img { max-width: 100%; }
 .reader-credit { display: grid; justify-items: center; gap: .3rem; margin-top: 5rem; padding-top: 2rem; color: rgba(17,16,14,.56); border-top: 1px solid var(--line); text-align: center; }
 .reader-credit p { margin: 0; font-size: .78rem; letter-spacing: .2em; }
 .reader-credit small { font-size: .82rem; line-height: 1.9; }
+.reader-letter p.reader-letter-signature { margin-top: 1.6em; font-size: 1.08em; text-align: right; text-indent: 0; }
+.reader-sign ul.is-bare { margin-top: 0; padding-top: 0; border-top: 0; }
+.reader-aside { margin: 0 0 1.4rem; color: rgba(17,16,14,.48); font-size: .86em; letter-spacing: .12em; }
+
+/* 正文之后的番外入口：版式同首页「一纸空文」的目录行 */
+.reader-extras { max-width: 42rem; margin: 6rem auto 0; }
+.reader-extras > header { margin-bottom: 2rem; }
+.reader-extras h2 { margin: 0 0 1rem; font-family: var(--serif); font-size: clamp(1.5rem,2.6vw,2.1rem); font-weight: 400; letter-spacing: -.02em; }
+.reader-extras > header p { margin: 0; color: rgba(17,16,14,.62); font-family: "Iowan Old Style","STSong",serif; font-size: clamp(.98rem,1.2vw,1.08rem); line-height: 1.95; }
+.reader-extra-list { border-top: 1px solid var(--ink); }
+.reader-extra-row { position: relative; display: grid; grid-template-columns: 3rem minmax(0,1fr) auto 2.2rem; align-items: center; gap: 1rem; min-height: 6rem; padding: 1.4rem 0; overflow: hidden; border-bottom: 1px solid var(--line); transition: color .5s var(--ease); }
+.reader-extra-row::before { content: ""; position: absolute; z-index: 0; inset: -1.5rem; background-color: var(--row-color); background-image: linear-gradient(90deg, rgba(12,18,32,.34), rgba(12,18,32,.12)), var(--row-cover, none); background-position: center; background-size: cover; filter: blur(22px) saturate(1.2); transform: translateX(-112%) scale(1.12); transition: transform .6s var(--ease); }
+.reader-extra-row > * { position: relative; z-index: 1; }
+.reader-extra-row:hover, .reader-extra-row:focus-visible, .reader-extra-row.is-opening { color: var(--paper); }
+.reader-extra-row:hover::before, .reader-extra-row:focus-visible::before, .reader-extra-row.is-opening::before { transform: translateX(0) scale(1.12); }
+.reader-extra-no { font-family: var(--serif); font-size: .9rem; font-style: italic; }
+.reader-extra-row h3 { margin: 0; font-family: var(--serif); font-size: clamp(1.9rem,3.6vw,3rem); font-weight: 400; line-height: 1; letter-spacing: -.04em; white-space: nowrap; }
+/* 交接层按高度比缩放标题：落点的行框要与交接层标题一样是 .92em */
+.reader-extra-row h3 [data-handoff-title] { display: inline-block; line-height: .92; letter-spacing: -.06em; }
+.reader-extra-row small { font-size: .62rem; letter-spacing: .1em; white-space: nowrap; }
+.reader-extra-row svg { width: 2rem; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .4s var(--ease); }
+.reader-extra-row:hover svg, .reader-extra-row:focus-visible svg { transform: rotate(45deg); }
 
 .reader-toc { position: fixed; z-index: 15; top: 50%; right: clamp(.55rem,1.7vw,1.8rem); display: flex; flex-direction: column; align-items: flex-end; gap: .55rem; transform: translateY(-50%); }
 .reader-toc a { position: relative; display: block; width: 2rem; height: .55rem; }
@@ -222,6 +244,10 @@ img { max-width: 100%; }
   .reader-toc a::after { width: .68rem; }
   .reader-toc a:hover::after, .reader-toc a.is-active::after { width: 1.2rem; }
   .reader-toc strong { display: none; }
+  .reader-extras { margin-top: 4.5rem; }
+  .reader-extra-row { grid-template-columns: 2rem minmax(0,1fr) 2rem; gap: .6rem; min-height: 5rem; padding: 1.2rem 0; }
+  .reader-extra-row small { display: none; }
+  .reader-extra-row h3 { font-size: clamp(1.6rem,7.5vw,2.4rem); }
   .reading-score { grid-template-columns: 3.8rem 1fr auto; padding: .65rem .7rem; }
   .score-disc { width: 3.5rem; height: 3.5rem; }
   .score-copy strong { font-size: 1.1rem; }

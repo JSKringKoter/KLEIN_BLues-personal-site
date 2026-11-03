@@ -15,19 +15,34 @@ export function setupPageHandoff() {
 
   const arrive = async () => {
     busy = true;
+    // 从番外页返回本篇时，标题落到末尾对应的入口上，而不是页首的大标题
+    const title = incoming()?.title;
+    const alt = title ? document.querySelector<HTMLElement>(`[data-handoff-title="${CSS.escape(title)}"]`) : null;
+    if (alt) {
+      alt.style.visibility = "hidden";
+      if (target) target.style.visibility = "visible";
+    }
+    const landOn = alt ?? target;
+    // 带 #锚点 落地时，html 的 scroll-behavior: smooth 会让页面慢慢滚过去，量到的位置是错的：先瞬间跳到锚点
+    const anchor = location.hash ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    const jump = () => anchor?.scrollIntoView({ block: "start", behavior: "instant" });
+    jump();
     // 落地后入场动画由交接层代播，撤掉首帧状态时不能再重播一遍（否则标题落位后会闪一次）
     html.classList.add("kb-arrived");
     // 等两帧：字体与版面就位后再量标题的位置
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    jump();
     html.classList.add("kb-handoff-reveal");
-    await layer.land(target?.getBoundingClientRect() ?? null);
+    await layer.land(landOn?.getBoundingClientRect() ?? null);
     // 标题落位：真实标题接替交接层
-    if (target) target.style.visibility = "visible";
+    if (landOn) landOn.style.visibility = "visible";
     layer.hide();
+    if (layer.el.dataset.ownTitle !== undefined) layer.title.textContent = layer.el.dataset.ownTitle;
     // 正文的升起比标题慢，跑完再撤掉首帧状态（撤掉后各部分本来就在原位，不会跳）
     window.setTimeout(() => {
       settle();
       if (target) target.style.visibility = "";
+      if (alt) alt.style.visibility = "";
       busy = false;
     }, 1000);
   };

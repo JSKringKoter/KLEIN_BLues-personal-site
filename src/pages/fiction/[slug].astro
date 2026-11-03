@@ -1,6 +1,7 @@
 ---
 import { getCollection, type CollectionEntry } from "astro:content";
 import DeepBlueOrnaments from "../../components/DeepBlueOrnaments.astro";
+import NovelBody from "../../components/NovelBody.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { parseNovelDocument } from "../../lib/novel";
 
@@ -18,6 +19,9 @@ interface Props {
 }
 
 const { work, totalWorks } = Astro.props;
+// 挂在本篇末尾的番外（未删减片段、后日谈）
+const extras = (await getCollection("extras", (extra) => extra.data.parent === work.id)).sort((a, b) => a.data.order - b.data.order);
+const extraColors = ["#8a5c28", "#283f66", "#633e6b"];
 const document = parseNovelDocument(work.body ?? "", work.data.title);
 const canonicalPath = `/fiction/${work.id}/`;
 // 社交平台不显示 SVG：SVG 封面改用 npm run images 生成的同名 .og.jpg
@@ -70,72 +74,43 @@ const workPosition = `${String(work.data.order).padStart(2, "0")} / ${String(tot
       </header>
 
       <div class="reader-body" data-handoff-part style="--part:5">
-        {document.blocks.map((block) => {
-          if (block.type === "spacer") return <div class="reader-spacer" aria-hidden="true"></div>;
-          if (block.type === "paragraph") return <p>{block.text}</p>;
-          if (block.type === "heading") {
-            const Heading = block.level === 1 ? "h2" : "h3";
-            return (
-              <header class:list={["reader-chapter", block.level === 1 ? "is-major" : "is-minor"]} id={block.id} data-chapter={block.id}>
-                <Heading>{block.title}</Heading>
-                {block.english && <em lang="en">{block.english}</em>}
-              </header>
-            );
-          }
-          if (block.type === "sign") {
-            const [name, status, ...items] = block.lines;
-            return (
-              <div class="reader-sign" aria-label="咖啡屋门口的营业牌">
-                <strong>{name}</strong>
-                {status && <small>{status}</small>}
-                <ul>
-                  {items.map((line) => {
-                    const priced = line.match(/^(.+?)\s+([\d.]+)$/);
-                    return (
-                      <li>{priced ? <><span>{priced[1]}</span><i>{priced[2]}</i></> : line}</li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          }
-          if (block.type === "file") return <p class="reader-file">{block.text}</p>;
-          if (block.type === "letter") {
-            return (
-              <div class="reader-letter" aria-label="卡布奇诺留下的信">
-                {block.lines.map((line, index) => <p class:list={[index === 0 && "is-salutation"]}>{line}</p>)}
-              </div>
-            );
-          }
-          if (block.type === "signature") return <p class="reader-signature">{block.text}</p>;
-          if (block.type === "credit") {
-            return (
-              <footer class="reader-credit">
-                <p>{block.lines[0]}</p>
-                {block.lines.slice(1).map((line) => <small>{line.split(/\*\*(.+?)\*\*/).map((part, i) => (i % 2 ? <b>{part}</b> : part))}</small>)}
-              </footer>
-            );
-          }
-          return (
-            <figure class="reader-notation" aria-label="古典音律歌词">
-              <figcaption><span>宫商谱</span><small>pentatonic verse</small></figcaption>
-              {block.pairs.length > 0 ? (
-                <div class="notation-score" style={`--notation-count:${block.pairs.length}`}>
-                  {block.pairs.map((pair) => <span><b>{pair.lyric}</b><i>{pair.notation}</i></span>)}
-                </div>
-              ) : (
-                <div class="notation-raw"><p>{block.lyric}</p><small>{block.notation}</small></div>
-              )}
-            </figure>
-          );
-        })}
+        <NovelBody blocks={document.blocks} />
       </div>
+
+      {extras.length > 0 && (
+        <section class="reader-extras" id="extras" aria-labelledby="extrasTitle" data-handoff-part style="--part:6">
+          <header>
+            <h2 id="extrasTitle">未删减片段与后日谈</h2>
+            <p>如果你相信故事已经停在那个深秋，请合上书页；如果你觉得故事仍留有遗憾，就继续往下读吧。</p>
+          </header>
+          <div class="reader-extra-list">
+            {extras.map((extra, index) => (
+              <a
+                class="reader-extra-row"
+                href={`/fiction/${work.id}/${extra.id}/`}
+                data-extra-row
+                data-title={extra.data.title}
+                data-theme={work.data.theme}
+                data-cursor="ENTER"
+                style={`--row-color:${extraColors[index % extraColors.length]};--row-cover:url("${work.data.cover}")`}
+              >
+                <span class="reader-extra-no">{String(index + 1).padStart(2, "0")}</span>
+                <h3>《<span data-handoff-title={extra.data.title}>{extra.data.title}</span>》</h3>
+                <small>{extra.data.charCount.toLocaleString("zh-CN")} 字</small>
+                <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 25 25 7M12 7h13v13" /></svg>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
     </article>
   </main>
 
   <script>
     import { setupTitleFit } from "../../scripts/title-fit";
+    import { setupExtraLinks } from "../../scripts/extra-links";
     setupTitleFit();
+    setupExtraLinks();
 
     const chapterLinks = Array.from(document.querySelectorAll("[data-chapter-link]"));
     const chapters = Array.from(document.querySelectorAll("[data-chapter]"));

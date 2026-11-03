@@ -23,6 +23,11 @@ const { from, kind = "home", theme, title = "" } = Astro.props;
     var layer = document.currentScript && document.currentScript.previousElementSibling;
     if (!h || !layer) return;
     // 首页：按出发的页面换上同样的底色与标题
+    if (layer.dataset.kind !== "home" && h.title) {
+      var own = layer.querySelector(".kb-handoff-title");
+      layer.dataset.ownTitle = own.textContent;
+      own.textContent = h.title;
+    }
     if (layer.dataset.kind === "home") {
       var kinds = { fiction: "fiction", notes: "notes", portraits: "portraits", home: "home" };
       layer.dataset.kind = h.kind || kinds[h.from] || "home";
