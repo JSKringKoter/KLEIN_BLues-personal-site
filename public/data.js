@@ -48,7 +48,7 @@ window.SITE_DATA = {
       "id": "n08",
       "title": "猫屿咖啡屋",
       "subtitle": "Cat Island Coffee House",
-      "charCount": 46613
+      "charCount": 46304
     },
     {
       "id": "n09",
